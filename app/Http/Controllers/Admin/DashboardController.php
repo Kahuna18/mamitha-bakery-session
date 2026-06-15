@@ -35,4 +35,18 @@ class DashboardController extends Controller
             'pendingOrders', 'recentOrders'
         ));
     }
+
+    public function checkNewOrders(\Illuminate\Http\Request $request)
+    {
+        $lastOrderId = $request->get('last_order_id', 0);
+        
+        $newOrdersCount = Order::where('id', '>', $lastOrderId)
+            ->where('status', 'pending')
+            ->count();
+            
+        return response()->json([
+            'new_orders_count' => $newOrdersCount,
+            'latest_order_id' => Order::max('id') ?: 0
+        ]);
+    }
 }

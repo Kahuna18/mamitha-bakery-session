@@ -270,7 +270,7 @@
                             <td class="px-4 py-3 text-gray-500 font-medium">{{ $index + 1 }}</td>
                             <td class="px-4 py-3 flex items-center gap-3">
                                 @if($item->product && $item->product->image)
-                                    <img src="{{ asset('storage/' . $item->product->image) }}" class="w-8 h-8 object-cover rounded-lg">
+                                    <img src="{{ $item->product->image_url }}" class="w-8 h-8 object-cover rounded-lg">
                                 @else
                                     <div class="w-8 h-8 bg-amber-50 dark:bg-amber-950/40 rounded-lg flex items-center justify-center text-amber-500 text-xs">🍞</div>
                                 @endif

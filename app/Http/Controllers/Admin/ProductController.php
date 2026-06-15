@@ -40,7 +40,20 @@ class ProductController extends Controller
         $validated['is_featured'] = $request->boolean('is_featured');
 
         if ($request->hasFile('image')) {
-            $validated['image'] = $request->file('image')->store('products', 'public');
+            $file = $request->file('image');
+            $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            
+            if (!file_exists(public_path('uploads/products'))) {
+                mkdir(public_path('uploads/products'), 0755, true);
+            }
+            $file->move(public_path('uploads/products'), $filename);
+            
+            if (!file_exists(storage_path('app/public/products'))) {
+                mkdir(storage_path('app/public/products'), 0755, true);
+            }
+            copy(public_path('uploads/products/' . $filename), storage_path('app/public/products/' . $filename));
+
+            $validated['image'] = 'uploads/products/' . $filename;
         }
 
         Product::create($validated);
@@ -72,9 +85,41 @@ class ProductController extends Controller
 
         if ($request->hasFile('image')) {
             if ($product->image) {
-                \Storage::disk('public')->delete($product->image);
+                if (str_starts_with($product->image, 'uploads/products/')) {
+                    $oldPath = public_path($product->image);
+                    if (file_exists($oldPath)) {
+                        @unlink($oldPath);
+                    }
+                    $oldStoragePath = storage_path('app/public/products/' . basename($product->image));
+                    if (file_exists($oldStoragePath)) {
+                        @unlink($oldStoragePath);
+                    }
+                } elseif (str_starts_with($product->image, 'products/')) {
+                    $oldStoragePath = storage_path('app/public/' . $product->image);
+                    if (file_exists($oldStoragePath)) {
+                        @unlink($oldStoragePath);
+                    }
+                    $oldPublicPath = public_path('uploads/products/' . basename($product->image));
+                    if (file_exists($oldPublicPath)) {
+                        @unlink($oldPublicPath);
+                    }
+                }
             }
-            $validated['image'] = $request->file('image')->store('products', 'public');
+
+            $file = $request->file('image');
+            $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            
+            if (!file_exists(public_path('uploads/products'))) {
+                mkdir(public_path('uploads/products'), 0755, true);
+            }
+            $file->move(public_path('uploads/products'), $filename);
+            
+            if (!file_exists(storage_path('app/public/products'))) {
+                mkdir(storage_path('app/public/products'), 0755, true);
+            }
+            copy(public_path('uploads/products/' . $filename), storage_path('app/public/products/' . $filename));
+
+            $validated['image'] = 'uploads/products/' . $filename;
         }
 
         $product->update($validated);
@@ -85,7 +130,25 @@ class ProductController extends Controller
     public function destroy(Product $product)
     {
         if ($product->image) {
-            \Storage::disk('public')->delete($product->image);
+            if (str_starts_with($product->image, 'uploads/products/')) {
+                $oldPath = public_path($product->image);
+                if (file_exists($oldPath)) {
+                    @unlink($oldPath);
+                }
+                $oldStoragePath = storage_path('app/public/products/' . basename($product->image));
+                if (file_exists($oldStoragePath)) {
+                    @unlink($oldStoragePath);
+                }
+            } elseif (str_starts_with($product->image, 'products/')) {
+                $oldStoragePath = storage_path('app/public/' . $product->image);
+                if (file_exists($oldStoragePath)) {
+                    @unlink($oldStoragePath);
+                }
+                $oldPublicPath = public_path('uploads/products/' . basename($product->image));
+                if (file_exists($oldPublicPath)) {
+                    @unlink($oldPublicPath);
+                }
+            }
         }
         $product->delete();
 

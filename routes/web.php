@@ -31,6 +31,7 @@ Route::post('/status', [OrderController::class, 'checkStatus'])->name('order.che
 // Admin Routes
 Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', [AdminDashboard::class, 'index'])->name('dashboard');
+    Route::get('/check-new-orders', [AdminDashboard::class, 'checkNewOrders'])->name('check-new-orders');
     Route::get('/kitchen', [KitchenDashboard::class, 'index'])->name('kitchen');
     Route::get('/reports', [AdminReport::class, 'index'])->name('reports.index');
     Route::get('/reports/export/pdf', [AdminReport::class, 'exportPdf'])->name('reports.export.pdf');

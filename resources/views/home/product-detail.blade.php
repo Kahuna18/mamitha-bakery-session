@@ -10,7 +10,7 @@
         <div class="grid md:grid-cols-2 gap-8 mt-4">
             <div class="relative bg-amber-50 rounded-xl p-8 flex items-center justify-center aspect-square">
                 @if($product->image)
-                    <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" class="w-full h-full object-cover rounded-lg {{ $product->stock <= 0 ? 'grayscale opacity-50' : '' }}">
+                    <img src="{{ $product->image_url }}" alt="{{ $product->name }}" class="w-full h-full object-cover rounded-lg {{ $product->stock <= 0 ? 'grayscale opacity-50' : '' }}">
                 @else
                     <span class="text-8xl opacity-30">🍞</span>
                 @endif

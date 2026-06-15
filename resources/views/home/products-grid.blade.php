@@ -2,7 +2,7 @@
 <div class="bg-white rounded-xl border border-amber-100 overflow-hidden hover:shadow-md transition">
     <div class="relative aspect-square bg-amber-50 flex items-center justify-center p-6">
         @if($product->image)
-            <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" class="w-full h-full object-cover rounded-lg {{ $product->stock <= 0 ? 'grayscale opacity-50' : '' }}">
+            <img src="{{ $product->image_url }}" alt="{{ $product->name }}" class="w-full h-full object-cover rounded-lg {{ $product->stock <= 0 ? 'grayscale opacity-50' : '' }}">
         @else
             <span class="text-6xl opacity-30 {{ $product->stock <= 0 ? 'grayscale' : '' }}">🍞</span>
         @endif

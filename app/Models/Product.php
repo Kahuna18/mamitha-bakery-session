@@ -38,6 +38,30 @@ class Product extends Model
         return $query->where('is_featured', true);
     }
 
+    public function getImageUrlAttribute()
+    {
+        if (!$this->image) {
+            return null;
+        }
+
+        if (str_starts_with($this->image, 'http://') || str_starts_with($this->image, 'https://')) {
+            return $this->image;
+        }
+
+        if (str_starts_with($this->image, 'products/')) {
+            if (file_exists(public_path('storage/' . $this->image))) {
+                return asset('storage/' . $this->image);
+            }
+            $filename = basename($this->image);
+            if (file_exists(public_path('uploads/products/' . $filename))) {
+                return asset('uploads/products/' . $filename);
+            }
+            return asset('storage/' . $this->image);
+        }
+
+        return asset($this->image);
+    }
+
     protected static function booted()
     {
         static::creating(function ($product) {

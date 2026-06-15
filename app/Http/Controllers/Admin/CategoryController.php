@@ -32,7 +32,20 @@ class CategoryController extends Controller
         $validated['is_active'] = $request->boolean('is_active');
 
         if ($request->hasFile('image')) {
-            $validated['image'] = $request->file('image')->store('categories', 'public');
+            $file = $request->file('image');
+            $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            
+            if (!file_exists(public_path('uploads/categories'))) {
+                mkdir(public_path('uploads/categories'), 0755, true);
+            }
+            $file->move(public_path('uploads/categories'), $filename);
+            
+            if (!file_exists(storage_path('app/public/categories'))) {
+                mkdir(storage_path('app/public/categories'), 0755, true);
+            }
+            copy(public_path('uploads/categories/' . $filename), storage_path('app/public/categories/' . $filename));
+
+            $validated['image'] = 'uploads/categories/' . $filename;
         }
 
         Category::create($validated);
@@ -57,9 +70,41 @@ class CategoryController extends Controller
 
         if ($request->hasFile('image')) {
             if ($category->image) {
-                \Storage::disk('public')->delete($category->image);
+                if (str_starts_with($category->image, 'uploads/categories/')) {
+                    $oldPath = public_path($category->image);
+                    if (file_exists($oldPath)) {
+                        @unlink($oldPath);
+                    }
+                    $oldStoragePath = storage_path('app/public/categories/' . basename($category->image));
+                    if (file_exists($oldStoragePath)) {
+                        @unlink($oldStoragePath);
+                    }
+                } elseif (str_starts_with($category->image, 'categories/')) {
+                    $oldStoragePath = storage_path('app/public/' . $category->image);
+                    if (file_exists($oldStoragePath)) {
+                        @unlink($oldStoragePath);
+                    }
+                    $oldPublicPath = public_path('uploads/categories/' . basename($category->image));
+                    if (file_exists($oldPublicPath)) {
+                        @unlink($oldPublicPath);
+                    }
+                }
             }
-            $validated['image'] = $request->file('image')->store('categories', 'public');
+
+            $file = $request->file('image');
+            $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            
+            if (!file_exists(public_path('uploads/categories'))) {
+                mkdir(public_path('uploads/categories'), 0755, true);
+            }
+            $file->move(public_path('uploads/categories'), $filename);
+            
+            if (!file_exists(storage_path('app/public/categories'))) {
+                mkdir(storage_path('app/public/categories'), 0755, true);
+            }
+            copy(public_path('uploads/categories/' . $filename), storage_path('app/public/categories/' . $filename));
+
+            $validated['image'] = 'uploads/categories/' . $filename;
         }
 
         $category->update($validated);
@@ -74,7 +119,25 @@ class CategoryController extends Controller
         }
 
         if ($category->image) {
-            \Storage::disk('public')->delete($category->image);
+            if (str_starts_with($category->image, 'uploads/categories/')) {
+                $oldPath = public_path($category->image);
+                if (file_exists($oldPath)) {
+                    @unlink($oldPath);
+                }
+                $oldStoragePath = storage_path('app/public/categories/' . basename($category->image));
+                if (file_exists($oldStoragePath)) {
+                    @unlink($oldStoragePath);
+                }
+            } elseif (str_starts_with($category->image, 'categories/')) {
+                $oldStoragePath = storage_path('app/public/' . $category->image);
+                if (file_exists($oldStoragePath)) {
+                    @unlink($oldStoragePath);
+                }
+                $oldPublicPath = public_path('uploads/categories/' . basename($category->image));
+                if (file_exists($oldPublicPath)) {
+                    @unlink($oldPublicPath);
+                }
+            }
         }
         $category->delete();
 

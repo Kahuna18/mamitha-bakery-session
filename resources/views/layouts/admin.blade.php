@@ -229,6 +229,127 @@
             document.getElementById('mobile-sidebar').classList.remove('hidden');
         });
     </script>
+
+    <!-- Admin Alarm Modal Overlay -->
+    <div id="admin-alarm-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden transition-all duration-300">
+        <div class="bg-white dark:bg-gray-800 rounded-3xl p-8 max-w-md w-full mx-4 shadow-2xl border border-amber-100 dark:border-gray-700 text-center transform scale-95 transition-all duration-300" id="admin-alarm-card">
+            <div class="w-20 h-20 bg-amber-100 dark:bg-amber-950/30 rounded-full flex items-center justify-center mx-auto text-4xl shadow-inner mb-5 animate-bounce">
+                🔔
+            </div>
+            <h3 class="text-2xl font-black text-gray-800 dark:text-white">Pesanan Baru Masuk!</h3>
+            <p class="text-gray-500 dark:text-gray-400 mt-2 text-sm">Ada pesanan baru masuk dari pelanggan yang harus segera diproses.</p>
+            
+            <div class="mt-6 flex gap-3">
+                <button onclick="stopAdminAlarmAndClose()" class="flex-1 py-3 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white font-bold rounded-2xl transition">
+                    Tutup
+                </button>
+                <a href="{{ route('admin.orders.index') }}" class="flex-1 py-3 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-2xl shadow-lg transition text-center flex items-center justify-center">
+                    Lihat Pesanan
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let lastOrderId = {{ \App\Models\Order::max('id') ?: 0 }};
+        let adminAlarmInterval = null;
+        let adminAudioCtx = null;
+        
+        function initAdminAudio() {
+            if (!adminAudioCtx) {
+                adminAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+        
+        function playAdminAlarmSound() {
+            initAdminAudio();
+            if (!adminAudioCtx) return;
+            
+            if (adminAudioCtx.state === 'suspended') {
+                adminAudioCtx.resume();
+            }
+            
+            const playTone = (frequency, startTime, duration, type = 'sine') => {
+                const osc = adminAudioCtx.createOscillator();
+                const gainNode = adminAudioCtx.createGain();
+                
+                osc.type = type;
+                osc.frequency.setValueAtTime(frequency, startTime);
+                
+                gainNode.gain.setValueAtTime(0.35, startTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+                
+                osc.connect(gainNode);
+                gainNode.connect(adminAudioCtx.destination);
+                
+                osc.start(startTime);
+                osc.stop(startTime + duration);
+            };
+            
+            // Double tone chime ringtone
+            playTone(880, adminAudioCtx.currentTime, 0.15, 'triangle');
+            playTone(1200, adminAudioCtx.currentTime + 0.15, 0.35, 'sine');
+        }
+        
+        function startAdminAlarm() {
+            const modal = document.getElementById('admin-alarm-modal');
+            const card = document.getElementById('admin-alarm-card');
+            if (modal) {
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    card.classList.remove('scale-95');
+                    card.classList.add('scale-100');
+                }, 10);
+            }
+            
+            playAdminAlarmSound();
+            if (!adminAlarmInterval) {
+                adminAlarmInterval = setInterval(playAdminAlarmSound, 1500);
+            }
+        }
+        
+        function stopAdminAlarm() {
+            if (adminAlarmInterval) {
+                clearInterval(adminAlarmInterval);
+                adminAlarmInterval = null;
+            }
+        }
+        
+        function stopAdminAlarmAndClose() {
+            stopAdminAlarm();
+            const modal = document.getElementById('admin-alarm-modal');
+            const card = document.getElementById('admin-alarm-card');
+            if (modal) {
+                card.classList.remove('scale-100');
+                card.classList.add('scale-95');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                }, 150);
+            }
+        }
+        
+        async function checkNewOrdersForAdmin() {
+            try {
+                const response = await fetch(`{{ route('admin.check-new-orders') }}?last_order_id=${lastOrderId}`);
+                if (!response.ok) throw new Error('Response error');
+                
+                const data = await response.json();
+                if (data.new_orders_count > 0) {
+                    startAdminAlarm();
+                }
+            } catch (error) {
+                console.error('Error checking new orders:', error);
+            }
+        }
+        
+        // Poll every 10 seconds
+        setInterval(checkNewOrdersForAdmin, 10000);
+        
+        // Initialize AudioContext on first user interaction (required by browsers)
+        document.addEventListener('click', () => {
+            initAdminAudio();
+        }, { once: true });
+    </script>
     @stack('scripts')
 </body>
 </html>

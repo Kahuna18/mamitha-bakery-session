@@ -112,7 +112,7 @@
                     <!-- Product Image Section -->
                     <div class="relative aspect-[4/3] bg-amber-50/50 dark:bg-gray-900/50 overflow-hidden group">
                         @if($product->image)
-                            <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" class="w-full h-full object-cover transition duration-500 group-hover:scale-105 {{ $product->stock <= 0 ? 'grayscale opacity-50' : '' }}">
+                            <img src="{{ $product->image_url }}" alt="{{ $product->name }}" class="w-full h-full object-cover transition duration-500 group-hover:scale-105 {{ $product->stock <= 0 ? 'grayscale opacity-50' : '' }}">
                         @else
                             <div class="w-full h-full flex items-center justify-center text-7xl select-none {{ $product->stock <= 0 ? 'grayscale opacity-50' : '' }}">
                                 🍞
@@ -383,13 +383,9 @@
                         <span>Biaya Pengiriman</span>
                         <span id="summary-shipping" class="font-medium text-gray-800 dark:text-gray-200">Rp 0</span>
                     </div>
-                    <div class="flex justify-between">
-                        <span>Biaya Layanan & Pajak</span>
-                        <span id="summary-tax" class="font-medium text-gray-800 dark:text-gray-200">Rp 2.000</span>
-                    </div>
                     <div class="flex justify-between text-base font-black text-gray-800 dark:text-gray-100 pt-2 border-t border-gray-200/50 dark:border-gray-700/50">
                         <span>Total Bayar</span>
-                        <span id="summary-total" class="text-amber-800 dark:text-amber-400 text-lg font-black">Rp 2.000</span>
+                        <span id="summary-total" class="text-amber-800 dark:text-amber-400 text-lg font-black">Rp 0</span>
                     </div>
                 </div>
 
@@ -476,7 +472,7 @@
         let totalPrice = 0;
         let discount = 0;
         let shippingFee = (document.querySelector('input[name="type"]:checked')?.value === 'delivery' && deliveryFeeEnabled) ? deliveryFeeAmount : 0;
-        let serviceTax = 2000;
+        let serviceTax = 0;
 
         // Update target card inputs if a specific card was actioned
         if (productId && cart[productId]) {
@@ -522,7 +518,7 @@
         document.getElementById('summary-discount').textContent = '-Rp ' + discount.toLocaleString('id-ID');
         document.getElementById('summary-shipping').textContent = 'Rp ' + shippingFee.toLocaleString('id-ID');
         
-        let finalTotal = totalPrice - discount + shippingFee + serviceTax;
+        let finalTotal = totalPrice - discount + shippingFee;
         if (totalItems === 0) finalTotal = 0; // reset total if nothing selected
         
         document.getElementById('summary-total').textContent = 'Rp ' + finalTotal.toLocaleString('id-ID');
