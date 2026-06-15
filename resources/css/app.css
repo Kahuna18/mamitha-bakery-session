@@ -1,0 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    html {
+        scroll-behavior: smooth;
+    }
+}
+
+@layer components {
+    .btn-primary {
+        @apply px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-lg shadow-sm transition text-sm;
+    }
+    .card {
+        @apply bg-white rounded-xl border border-amber-100 shadow-sm;
+    }
+}

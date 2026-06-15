@@ -1,0 +1,75 @@
+@extends('layouts.app')
+
+@section('title', 'Kontak')
+
+@section('content')
+<section class="bg-amber-50 py-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h1 class="text-3xl md:text-4xl font-bold text-amber-900 mb-2">Kontak Kami</h1>
+        <p class="text-gray-600">Hubungi kami untuk informasi lebih lanjut</p>
+    </div>
+</section>
+
+<section class="py-12">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid md:grid-cols-2 gap-8">
+            <div class="space-y-6">
+                <div class="bg-white rounded-xl p-6 border border-amber-100 shadow-sm">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <svg class="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 448 512"><path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157z"/></svg>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-gray-800">WhatsApp</h3>
+                            <p class="text-gray-600 text-sm">{{ $storePhone }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl p-6 border border-amber-100 shadow-sm">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-gray-800">Alamat</h3>
+                            <p class="text-gray-600 text-sm">{{ $storeAddress }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl p-6 border border-amber-100 shadow-sm">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-gray-800">Email</h3>
+                            <p class="text-gray-600 text-sm">{{ $storeEmail }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl p-6 border border-amber-100 shadow-sm">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-gray-800">Jam Operasional</h3>
+                            <p class="text-gray-600 text-sm">Senin - Sabtu: {{ $openTime }} - {{ $closeTime }}</p>
+                            <p class="text-gray-600 text-sm">Minggu: 08:00 - 18:00</p>
+                        </div>
+                    </div>
+                </div>
+                <a href="https://wa.me/{{ $storeWhatsapp }}" target="_blank" class="block w-full text-center px-6 py-3.5 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl transition text-base">
+                    <svg class="w-5 h-5 inline mr-2" fill="currentColor" viewBox="0 0 448 512"><path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157z"/></svg>
+                    Pesan via WhatsApp
+                </a>
+            </div>
+            <div>
+                <div class="bg-gray-200 rounded-xl h-80 flex items-center justify-center">
+                    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3966.0!2d106.8!3d-6.2!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNsKwMTInMDAuMCJTIDEwNsKwNDgnMDAuMCJF!5e0!3m2!1sen!2sid!4v1" width="100%" height="100%" style="border:0; border-radius: 12px;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+@endsection
