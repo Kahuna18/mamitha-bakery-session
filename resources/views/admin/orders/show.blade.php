@@ -132,7 +132,7 @@
                     $storeLat = \App\Models\Setting::getValue('store_latitude', '-7.7705163');
                     $storeLng = \App\Models\Setting::getValue('store_longitude', '110.2474903');
                 @endphp
-                <a href="https://www.google.com/maps/dir/{{ $storeLat }},{{ $storeLng }}/{{ $order->latitude }},{{ $order->longitude }}" target="_blank" class="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold rounded-lg shadow-sm transition">
+                <a href="https://www.google.com/maps/dir/?api=1&origin={{ $storeLat }},{{ $storeLng }}&destination={{ $order->latitude }},{{ $order->longitude }}" target="_blank" class="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold rounded-lg shadow-sm transition">
                     🚗 Rute Pengantaran (Kurir)
                 </a>
                 <a href="https://waze.com/ul?ll={{ $order->latitude }},{{ $order->longitude }}&navigate=yes" target="_blank" class="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold rounded-lg shadow-sm transition">
