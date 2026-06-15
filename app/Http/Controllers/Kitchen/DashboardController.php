@@ -62,4 +62,18 @@ class DashboardController extends Controller
 
         return view('kitchen.print', compact('order', 'storeName'));
     }
+
+    public function checkNewTasks(Request $request)
+    {
+        $lastTaskId = $request->get('last_task_id', 0);
+        
+        $newTasksCount = KitchenTask::where('id', '>', $lastTaskId)
+            ->where('status', 'pending')
+            ->count();
+            
+        return response()->json([
+            'new_tasks_count' => $newTasksCount,
+            'latest_task_id' => KitchenTask::max('id') ?: 0
+        ]);
+    }
 }

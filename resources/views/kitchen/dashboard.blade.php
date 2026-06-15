@@ -115,6 +115,23 @@
     <p class="text-gray-400 text-sm mt-1">Semua pesanan sudah selesai.</p>
 </div>
 @endif
+
+<!-- Alarm Modal Overlay -->
+<div id="alarm-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden transition-all duration-300">
+    <div class="bg-white dark:bg-gray-800 rounded-3xl p-8 max-w-md w-full mx-4 shadow-2xl border border-orange-100 dark:border-gray-700 text-center transform scale-95 transition-all duration-300" id="alarm-card">
+        <div class="w-20 h-20 bg-orange-100 dark:bg-orange-950/30 rounded-full flex items-center justify-center mx-auto text-4xl shadow-inner mb-5 animate-bounce">
+            🔔
+        </div>
+        <h3 class="text-2xl font-black text-gray-850 dark:text-white">Pesanan Baru Masuk!</h3>
+        <p class="text-gray-500 dark:text-gray-400 mt-2 text-sm">Ada pesanan baru yang perlu segera diproses di dapur.</p>
+        
+        <div class="mt-6">
+            <button onclick="acceptAndReload()" class="w-full py-3.5 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-2xl shadow-lg transition active:scale-95 flex items-center justify-center gap-2">
+                <span>👨‍🍳</span> Terima & Muat Ulang
+            </button>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
@@ -129,6 +146,99 @@
             }
         }
     }
+
+    let lastTaskId = {{ \App\Models\KitchenTask::max('id') ?: 0 }};
+    let alarmInterval = null;
+    let audioCtx = null;
+
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+    }
+
+    // Synthesize alarm sound using Web Audio API
+    function playAlarmSound() {
+        initAudio();
+        if (!audioCtx) return;
+        
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+
+        const playTone = (frequency, startTime, duration, type = 'sine') => {
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            osc.type = type;
+            osc.frequency.setValueAtTime(frequency, startTime);
+            
+            gainNode.gain.setValueAtTime(0.35, startTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+            
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            osc.start(startTime);
+            osc.stop(startTime + duration);
+        };
+
+        // Ringtone double tone chime
+        playTone(880, audioCtx.currentTime, 0.15, 'triangle');
+        playTone(1200, audioCtx.currentTime + 0.15, 0.35, 'sine');
+    }
+
+    function startAlarm() {
+        const modal = document.getElementById('alarm-modal');
+        const card = document.getElementById('alarm-card');
+        if (modal) {
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                card.classList.remove('scale-95');
+                card.classList.add('scale-100');
+            }, 10);
+        }
+
+        playAlarmSound();
+        if (!alarmInterval) {
+            alarmInterval = setInterval(playAlarmSound, 1500);
+        }
+    }
+
+    function stopAlarm() {
+        if (alarmInterval) {
+            clearInterval(alarmInterval);
+            alarmInterval = null;
+        }
+    }
+
+    function acceptAndReload() {
+        stopAlarm();
+        window.location.reload();
+    }
+
+    // Polling function
+    async function checkNewOrders() {
+        try {
+            const response = await fetch(`{{ route('kitchen.check-new-tasks') }}?last_task_id=${lastTaskId}`);
+            if (!response.ok) throw new Error('Response error');
+            
+            const data = await response.json();
+            if (data.new_tasks_count > 0) {
+                startAlarm();
+            }
+        } catch (error) {
+            console.error('Error polling for new orders:', error);
+        }
+    }
+
+    // Poll every 10 seconds
+    setInterval(checkNewOrders, 10000);
+
+    // Init audio context on user interaction
+    document.addEventListener('click', () => {
+        initAudio();
+    }, { once: true });
 </script>
 @endpush
 

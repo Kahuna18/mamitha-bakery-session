@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProductController;
@@ -61,6 +61,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
 // Kitchen Routes
 Route::middleware(['auth', 'verified', 'role:kitchen,admin'])->prefix('kitchen')->name('kitchen.')->group(function () {
     Route::get('/', [KitchenDashboard::class, 'index'])->name('dashboard');
+    Route::get('/check-new-tasks', [KitchenDashboard::class, 'checkNewTasks'])->name('check-new-tasks');
     Route::post('/tasks/{task}/status', [KitchenDashboard::class, 'updateStatus'])->name('task.update-status');
     Route::get('/print/{id}', [KitchenDashboard::class, 'print'])->name('print');
 });
