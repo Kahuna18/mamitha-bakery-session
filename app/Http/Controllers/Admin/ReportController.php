@@ -242,21 +242,22 @@ class ReportController extends Controller
             });
 
         // ── Monthly Trend (12 months) ───────────────────────────────
-        $monthlyTrend = Order::select(
-            DB::raw("strftime('%Y-%m', order_date) as month"),
-            DB::raw('SUM(total) as revenue'),
-            DB::raw('COUNT(*) as orders')
-        )
-            ->where('status', '!=', 'cancelled')
-            ->where('order_date', '>=', Carbon::now()->subMonths(11)->startOfMonth())
-            ->groupBy('month')
-            ->orderBy('month')
-            ->get();
+        $isMysql = config('database.default') === 'mysql' || DB::connection()->getDriverName() === 'mysql';
 
-        // Check if DB is MySQL – adjust date function accordingly
-        if (config('database.default') === 'mysql') {
+        if ($isMysql) {
             $monthlyTrend = Order::select(
                 DB::raw("DATE_FORMAT(order_date, '%Y-%m') as month"),
+                DB::raw('SUM(total) as revenue'),
+                DB::raw('COUNT(*) as orders')
+            )
+                ->where('status', '!=', 'cancelled')
+                ->where('order_date', '>=', Carbon::now()->subMonths(11)->startOfMonth())
+                ->groupBy('month')
+                ->orderBy('month')
+                ->get();
+        } else {
+            $monthlyTrend = Order::select(
+                DB::raw("strftime('%Y-%m', order_date) as month"),
                 DB::raw('SUM(total) as revenue'),
                 DB::raw('COUNT(*) as orders')
             )
@@ -286,19 +287,19 @@ class ReportController extends Controller
         }
 
         // ── Hourly Distribution (peak hours) ────────────────────────
-        $hourlyOrders = Order::select(
-            DB::raw("CAST(strftime('%H', order_date) AS INTEGER) as hour"),
-            DB::raw('COUNT(*) as count')
-        )
-            ->whereBetween('order_date', [$startDate, $endDate])
-            ->where('status', '!=', 'cancelled')
-            ->groupBy('hour')
-            ->orderBy('hour')
-            ->get();
-
-        if (config('database.default') === 'mysql') {
+        if ($isMysql) {
             $hourlyOrders = Order::select(
                 DB::raw("HOUR(order_date) as hour"),
+                DB::raw('COUNT(*) as count')
+            )
+                ->whereBetween('order_date', [$startDate, $endDate])
+                ->where('status', '!=', 'cancelled')
+                ->groupBy('hour')
+                ->orderBy('hour')
+                ->get();
+        } else {
+            $hourlyOrders = Order::select(
+                DB::raw("CAST(strftime('%H', order_date) AS INTEGER) as hour"),
                 DB::raw('COUNT(*) as count')
             )
                 ->whereBetween('order_date', [$startDate, $endDate])
