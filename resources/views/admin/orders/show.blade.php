@@ -2,6 +2,24 @@
 
 @section('title', 'Detail Order')
 
+@push('styles')
+<!-- Leaflet CSS for Map -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<style>
+    #map-order {
+        height: 240px;
+        z-index: 10;
+    }
+    /* Dark Mode overrides for Leaflet */
+    .dark .leaflet-tile {
+        filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3);
+    }
+    .dark .leaflet-container {
+        background: #111827;
+    }
+</style>
+@endpush
+
 @section('content')
 <div class="mb-6">
     <a href="{{ route('admin.orders.index') }}" class="text-amber-600 hover:text-amber-700 text-sm font-medium">&larr; Kembali</a>
@@ -95,14 +113,32 @@
             </div>
         </div>
 
-        @if($order->latitude && $order->longitude && $googleMapsKey)
+        @if($order->latitude && $order->longitude)
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <h2 class="text-lg font-bold text-gray-800 mb-4">Lokasi Pengiriman</h2>
-            <div id="map-order" class="w-full h-48 rounded-lg border border-gray-200 overflow-hidden bg-gray-100"></div>
+            <div id="map-order" class="w-full rounded-lg border border-gray-200 overflow-hidden bg-gray-100"></div>
             @if($order->address)
-            <p class="text-sm text-gray-600 mt-2">{{ $order->address }}</p>
+            <div class="mt-4">
+                <p class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Alamat Terpilih</p>
+                <p class="text-sm text-gray-700 dark:text-gray-300 mt-1">{{ $order->address }}</p>
+            </div>
             @endif
-            <a href="https://www.google.com/maps?q={{ $order->latitude }},{{ $order->longitude }}" target="_blank" class="mt-2 inline-block text-sm text-amber-600 hover:text-amber-700 font-medium">Buka di Google Maps &rarr;</a>
+            
+            <div class="mt-4 flex flex-col gap-2">
+                <a href="https://www.google.com/maps?q={{ $order->latitude }},{{ $order->longitude }}" target="_blank" class="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-750 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm font-semibold rounded-lg shadow-sm transition">
+                    📍 Buka di Google Maps
+                </a>
+                @php
+                    $storeLat = \App\Models\Setting::getValue('store_latitude', '-6.200000');
+                    $storeLng = \App\Models\Setting::getValue('store_longitude', '106.816666');
+                @endphp
+                <a href="https://www.google.com/maps/dir/{{ $storeLat }},{{ $storeLng }}/{{ $order->latitude }},{{ $order->longitude }}" target="_blank" class="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold rounded-lg shadow-sm transition">
+                    🚗 Rute Pengantaran (Kurir)
+                </a>
+                <a href="https://waze.com/ul?ll={{ $order->latitude }},{{ $order->longitude }}&navigate=yes" target="_blank" class="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold rounded-lg shadow-sm transition">
+                    🚙 Navigasi Waze
+                </a>
+            </div>
         </div>
         @endif
 
@@ -191,22 +227,42 @@
         }
     }
 </script>
-@if($googleMapsKey && $order->latitude && $order->longitude)
-<script src="https://maps.googleapis.com/maps/api/js?key={{ $googleMapsKey }}&callback=initOrderMap" async defer></script>
+@if($order->latitude && $order->longitude)
+<!-- Leaflet JS Library -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
     function initOrderMap() {
-        const loc = { lat: {{ $order->latitude }}, lng: {{ $order->longitude }} };
-        const mapEl = document.getElementById('map-order');
-        if (!mapEl) return;
-        const map = new google.maps.Map(mapEl, {
-            center: loc,
-            zoom: 15,
-            mapTypeControl: false,
-            streetViewControl: false,
-            fullscreenControl: false,
+        const storeLocation = [{{ \App\Models\Setting::getValue('store_latitude', '-6.200000') }}, {{ \App\Models\Setting::getValue('store_longitude', '106.816666') }}];
+        const customerLocation = [{{ $order->latitude }}, {{ $order->longitude }}];
+        
+        const map = L.map('map-order', {
+            zoomControl: true,
+            attributionControl: false
         });
-        new google.maps.Marker({ position: loc, map: map, title: 'Lokasi Pelanggan' });
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19
+        }).addTo(map);
+        
+        const storeMarker = L.marker(storeLocation).addTo(map).bindPopup('<b>Toko (Mamitha Bakery)</b>');
+        const customerMarker = L.marker(customerLocation).addTo(map).bindPopup('<b>Lokasi Pelanggan</b>').openPopup();
+        
+        // Draw path between store and customer location
+        L.polyline([storeLocation, customerLocation], {
+            color: '#d97706',
+            weight: 3.5,
+            opacity: 0.85,
+            dashArray: '8, 8'
+        }).addTo(map);
+        
+        // Fit map bounds to cover both markers
+        const group = new L.featureGroup([storeMarker, customerMarker]);
+        map.fitBounds(group.getBounds().pad(0.25));
     }
+    
+    window.addEventListener('load', () => {
+        initOrderMap();
+    });
 </script>
 @endif
 @endpush

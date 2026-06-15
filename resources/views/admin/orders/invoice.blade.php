@@ -29,7 +29,12 @@
     <p>Ambil: {{ $order->pickup_date->format('d/m/Y') }}</p>
     <p>Pelanggan: {{ $order->customer->name }}</p>
     <p>WA: {{ $order->customer->phone }}</p>
-    @if($order->address)<p>Alamat: {{ $order->address }}</p>@endif
+    @if($order->address)
+        <p>Alamat: {{ $order->address }}</p>
+        @if($order->latitude && $order->longitude)
+            <p>Google Maps: <a href="https://www.google.com/maps?q={{ $order->latitude }},{{ $order->longitude }}" target="_blank" style="text-decoration: underline; color: #000;">Buka Peta</a></p>
+        @endif
+    @endif
     <hr>
     <table class="items">
         <thead>

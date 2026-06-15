@@ -51,8 +51,25 @@
                 <tr class="hover:bg-gray-50">
                     <td class="px-4 py-3 font-medium">{{ $order->order_number }}</td>
                     <td class="px-4 py-3">
-                        <p class="font-medium">{{ $order->customer->name }}</p>
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <p class="font-medium text-gray-900 dark:text-gray-100">{{ $order->customer->name }}</p>
+                            @if($order->type == 'delivery')
+                                <span class="inline-block px-1.5 py-0.5 text-[10px] font-semibold bg-orange-100 text-orange-850 dark:bg-orange-950/40 dark:text-orange-300 rounded">Delivery</span>
+                            @else
+                                <span class="inline-block px-1.5 py-0.5 text-[10px] font-semibold bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 rounded">Pickup</span>
+                            @endif
+                        </div>
                         <p class="text-xs text-gray-500">{{ $order->customer->phone }}</p>
+                        @if($order->type == 'delivery' && $order->address)
+                            <div class="mt-1 text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1 max-w-xs truncate" title="{{ $order->address }}">
+                                📍 {{ $order->address }}
+                                @if($order->latitude && $order->longitude)
+                                    <a href="https://www.google.com/maps?q={{ $order->latitude }},{{ $order->longitude }}" target="_blank" class="text-amber-600 hover:text-amber-700 dark:text-amber-400 font-bold ml-1 hover:underline">
+                                        (Peta)
+                                    </a>
+                                @endif
+                            </div>
+                        @endif
                     </td>
                     <td class="px-4 py-3 text-gray-600">{{ $order->order_date->format('d/m/Y H:i') }}</td>
                     <td class="px-4 py-3 font-semibold">Rp {{ number_format($order->total, 0, ',', '.') }}</td>
