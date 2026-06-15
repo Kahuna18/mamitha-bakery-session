@@ -979,11 +979,11 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">Latitude</label>
-                        <input type="text" name="store_latitude" value="{{ $settings['store_latitude'] ?? '-6.200000' }}" class="form-input">
+                        <input type="text" name="store_latitude" value="{{ $settings['store_latitude'] ?? '-7.7705163' }}" class="form-input">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Longitude</label>
-                        <input type="text" name="store_longitude" value="{{ $settings['store_longitude'] ?? '106.816666' }}" class="form-input">
+                        <input type="text" name="store_longitude" value="{{ $settings['store_longitude'] ?? '110.2474903' }}" class="form-input">
                     </div>
                 </div>
             </div>

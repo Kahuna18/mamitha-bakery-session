@@ -21,8 +21,8 @@ class OrderController extends Controller
         $storeWhatsapp = Setting::getValue('store_whatsapp');
         $canOrder = Setting::canAcceptOrder();
         $googleMapsKey = Setting::getValue('google_maps_api_key', '');
-        $storeLat = Setting::getValue('store_latitude', '-6.200000');
-        $storeLng = Setting::getValue('store_longitude', '106.816666');
+        $storeLat = Setting::getValue('store_latitude', '-7.7705163');
+        $storeLng = Setting::getValue('store_longitude', '110.2474903');
         $deliveryFeeEnabled = Setting::getValue('delivery_fee_enabled', 'true') === 'true';
         $deliveryFeeAmount = (int) Setting::getValue('delivery_fee_amount', 10000);
 

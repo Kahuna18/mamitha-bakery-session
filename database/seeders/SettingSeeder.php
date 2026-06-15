@@ -11,7 +11,7 @@ class SettingSeeder extends Seeder
     {
         $settings = [
             ['key' => 'store_name', 'value' => 'Mamitha Bakery'],
-            ['key' => 'store_address', 'value' => 'Jl. Raya Bakery No. 123, Jakarta'],
+            ['key' => 'store_address', 'value' => 'Ndukuh malangan, RT.005/RW.044, Malangan, Sumberagung, Kec. Moyudan, Sleman, Yogyakarta 55563'],
             ['key' => 'store_phone', 'value' => '0812-3456-7890'],
             ['key' => 'store_whatsapp', 'value' => '6281234567890'],
             ['key' => 'store_email', 'value' => 'info@mamithabakery.com'],
@@ -21,8 +21,8 @@ class SettingSeeder extends Seeder
             ['key' => 'is_closed', 'value' => 'false'],
             ['key' => 'about_text', 'value' => 'Mamitha Bakery adalah toko roti rumahan yang menyajikan roti fresh setiap hari dengan bahan-bahan berkualitas. Kami siap melayani pesanan roti, cake, snack box, dan paket acara untuk Anda.'],
             ['key' => 'google_maps_api_key', 'value' => ''],
-            ['key' => 'store_latitude', 'value' => '-6.200000'],
-            ['key' => 'store_longitude', 'value' => '106.816666'],
+            ['key' => 'store_latitude', 'value' => '-7.7705163'],
+            ['key' => 'store_longitude', 'value' => '110.2474903'],
         ];
 
         foreach ($settings as $setting) {

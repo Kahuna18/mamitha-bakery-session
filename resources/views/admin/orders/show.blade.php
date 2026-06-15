@@ -129,8 +129,8 @@
                     📍 Buka di Google Maps
                 </a>
                 @php
-                    $storeLat = \App\Models\Setting::getValue('store_latitude', '-6.200000');
-                    $storeLng = \App\Models\Setting::getValue('store_longitude', '106.816666');
+                    $storeLat = \App\Models\Setting::getValue('store_latitude', '-7.7705163');
+                    $storeLng = \App\Models\Setting::getValue('store_longitude', '110.2474903');
                 @endphp
                 <a href="https://www.google.com/maps/dir/{{ $storeLat }},{{ $storeLng }}/{{ $order->latitude }},{{ $order->longitude }}" target="_blank" class="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold rounded-lg shadow-sm transition">
                     🚗 Rute Pengantaran (Kurir)
@@ -232,7 +232,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
     function initOrderMap() {
-        const storeLocation = [{{ \App\Models\Setting::getValue('store_latitude', '-6.200000') }}, {{ \App\Models\Setting::getValue('store_longitude', '106.816666') }}];
+        const storeLocation = [{{ \App\Models\Setting::getValue('store_latitude', '-7.7705163') }}, {{ \App\Models\Setting::getValue('store_longitude', '110.2474903') }}];
         const customerLocation = [{{ $order->latitude }}, {{ $order->longitude }}];
         
         const map = L.map('map-order', {
