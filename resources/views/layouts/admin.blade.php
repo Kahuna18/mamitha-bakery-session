@@ -11,82 +11,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     @stack('styles')
     <script src="{{ asset('js/thermal-printer.js') }}"></script>
-    <script>
-        (function() {
-            const theme = localStorage.getItem('admin-theme') || 'light';
-            if (theme === 'dark') {
-                document.documentElement.setAttribute('data-theme', 'dark');
-                document.documentElement.classList.add('dark');
-            } else {
-                document.documentElement.setAttribute('data-theme', 'light');
-                document.documentElement.classList.remove('dark');
-            }
-        })();
-    </script>
+
     <style>
         /* Smooth transitions for theme toggle */
         body, header, aside, main, div, p, span, h1, h2, h3, table, td, th, a, button, input, textarea, select {
             transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
         }
-        
-        /* Global Dark Mode Overrides for general UI elements */
-        html.dark body {
-            background-color: #121218 !important;
-            color: #1a1a2e !important;
-        }
-        html.dark main {
-            background-color: #121218 !important;
-        }
-        html.dark header {
-            background-color: #1e1e2e !important;
-            border-color: rgba(255, 255, 255, 0.08) !important;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
-        }
-        html.dark header span.text-gray-600 {
-            color: #374151 !important;
-        }
-        html.dark .bg-white {
-            background-color: #1e1e2e !important;
-        }
-        html.dark .bg-gray-50 {
-            background-color: #121218 !important;
-        }
-        html.dark .text-gray-800,
-        html.dark .text-gray-900 {
-            color: #111827 !important;
-        }
-        html.dark .text-gray-700 {
-            color: #1f2937 !important;
-        }
-        html.dark .text-gray-600 {
-            color: #374151 !important;
-        }
-        html.dark .text-gray-500,
-        html.dark .text-gray-400 {
-            color: #4b5563 !important;
-        }
-        html.dark .border-gray-100,
-        html.dark .border-gray-200,
-        html.dark .border-gray-300,
-        html.dark .border-amber-100 {
-            border-color: rgba(255, 255, 255, 0.08) !important;
-        }
-        html.dark .hover\:bg-gray-50:hover {
-            background-color: rgba(255, 255, 255, 0.03) !important;
-        }
-        
-        /* Sidebar dark mode adjustment */
-        html.dark aside#sidebar,
-        html.dark aside#mobile-sidebar aside {
-            background-color: #16120e !important;
-            border-right: 1px solid rgba(255, 255, 255, 0.05) !important;
-        }
-        html.dark aside .border-amber-800 {
-            border-color: rgba(255, 255, 255, 0.05) !important;
-        }
     </style>
 </head>
-<body class="bg-gray-50 font-['Inter'] dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300">
+<body class="bg-gray-50 font-['Inter'] transition-colors duration-300">
     <div class="flex h-screen overflow-hidden">
         <aside id="sidebar" class="bg-amber-900 text-amber-100 w-64 flex-shrink-0 hidden md:flex flex-col">
             <div class="p-4 border-b border-amber-800">
