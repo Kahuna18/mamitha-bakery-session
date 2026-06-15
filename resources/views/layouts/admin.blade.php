@@ -32,7 +32,7 @@
         /* Global Dark Mode Overrides for general UI elements */
         html.dark body {
             background-color: #121218 !important;
-            color: #f1f1f4 !important;
+            color: #1a1a2e !important;
         }
         html.dark main {
             background-color: #121218 !important;
@@ -43,7 +43,7 @@
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
         }
         html.dark header span.text-gray-600 {
-            color: #a0a3b1 !important;
+            color: #374151 !important;
         }
         html.dark .bg-white {
             background-color: #1e1e2e !important;
@@ -53,17 +53,17 @@
         }
         html.dark .text-gray-800,
         html.dark .text-gray-900 {
-            color: #f1f1f4 !important;
+            color: #111827 !important;
         }
         html.dark .text-gray-700 {
-            color: #e2e8f0 !important;
+            color: #1f2937 !important;
         }
         html.dark .text-gray-600 {
-            color: #a0a3b1 !important;
+            color: #374151 !important;
         }
         html.dark .text-gray-500,
         html.dark .text-gray-400 {
-            color: #6b6e7e !important;
+            color: #4b5563 !important;
         }
         html.dark .border-gray-100,
         html.dark .border-gray-200,
