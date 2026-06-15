@@ -232,32 +232,18 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
     function initOrderMap() {
-        const storeLocation = [{{ \App\Models\Setting::getValue('store_latitude', '-7.7705163') }}, {{ \App\Models\Setting::getValue('store_longitude', '110.2474903') }}];
         const customerLocation = [{{ $order->latitude }}, {{ $order->longitude }}];
         
         const map = L.map('map-order', {
             zoomControl: true,
             attributionControl: false
-        });
+        }).setView(customerLocation, 16);
         
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19
         }).addTo(map);
         
-        const storeMarker = L.marker(storeLocation).addTo(map).bindPopup('<b>Toko (Mamitha Bakery)</b>');
-        const customerMarker = L.marker(customerLocation).addTo(map).bindPopup('<b>Lokasi Pelanggan</b>').openPopup();
-        
-        // Draw path between store and customer location
-        L.polyline([storeLocation, customerLocation], {
-            color: '#d97706',
-            weight: 3.5,
-            opacity: 0.85,
-            dashArray: '8, 8'
-        }).addTo(map);
-        
-        // Fit map bounds to cover both markers
-        const group = new L.featureGroup([storeMarker, customerMarker]);
-        map.fitBounds(group.getBounds().pad(0.25));
+        L.marker(customerLocation).addTo(map).bindPopup('<b>Lokasi Pelanggan</b>').openPopup();
     }
     
     window.addEventListener('load', () => {

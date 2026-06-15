@@ -79,6 +79,7 @@
                         </div>
                     </div>
 
+                    @if($order->type === 'delivery' && $order->latitude && $order->longitude)
                     <!-- Map container -->
                     <div class="relative">
                         <div id="map-{{ $order->id }}" class="status-map w-full"></div>
@@ -91,6 +92,7 @@
                             </svg>
                         </button>
                     </div>
+                    @endif
 
                     <!-- Courier Info -->
                     @php
@@ -253,43 +255,28 @@
             const lat = {{ $order->latitude ?? 'null' }};
             const lng = {{ $order->longitude ?? 'null' }};
             const type = '{{ $order->type }}';
+            
+            // Only initialize map if it's a delivery and has coordinates
+            const mapContainer = document.getElementById(mapId);
+            if (!mapContainer) return;
+
+            const customerLocation = [lat, lng];
 
             const map = L.map(mapId, {
                 zoomControl: false,
                 attributionControl: false
-            });
+            }).setView(customerLocation, 16);
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19
             }).addTo(map);
 
-            const storeMarker = L.marker(storeLocation).addTo(map).bindPopup('🥐 Mamitha Bakery');
-
-            let customerMarker = null;
-            if (type === 'delivery' && lat && lng) {
-                const customerLocation = [lat, lng];
-                customerMarker = L.marker(customerLocation).addTo(map).bindPopup('📍 Lokasi Pengiriman');
-
-                // Draw dashed line
-                L.polyline([storeLocation, customerLocation], {
-                    color: '#d97706',
-                    weight: 3.5,
-                    opacity: 0.85,
-                    dashArray: '8, 8'
-                }).addTo(map);
-
-                // Fit bounds
-                const bounds = new L.featureGroup([storeMarker, customerMarker]);
-                map.fitBounds(bounds.getBounds().pad(0.3));
-            } else {
-                map.setView(storeLocation, 15);
-                storeMarker.openPopup();
-            }
+            const customerMarker = L.marker(customerLocation).addTo(map).bindPopup('📍 Lokasi Pengiriman').openPopup();
 
             // Save references for live GPS tracking
             activeMaps[{{ $order->id }}] = {
                 map: map,
-                bakeryMarker: storeMarker,
+                bakeryMarker: null,
                 customerMarker: customerMarker,
                 hasRoute: (type === 'delivery' && lat && lng),
                 watchId: null,

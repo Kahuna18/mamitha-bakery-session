@@ -29,6 +29,7 @@
         
         <!-- Main Success Tracker Card -->
         <div class="bg-white dark:bg-gray-800 rounded-3xl border border-amber-100/50 dark:border-gray-700/50 shadow-xl overflow-hidden">
+            @if($hasRoute)
             <!-- Leaflet Tracking Map (Header of Card) -->
             <div class="relative">
                 <div id="tracking-map" class="w-full"></div>
@@ -57,6 +58,26 @@
                     @endif
                 </div>
             </div>
+            @else
+            <!-- Status Header without Map -->
+            <div class="p-4 bg-gray-900 dark:bg-gray-800 flex justify-center">
+                <div class="bg-gray-800 dark:bg-gray-700 border border-gray-700 dark:border-gray-600 text-white rounded-2xl px-6 py-2.5 text-sm font-bold shadow-md">
+                    @if($order->status == 'pending')
+                        ⏳ Menunggu Konfirmasi
+                    @elseif($order->status == 'confirmed')
+                        👍 Pesanan Dikonfirmasi
+                    @elseif($order->status == 'producing')
+                        🔥 Sedang Dipanggang
+                    @elseif($order->status == 'ready')
+                        🛵 Siap Diambil / Diantar
+                    @elseif($order->status == 'done')
+                        ✅ Pesanan Selesai
+                    @else
+                        ❌ Dibatalkan
+                    @endif
+                </div>
+            </div>
+            @endif
 
             <!-- Arrival estimate banner -->
             <div class="p-6 border-b border-gray-100 dark:border-gray-700/50 flex flex-col sm:flex-row justify-between items-center gap-4 bg-gray-50/50 dark:bg-gray-800/30">
@@ -262,53 +283,38 @@
 <!-- Leaflet.js Library -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
-    const storeLocation = [{{ $storeLat }}, {{ $storeLng }}];
     const customerLocation = [{{ $order->latitude ?? $storeLat }}, {{ $order->longitude ?? $storeLng }}];
     const hasRoute = {{ $hasRoute ? 'true' : 'false' }};
-
-    // Initialize Map on success page
-    const map = L.map('tracking-map', {
-        zoomControl: false,
-        attributionControl: false
-    });
-
-    // Add tiles layer
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19
-    }).addTo(map);
-
-    // Bakery Icon Custom
-    const bakeryMarker = L.marker(storeLocation).addTo(map)
-        .bindPopup('🥐 Mamitha Bakery');
-
+    
+    let map = null;
     let customerMarker = null;
-    if (hasRoute) {
-        // Customer Icon Custom
-        customerMarker = L.marker(customerLocation).addTo(map)
-            .bindPopup('📍 Lokasi Pengiriman');
+    let bakeryMarker = null;
+    
+    // Initialize Map only if tracking map exists (hasRoute is true)
+    if (hasRoute && document.getElementById('tracking-map')) {
+        map = L.map('tracking-map', {
+            zoomControl: false,
+            attributionControl: false
+        }).setView(customerLocation, 16);
 
-        // Draw polyline connecting store and customer (red path from TikTok)
-        const pathLine = L.polyline([storeLocation, customerLocation], {
-            color: '#d97706', // amber-600
-            weight: 4,
-            opacity: 0.8,
-            dashArray: '8, 8'
+        // Add tiles layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19
         }).addTo(map);
 
-        // Fit map boundaries to include both coordinates nicely
+        // Customer Icon Custom
+        customerMarker = L.marker(customerLocation).addTo(map)
+            .bindPopup('📍 Lokasi Pengiriman').openPopup();
+            
         fitMapBounds();
-    } else {
-        // Just center store marker
-        map.setView(storeLocation, 15);
-        bakeryMarker.openPopup();
     }
 
     // Function to calculate map boundaries
     function fitMapBounds(userLat = null, userLng = null) {
-        const markers = [bakeryMarker];
-        if (hasRoute && customerMarker) {
-            markers.push(customerMarker);
-        }
+        if (!map) return;
+        
+        const markers = [];
+        if (customerMarker) markers.push(customerMarker);
         
         // Include live user location in bounds if present
         let tempUserMarker = null;
@@ -317,8 +323,10 @@
             markers.push(tempUserMarker);
         }
 
-        const group = new L.featureGroup(markers);
-        map.fitBounds(group.getBounds().pad(0.25));
+        if (markers.length > 0) {
+            const group = new L.featureGroup(markers);
+            map.fitBounds(group.getBounds().pad(0.3));
+        }
     }
 
     // =========================================================================
