@@ -112,9 +112,9 @@
                     <!-- Product Image Section -->
                     <div class="relative aspect-[4/3] bg-amber-50/50 dark:bg-gray-900/50 overflow-hidden group">
                         @if($product->image)
-                            <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" class="w-full h-full object-cover transition duration-500 group-hover:scale-105">
+                            <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" class="w-full h-full object-cover transition duration-500 group-hover:scale-105 {{ $product->stock <= 0 ? 'grayscale opacity-50' : '' }}">
                         @else
-                            <div class="w-full h-full flex items-center justify-center text-7xl select-none">
+                            <div class="w-full h-full flex items-center justify-center text-7xl select-none {{ $product->stock <= 0 ? 'grayscale opacity-50' : '' }}">
                                 🍞
                             </div>
                         @endif
@@ -123,10 +123,32 @@
                             <span class="bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
                                 {{ $product->category->name }}
                             </span>
+                            @if($product->stock > 0)
                             <span class="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
                                 10% OFF
                             </span>
+                            @endif
                         </div>
+                        <!-- Stock Badge -->
+                        <div class="absolute top-3 right-3">
+                            @if($product->stock <= 0)
+                                <span class="bg-red-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider shadow-md">
+                                    Habis
+                                </span>
+                            @else
+                                <span class="bg-white/90 dark:bg-gray-800/90 text-gray-700 dark:text-gray-200 text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm backdrop-blur-sm">
+                                    Stok: {{ $product->stock }}
+                                </span>
+                            @endif
+                        </div>
+                        <!-- Out of Stock Overlay -->
+                        @if($product->stock <= 0)
+                        <div class="absolute inset-0 bg-gray-900/30 flex items-center justify-center">
+                            <span class="bg-red-600 text-white text-sm font-extrabold px-5 py-2 rounded-full shadow-lg transform -rotate-12">
+                                SOLD OUT
+                            </span>
+                        </div>
+                        @endif
                     </div>
 
                     <!-- Details -->
@@ -152,6 +174,7 @@
                     </div>
 
                     <!-- Interactive Add Button -->
+                    @if($product->stock > 0)
                     <div class="relative w-28 h-10 flex items-center justify-end" id="btn-container-{{ $product->id }}">
                         <!-- Add Button -->
                         <button onclick="addToCart({{ $product->id }}, '{{ $product->name }}', {{ $product->price }})" class="add-btn px-4 py-2 bg-gray-900 dark:bg-gray-100 hover:bg-amber-700 dark:hover:bg-amber-500 text-white dark:text-gray-900 text-xs font-extrabold rounded-full shadow-sm hover:shadow-md transition duration-200">
@@ -165,6 +188,13 @@
                             <button onclick="incrementQty({{ $product->id }})" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-800 dark:hover:bg-gray-200 font-extrabold text-sm">+</button>
                         </div>
                     </div>
+                    @else
+                    <div class="relative w-28 h-10 flex items-center justify-end">
+                        <span class="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 text-xs font-extrabold rounded-full cursor-not-allowed">
+                            HABIS
+                        </span>
+                    </div>
+                    @endif
                 </div>
             </div>
             @endforeach
@@ -390,7 +420,8 @@
     @foreach($products as $product)
     products[{{ $product->id }}] = {
         name: '{{ $product->name }}',
-        price: {{ $product->price }}
+        price: {{ $product->price }},
+        stock: {{ $product->stock ?? 0 }}
     };
     @endforeach
 
@@ -407,9 +438,19 @@
         updateCartState(productId);
     }
 
-    // Increment qty
+    // Increment qty (respect stock limit)
     function incrementQty(productId) {
         if (cart[productId]) {
+            const maxStock = products[productId]?.stock || 0;
+            if (cart[productId].qty >= maxStock) {
+                // Show brief shake animation on the qty controls
+                const container = document.getElementById('btn-container-' + productId);
+                if (container) {
+                    container.classList.add('animate-pulse');
+                    setTimeout(() => container.classList.remove('animate-pulse'), 300);
+                }
+                return; // Don't exceed stock
+            }
             cart[productId].qty++;
             updateCartState(productId);
         }

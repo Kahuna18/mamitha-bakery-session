@@ -60,6 +60,15 @@ class OrderController extends Controller
 
         foreach ($validated['items'] as $item) {
             $product = Product::findOrFail($item['product_id']);
+
+            // Validate stock availability
+            if ($product->stock <= 0) {
+                return back()->with('error', "Maaf, {$product->name} sudah habis (stok kosong).")->withInput();
+            }
+            if ($item['quantity'] > $product->stock) {
+                return back()->with('error', "Maaf, stok {$product->name} hanya tersisa {$product->stock} pcs.")->withInput();
+            }
+
             $subtotal = $product->price * $item['quantity'];
             $total += $subtotal;
             $orderItems[] = [
@@ -89,6 +98,9 @@ class OrderController extends Controller
 
         foreach ($orderItems as $item) {
             $order->items()->create($item);
+
+            // Decrement product stock
+            Product::where('id', $item['product_id'])->decrement('stock', $item['quantity']);
         }
 
         $order->kitchenTask()->create([
