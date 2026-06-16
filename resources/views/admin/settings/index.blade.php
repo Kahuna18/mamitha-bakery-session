@@ -886,13 +886,32 @@
             <div class="toggle-item">
                 <div class="toggle-icon">🏷️</div>
                 <div class="toggle-info">
-                    <div class="toggle-title">Diskon Otomatis (10% OFF)</div>
-                    <div class="toggle-desc">Aktifkan diskon 10% untuk semua pesanan</div>
+                    <div class="toggle-title">Diskon Otomatis ({{ $settings['discount_percentage'] ?? '10' }}% OFF)</div>
+                    <div class="toggle-desc">Aktifkan diskon untuk semua pesanan</div>
                 </div>
                 <label class="toggle-switch">
                     <input type="checkbox" name="discount_enabled" value="1" {{ ($settings['discount_enabled'] ?? 'true') == 'true' ? 'checked' : '' }}>
                     <span class="toggle-slider"></span>
                 </label>
+            </div>
+
+            {{-- Nominal Diskon --}}
+            <div class="menu-item" onclick="toggleExpand('discountPanel', this)">
+                <div class="menu-icon">💸</div>
+                <div class="menu-item-info">
+                    <div class="menu-item-title">Persentase Diskon</div>
+                    <div class="menu-item-subtitle">{{ $settings['discount_percentage'] ?? '10' }}% dari total harga</div>
+                </div>
+                <svg class="menu-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+            </div>
+            <div class="expand-panel" id="discountPanel">
+                <div class="form-group">
+                    <label class="form-label">Persentase Diskon (%)</label>
+                    <input type="number" name="discount_percentage" value="{{ $settings['discount_percentage'] ?? '10' }}" min="1" max="100" class="form-input" placeholder="10">
+                    <div class="form-hint">Masukkan nilai persen diskon yang akan diberikan otomatis ke semua pesanan (contoh: 10 = diskon 10%). Berlaku hanya jika toggle diskon di atas aktif.</div>
+                </div>
             </div>
         </div>
 

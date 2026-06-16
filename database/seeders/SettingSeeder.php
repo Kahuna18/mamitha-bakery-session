@@ -21,8 +21,9 @@ class SettingSeeder extends Seeder
             ['key' => 'is_closed', 'value' => 'false'],
             ['key' => 'about_text', 'value' => 'Mamitha Bakery adalah toko roti rumahan yang menyajikan roti fresh setiap hari dengan bahan-bahan berkualitas. Kami siap melayani pesanan roti, cake, snack box, dan paket acara untuk Anda.'],
             ['key' => 'google_maps_api_key', 'value' => ''],
-            ['key' => 'store_latitude', 'value' => '-7.7705163'],
-            ['key' => 'store_longitude', 'value' => '110.2474903'],
+            ['key' => 'store_latitude', 'value' => '-7.7609582'],
+            ['key' => 'store_longitude', 'value' => '110.2529556'],
+            ['key' => 'store_gmaps_link', 'value' => 'https://maps.app.goo.gl/X5XV5KcBZou4mbQT8'],
         ];
 
         foreach ($settings as $setting) {

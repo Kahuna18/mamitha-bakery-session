@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Setting;
+use App\Models\Testimonial;
 
 class HomeController extends Controller
 {
@@ -17,13 +18,14 @@ class HomeController extends Controller
             ->get();
 
         $categories = Category::where('is_active', true)->get();
+        $testimonials = Testimonial::where('is_active', true)->latest()->get();
         $storeName = Setting::getValue('store_name');
         $storePhone = Setting::getValue('store_phone');
         $storeWhatsapp = Setting::getValue('store_whatsapp');
         $storeAddress = Setting::getValue('store_address');
 
         return view('home.index', compact(
-            'featuredProducts', 'categories',
+            'featuredProducts', 'categories', 'testimonials',
             'storeName', 'storePhone', 'storeWhatsapp', 'storeAddress'
         ));
     }

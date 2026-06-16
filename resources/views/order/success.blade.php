@@ -19,8 +19,8 @@
 
 @section('content')
 @php
-    $storeLat = \App\Models\Setting::getValue('store_latitude', '-7.7705163');
-    $storeLng = \App\Models\Setting::getValue('store_longitude', '110.2474903');
+    $storeLat = \App\Models\Setting::getValue('store_latitude', '-7.7609582');
+    $storeLng = \App\Models\Setting::getValue('store_longitude', '110.2529556');
     $hasRoute = $order->type === 'delivery' && $order->latitude && $order->longitude;
 @endphp
 

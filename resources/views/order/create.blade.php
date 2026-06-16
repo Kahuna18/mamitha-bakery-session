@@ -33,6 +33,89 @@
     .dark .leaflet-container {
         background: #111827;
     }
+
+    /* Product Image Clickable */
+    .product-image-clickable {
+        cursor: pointer;
+        position: relative;
+    }
+    .product-image-clickable::after {
+        content: '🔍 Pilih Varian';
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0,0,0,0);
+        color: transparent;
+        font-size: 12px;
+        font-weight: 800;
+        transition: all 0.25s ease;
+        border-radius: 0;
+    }
+    .product-image-clickable:hover::after {
+        background: rgba(0,0,0,0.35);
+        color: #fff;
+    }
+
+    /* Variant Modal */
+    #variant-modal-overlay {
+        transition: opacity 0.3s ease;
+    }
+    #variant-modal-sheet {
+        transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+    }
+    .variant-chip {
+        cursor: pointer;
+        transition: all 0.18s ease;
+        border: 2px solid #e5e7eb;
+        border-radius: 9999px;
+        padding: 6px 16px;
+        font-size: 12px;
+        font-weight: 700;
+        background: white;
+        color: #374151;
+        user-select: none;
+    }
+    .dark .variant-chip {
+        border-color: #374151;
+        background: #1f2937;
+        color: #d1d5db;
+    }
+    .variant-chip:hover {
+        border-color: #d97706;
+        background: #fffbeb;
+        color: #92400e;
+    }
+    .dark .variant-chip:hover {
+        border-color: #d97706;
+        background: #451a03;
+        color: #fbbf24;
+    }
+    .variant-chip.selected {
+        border-color: #b45309;
+        background: #b45309;
+        color: #fff;
+        box-shadow: 0 2px 8px rgba(180,83,9,0.3);
+    }
+    .variant-chip.out-of-stock {
+        opacity: 0.45;
+        cursor: not-allowed;
+        text-decoration: line-through;
+    }
+    .variant-chip.out-of-stock:hover {
+        border-color: #e5e7eb;
+        background: white;
+        color: #374151;
+    }
+    .dark .variant-chip.out-of-stock:hover {
+        border-color: #374151;
+        background: #1f2937;
+        color: #d1d5db;
+    }
+    #modal-add-btn {
+        transition: all 0.2s ease;
+    }
 </style>
 @endpush
 
@@ -64,7 +147,7 @@
                         <div class="flex flex-wrap justify-center md:justify-start gap-4 mt-3 text-xs text-gray-600 dark:text-gray-300 font-medium">
                             <span class="flex items-center gap-1"><span class="text-amber-500">★</span> 4.9 (1.2k+ rating)</span>
                             <span class="flex items-center gap-1">🕒 07:00 - 20:00</span>
-                            @if($discountEnabled)<span class="flex items-center gap-1 text-orange-600 dark:text-orange-400">🏷️ Diskon 10% Otomatis</span>@endif
+                            @if($discountEnabled)<span class="flex items-center gap-1 text-orange-600 dark:text-orange-400">🏷️ Diskon {{ $discountPercentage }}% Otomatis</span>@endif
                         </div>
                     </div>
                 </div>
@@ -107,10 +190,10 @@
         <!-- Product List (Pizza Mojo Style Cards) -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="product-grid">
             @foreach($products as $product)
-            <div class="product-card bg-white dark:bg-gray-800 rounded-3xl border border-amber-100/40 dark:border-gray-700/40 overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between" data-category="{{ $product->category_id }}" data-name="{{ strtolower($product->name) }}">
+            <div class="product-card bg-white dark:bg-gray-800 rounded-3xl border border-amber-100/40 dark:border-gray-700/40 overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between cursor-pointer" data-category="{{ $product->category_id }}" data-name="{{ strtolower($product->name) }}" onclick="openVariantModal({{ $product->id }})">
                 <div>
                     <!-- Product Image Section -->
-                    <div class="relative aspect-[4/3] bg-amber-50/50 dark:bg-gray-900/50 overflow-hidden group">
+                    <div class="relative aspect-[4/3] bg-amber-50/50 dark:bg-gray-900/50 overflow-hidden group product-image-clickable">
                         @if($product->image)
                             <img src="{{ $product->image_url }}" alt="{{ $product->name }}" class="w-full h-full object-cover transition duration-500 group-hover:scale-105 {{ $product->stock <= 0 ? 'grayscale opacity-50' : '' }}">
                         @else
@@ -125,7 +208,7 @@
                             </span>
                             @if($product->stock > 0 && $discountEnabled)
                             <span class="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                                10% OFF
+                                {{ $discountPercentage }}% OFF
                             </span>
                             @endif
                         </div>
@@ -149,6 +232,14 @@
                             </span>
                         </div>
                         @endif
+                        <!-- Hover hint for available products -->
+                        @if($product->stock > 0)
+                        <div class="absolute bottom-3 inset-x-3 flex justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none">
+                            <span class="bg-black/70 backdrop-blur-sm text-white text-[10px] font-bold px-3 py-1 rounded-full">
+                                {{ $product->activeVariants->isNotEmpty() ? '✨ Pilih Varian' : '+ Tambah ke Keranjang' }}
+                            </span>
+                        </div>
+                        @endif
                     </div>
 
                     <!-- Details -->
@@ -161,13 +252,17 @@
                         <h3 class="font-bold text-gray-800 dark:text-gray-100 text-lg mt-1 font-serif">{{ $product->name }}</h3>
                         <p class="text-gray-500 dark:text-gray-400 text-xs mt-1 line-clamp-2">{{ $product->description ?? 'Roti hangat dan empuk yang dibuat fresh hari ini.' }}</p>
                         @if($product->activeVariants->isNotEmpty())
-                        <div class="mt-3">
-                            <select class="variant-select w-full text-xs border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300" data-product-id="{{ $product->id }}" onchange="onVariantChange({{ $product->id }}, this)">
-                                <option value="">Pilih Varian</option>
-                                @foreach($product->activeVariants as $v)
-                                <option value="{{ $v->id }}" data-adjustment="{{ $v->price_adjustment }}" data-stock="{{ $v->stock }}">{{ $v->name }}@if($v->price_adjustment > 0) (+Rp {{ number_format($v->price_adjustment, 0, ',', '.') }}) @endif</option>
-                                @endforeach
-                            </select>
+                        {{-- Hidden select kept for JS compatibility --}}
+                        <select class="variant-select" style="display: none !important;" data-product-id="{{ $product->id }}" onchange="onVariantChange({{ $product->id }}, this)">
+                            <option value="">Pilih Varian</option>
+                            @foreach($product->activeVariants as $v)
+                            <option value="{{ $v->id }}" data-adjustment="{{ $v->price_adjustment }}" data-stock="{{ $v->stock }}">{{ $v->name }}@if($v->price_adjustment > 0) (+Rp {{ number_format($v->price_adjustment, 0, ',', '.') }}) @endif</option>
+                            @endforeach
+                        </select>
+                        {{-- Visual Variant Indicator --}}
+                        <div class="mt-3 flex items-center gap-1.5">
+                            <span class="text-[10px] font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 px-2 py-0.5 rounded-full">✨ {{ $product->activeVariants->count() }} Varian</span>
+                            <span id="selected-variant-badge-{{ $product->id }}" class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 hidden"></span>
                         </div>
                         @endif
                     </div>
@@ -177,7 +272,7 @@
                 <div class="p-5 pt-0 flex items-center justify-between mt-auto">
                     <!-- Price block -->
                     <div>
-                        <span class="text-xs text-gray-400 line-through">Rp {{ number_format($product->price * 1.1, 0, ',', '.') }}</span>
+                        <span class="text-xs text-gray-400 line-through">Rp {{ number_format($product->price * (1 + $discountPercentage/100), 0, ',', '.') }}</span>
                         <p class="text-amber-800 dark:text-amber-400 font-extrabold text-lg -mt-1">
                             Rp {{ number_format($product->price, 0, ',', '.') }}
                         </p>
@@ -187,15 +282,15 @@
                     @if($product->stock > 0)
                     <div class="relative w-28 h-10 flex items-center justify-end" id="btn-container-{{ $product->id }}">
                         <!-- Add Button -->
-                        <button onclick="addToCart({{ $product->id }})" class="add-btn px-4 py-2 bg-gray-900 dark:bg-gray-100 hover:bg-amber-700 dark:hover:bg-amber-500 text-white dark:text-gray-900 text-xs font-extrabold rounded-full shadow-sm hover:shadow-md transition duration-200">
+                        <button onclick="event.stopPropagation(); {{ $product->activeVariants->isNotEmpty() ? 'openVariantModal(' . $product->id . ')' : 'addToCart(' . $product->id . ')' }}" class="add-btn px-4 py-2 bg-gray-900 dark:bg-gray-100 hover:bg-amber-700 dark:hover:bg-amber-500 text-white dark:text-gray-900 text-xs font-extrabold rounded-full shadow-sm hover:shadow-md transition duration-200">
                             + ADD
                         </button>
                         
                         <!-- Quantity Selector Controls (Hidden initially) -->
                         <div class="qty-controls absolute inset-0 bg-gray-900 dark:bg-gray-100 rounded-full flex items-center justify-between px-2 text-white dark:text-gray-900 scale-0 opacity-0 transition duration-200">
-                            <button onclick="decrementQty({{ $product->id }})" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-800 dark:hover:bg-gray-200 font-extrabold text-sm">-</button>
+                            <button onclick="event.stopPropagation(); decrementQty({{ $product->id }})" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-800 dark:hover:bg-gray-200 font-extrabold text-sm">-</button>
                             <span class="font-extrabold text-sm" id="card-qty-{{ $product->id }}">0</span>
-                            <button onclick="incrementQty({{ $product->id }})" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-800 dark:hover:bg-gray-200 font-extrabold text-sm">+</button>
+                            <button onclick="event.stopPropagation(); incrementQty({{ $product->id }})" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-800 dark:hover:bg-gray-200 font-extrabold text-sm">+</button>
                         </div>
                     </div>
                     @else
@@ -225,6 +320,80 @@
         <button onclick="toggleCheckoutDrawer(true)" class="px-5 py-2.5 bg-amber-600 hover:bg-amber-500 text-white text-xs font-black rounded-2xl shadow transition">
             Lihat Keranjang →
         </button>
+    </div>
+
+    <!-- ================================================================ -->
+    <!-- Variant Selection Modal (Bottom Sheet) -->
+    <!-- ================================================================ -->
+    <div id="variant-modal-overlay" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] opacity-0 pointer-events-none flex items-end justify-center">
+        <div id="variant-modal-sheet" class="w-full max-w-lg bg-white dark:bg-gray-900 rounded-t-3xl shadow-2xl transform translate-y-full flex flex-col max-h-[90vh]">
+            
+            <!-- Drag Handle -->
+            <div class="flex justify-center pt-3 pb-1 flex-shrink-0">
+                <div class="w-10 h-1 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
+            </div>
+
+            <!-- Close Button -->
+            <div class="flex items-center justify-between px-5 pb-3 flex-shrink-0">
+                <h2 class="text-base font-extrabold text-gray-800 dark:text-gray-100" id="modal-product-title">Pilih Varian</h2>
+                <button onclick="closeVariantModal()" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 transition font-bold text-lg">&times;</button>
+            </div>
+
+            <!-- Scrollable Content -->
+            <div class="overflow-y-auto flex-1">
+                <!-- Product Preview Strip -->
+                <div class="flex items-center gap-4 px-5 pb-4 border-b border-gray-100 dark:border-gray-800">
+                    <div class="w-20 h-20 rounded-2xl overflow-hidden bg-amber-50 dark:bg-gray-800 flex-shrink-0">
+                        <img id="modal-product-image" src="" alt="" class="w-full h-full object-cover">
+                        <div id="modal-product-emoji" class="w-full h-full items-center justify-center text-4xl hidden">🍞</div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="font-bold text-gray-800 dark:text-gray-100 text-sm font-serif" id="modal-product-name"></p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2" id="modal-product-desc"></p>
+                        <div class="flex items-center gap-2 mt-1.5">
+                            <p class="text-amber-700 dark:text-amber-400 font-extrabold text-sm" id="modal-product-price"></p>
+                            <span id="modal-discount-badge" class="text-[10px] font-bold bg-red-500 text-white px-2 py-0.5 rounded-full hidden">{{ $discountPercentage }}% OFF</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Variant Chips Section -->
+                <div id="modal-variants-section" class="px-5 py-4 hidden">
+                    <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Pilih Varian</p>
+                    <div id="modal-variant-chips" class="flex flex-wrap gap-2"></div>
+                    <p class="text-xs text-amber-600 dark:text-amber-400 mt-2 font-medium" id="modal-variant-note"></p>
+                </div>
+
+                <!-- Per-item Notes -->
+                <div class="px-5 py-3 border-t border-gray-100 dark:border-gray-800">
+                    <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">📝 Catatan</p>
+                    <textarea id="modal-item-note" rows="2" placeholder="Contoh: jangan terlalu manis, extra topping, dll" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl text-xs text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition resize-none" maxlength="200"></textarea>
+                    <p class="text-[10px] text-gray-400 mt-1">Opsional — maks 200 karakter</p>
+                </div>
+
+                <!-- Quantity selector inside modal -->
+                <div class="px-5 py-3 border-t border-gray-100 dark:border-gray-800">
+                    <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Jumlah</p>
+                    <div class="flex items-center gap-4">
+                        <button onclick="modalDecQty()" id="modal-dec-btn" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center font-extrabold text-lg text-gray-700 dark:text-gray-300 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition">-</button>
+                        <span id="modal-qty-display" class="font-extrabold text-xl text-gray-800 dark:text-gray-100 w-8 text-center">1</span>
+                        <button onclick="modalIncQty()" id="modal-inc-btn" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center font-extrabold text-lg text-gray-700 dark:text-gray-300 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition">+</button>
+                        <span class="text-xs text-gray-400" id="modal-stock-info"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Action -->
+            <div class="px-5 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50/70 dark:bg-gray-900/50 flex-shrink-0">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs text-gray-500 dark:text-gray-400">Total</span>
+                    <span class="font-extrabold text-amber-700 dark:text-amber-400 text-base" id="modal-line-total">Rp 0</span>
+                </div>
+                <button id="modal-add-btn" onclick="confirmAddToCart()" class="w-full py-3.5 bg-gray-900 dark:bg-gray-100 hover:bg-amber-700 dark:hover:bg-amber-500 text-white dark:text-gray-900 font-extrabold text-sm rounded-2xl shadow-lg transition disabled:opacity-40 disabled:cursor-not-allowed">
+                    + Tambah ke Keranjang
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- Checkout Overlay Panel (Tiktok Checkout Style Drawer) -->
@@ -394,7 +563,7 @@
                         <span id="summary-subtotal" class="font-medium text-gray-800 dark:text-gray-200">Rp 0</span>
                     </div>
                     <div class="flex justify-between text-green-600 dark:text-green-400" id="discount-row" @if(!$discountEnabled) style="display:none" @endif>
-                        <span>Diskon Promo (10% OFF)</span>
+                        <span>Diskon Promo (<span id="discount-pct-label">{{ $discountPercentage }}</span>% OFF)</span>
                         <span id="summary-discount" class="font-bold">-Rp 0</span>
                     </div>
                     <div class="flex justify-between">
@@ -426,6 +595,7 @@
     const deliveryFeeEnabled = {{ $deliveryFeeEnabled ? 'true' : 'false' }};
     const deliveryFeeAmount = {{ $deliveryFeeAmount }};
     const discountEnabled = {{ $discountEnabled ? 'true' : 'false' }};
+    const discountPercentage = {{ $discountPercentage }};
 
     // Cart State
     let cart = {};
@@ -456,19 +626,295 @@
     // Load initial products list details into JS object
     @foreach($products as $product)
     products[{{ $product->id }}] = {
-        name: '{{ $product->name }}',
+        name: '{{ addslashes($product->name) }}',
         price: {{ $product->price }},
         stock: {{ $product->stock ?? 0 }},
         hasVariants: {{ $product->activeVariants->isNotEmpty() ? 'true' : 'false' }},
+        imageUrl: '{{ $product->image ? $product->image_url : '' }}',
+        description: '{{ addslashes($product->description ?? 'Roti hangat dan empuk yang dibuat fresh hari ini.') }}',
         variants: [
             @foreach($product->activeVariants as $v)
-            { id: {{ $v->id }}, name: '{{ $v->name }}', price_adjustment: {{ $v->price_adjustment }}, stock: {{ $v->stock }} },
+            { id: {{ $v->id }}, name: '{{ addslashes($v->name) }}', price_adjustment: {{ $v->price_adjustment }}, stock: {{ $v->stock }} },
             @endforeach
         ]
     };
     @endforeach
 
-    // Called when variant dropdown changes
+    // =========================================================================
+    // Variant Selection Modal Logic
+    // =========================================================================
+    let modalState = {
+        productId: null,
+        selectedVariantId: null,
+        selectedVariantName: null,
+        selectedVariantPrice: 0,
+        selectedVariantStock: 0,
+        qty: 1
+    };
+
+    function openVariantModal(productId) {
+        var prod = products[productId];
+        if (!prod) return;
+        if (prod.stock <= 0) return; // Already sold out
+
+        // Reset modal state
+        modalState.productId = productId;
+        modalState.selectedVariantId = null;
+        modalState.selectedVariantName = null;
+        modalState.selectedVariantPrice = prod.price;
+        modalState.selectedVariantStock = prod.stock;
+        modalState.qty = 1;
+
+        // Populate product info
+        document.getElementById('modal-product-title').textContent = prod.hasVariants ? 'Pilih Varian' : 'Tambah ke Keranjang';
+        document.getElementById('modal-product-name').textContent = prod.name;
+        document.getElementById('modal-product-desc').textContent = prod.description;
+        document.getElementById('modal-product-price').textContent = 'Rp ' + prod.price.toLocaleString('id-ID');
+
+        // Product image
+        var imgEl = document.getElementById('modal-product-image');
+        var emojiEl = document.getElementById('modal-product-emoji');
+        if (prod.imageUrl) {
+            imgEl.src = prod.imageUrl;
+            imgEl.classList.remove('hidden');
+            emojiEl.classList.add('hidden');
+        } else {
+            imgEl.classList.add('hidden');
+            emojiEl.classList.remove('hidden');
+            emojiEl.classList.add('flex');
+        }
+
+        // Discount badge
+        var discBadge = document.getElementById('modal-discount-badge');
+        if (discountEnabled && prod.stock > 0) {
+            discBadge.classList.remove('hidden');
+        } else {
+            discBadge.classList.add('hidden');
+        }
+
+        // Variant chips
+        var variantsSection = document.getElementById('modal-variants-section');
+        var chipsContainer = document.getElementById('modal-variant-chips');
+        chipsContainer.innerHTML = '';
+
+        if (prod.hasVariants && prod.variants.length > 0) {
+            variantsSection.classList.remove('hidden');
+            prod.variants.forEach(function(v) {
+                var chip = document.createElement('button');
+                chip.type = 'button';
+                chip.className = 'variant-chip' + (v.stock <= 0 ? ' out-of-stock' : '');
+                var priceLabel = v.price_adjustment > 0 ? ' (+Rp ' + v.price_adjustment.toLocaleString('id-ID') + ')' : (v.price_adjustment < 0 ? ' (-Rp ' + Math.abs(v.price_adjustment).toLocaleString('id-ID') + ')' : '');
+                chip.innerHTML = v.name + '<span class="font-normal text-[10px] ml-1 opacity-75">' + priceLabel + '</span>';
+                if (v.stock <= 0) {
+                    chip.setAttribute('disabled', 'disabled');
+                    chip.title = 'Stok habis';
+                } else {
+                    chip.onclick = function() { selectVariant(v.id, v.name, v.price_adjustment, v.stock, this); };
+                }
+                chipsContainer.appendChild(chip);
+            });
+            document.getElementById('modal-variant-note').textContent = 'Wajib pilih varian sebelum menambahkan ke keranjang';
+            // Disable add button until variant selected
+            document.getElementById('modal-add-btn').disabled = true;
+        } else {
+            variantsSection.classList.add('hidden');
+            document.getElementById('modal-add-btn').disabled = false;
+        }
+
+        // Stock info
+        document.getElementById('modal-stock-info').textContent = 'Stok: ' + prod.stock;
+        document.getElementById('modal-qty-display').textContent = '1';
+        updateModalTotal();
+
+        // Clear or load existing notes
+        var noteInput = document.getElementById('modal-item-note');
+        if (noteInput) {
+            var existingKey = cartKey(productId, 0);
+            if (!prod.hasVariants && cart[existingKey]) {
+                noteInput.value = cart[existingKey].note || '';
+            } else {
+                noteInput.value = '';
+            }
+        }
+
+        // Hide floating cart bar so it doesn't overlap modal
+        var floatingCart = document.getElementById('floating-cart');
+        if (floatingCart) floatingCart.style.display = 'none';
+
+        // Show modal
+        var overlay = document.getElementById('variant-modal-overlay');
+        var sheet = document.getElementById('variant-modal-sheet');
+        overlay.classList.remove('opacity-0', 'pointer-events-none');
+        overlay.classList.add('opacity-100');
+        sheet.classList.remove('translate-y-full');
+        sheet.classList.add('translate-y-0');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeVariantModal() {
+        var overlay = document.getElementById('variant-modal-overlay');
+        var sheet = document.getElementById('variant-modal-sheet');
+        overlay.classList.add('opacity-0', 'pointer-events-none');
+        overlay.classList.remove('opacity-100');
+        sheet.classList.add('translate-y-full');
+        sheet.classList.remove('translate-y-0');
+        document.body.style.overflow = '';
+
+        // Restore floating cart bar if cart has items
+        var floatingCart = document.getElementById('floating-cart');
+        if (floatingCart) {
+            floatingCart.style.display = '';
+        }
+    }
+
+    function selectVariant(variantId, variantName, priceAdj, stock, chipEl) {
+        // Deselect all chips
+        document.querySelectorAll('.variant-chip').forEach(function(c) {
+            c.classList.remove('selected');
+        });
+        chipEl.classList.add('selected');
+
+        // Update modal state
+        modalState.selectedVariantId = variantId;
+        modalState.selectedVariantName = variantName;
+        var prod = products[modalState.productId];
+        modalState.selectedVariantPrice = prod.price + priceAdj;
+        modalState.selectedVariantStock = stock;
+        modalState.qty = 1;
+
+        // Update price display
+        document.getElementById('modal-product-price').textContent = 'Rp ' + modalState.selectedVariantPrice.toLocaleString('id-ID');
+        document.getElementById('modal-stock-info').textContent = 'Stok: ' + stock;
+        document.getElementById('modal-qty-display').textContent = '1';
+        document.getElementById('modal-variant-note').textContent = '';
+
+        // Load note if already in cart
+        var noteInput = document.getElementById('modal-item-note');
+        if (noteInput) {
+            var key = cartKey(modalState.productId, variantId);
+            noteInput.value = cart[key] ? (cart[key].note || '') : '';
+        }
+
+        // Enable add button
+        document.getElementById('modal-add-btn').disabled = false;
+
+        updateModalTotal();
+    }
+
+    function modalIncQty() {
+        var maxStock = modalState.selectedVariantId ? modalState.selectedVariantStock : (products[modalState.productId] ? products[modalState.productId].stock : 1);
+        if (modalState.qty >= maxStock) {
+            document.getElementById('modal-inc-btn').classList.add('animate-pulse');
+            setTimeout(function() { document.getElementById('modal-inc-btn').classList.remove('animate-pulse'); }, 300);
+            return;
+        }
+        modalState.qty++;
+        document.getElementById('modal-qty-display').textContent = modalState.qty;
+        updateModalTotal();
+    }
+
+    function modalDecQty() {
+        if (modalState.qty <= 1) return;
+        modalState.qty--;
+        document.getElementById('modal-qty-display').textContent = modalState.qty;
+        updateModalTotal();
+    }
+
+    function updateModalTotal() {
+        var price = modalState.selectedVariantId ? modalState.selectedVariantPrice : (products[modalState.productId] ? products[modalState.productId].price : 0);
+        var total = price * modalState.qty;
+        document.getElementById('modal-line-total').textContent = 'Rp ' + total.toLocaleString('id-ID');
+    }
+
+    function confirmAddToCart() {
+        var productId = modalState.productId;
+        var prod = products[productId];
+        if (!prod) return;
+
+        var variantId = modalState.selectedVariantId || 0;
+        var variantName = modalState.selectedVariantName;
+        var finalPrice = modalState.selectedVariantId ? modalState.selectedVariantPrice : prod.price;
+        var maxStock = modalState.selectedVariantId ? modalState.selectedVariantStock : prod.stock;
+
+        if (prod.hasVariants && !variantId) {
+            document.getElementById('modal-variant-note').textContent = '⚠ Pilih varian terlebih dahulu!';
+            return;
+        }
+
+        if (maxStock <= 0) {
+            alert('Maaf, varian ini sedang habis.');
+            return;
+        }
+
+        var key = cartKey(productId, variantId);
+        var itemNote = document.getElementById('modal-item-note') ? document.getElementById('modal-item-note').value.trim() : '';
+
+        // If already exists, add qty on top
+        if (cart[key]) {
+            var newQty = cart[key].qty + modalState.qty;
+            if (newQty > maxStock) newQty = maxStock;
+            cart[key].qty = newQty;
+            cart[key].note = itemNote;
+        } else {
+            cart[key] = {
+                product_id: productId,
+                variant_id: variantId || null,
+                name: prod.name,
+                variant_name: variantName,
+                price: finalPrice,
+                qty: modalState.qty,
+                note: itemNote
+            };
+        }
+
+        // Sync hidden select for backward compat
+        if (prod.hasVariants && variantId) {
+            var hiddenSelect = getVariantSelect(productId);
+            if (hiddenSelect) {
+                hiddenSelect.value = variantId;
+                // Trigger change silently
+                var ev = new Event('change');
+                hiddenSelect.dispatchEvent(ev);
+            }
+        }
+
+        // Update selected variant badge on card
+        if (variantName) {
+            var badge = document.getElementById('selected-variant-badge-' + productId);
+            if (badge) {
+                badge.textContent = '✓ ' + variantName;
+                badge.classList.remove('hidden');
+            }
+        }
+
+        // Update cart state and show qty controls on card
+        updateCartState(productId);
+
+        // Also update card-qty span with the actual total qty in cart
+        var cardQtySpan = document.getElementById('card-qty-' + productId);
+        if (cardQtySpan) cardQtySpan.textContent = cart[key].qty;
+
+        // Show a brief success animation on the card button
+        var container = document.getElementById('btn-container-' + productId);
+        if (container) {
+            var addBtn = container.querySelector('.add-btn');
+            var qtyControls = container.querySelector('.qty-controls');
+            if (addBtn && qtyControls) {
+                addBtn.classList.add('scale-0', 'opacity-0');
+                qtyControls.classList.remove('scale-0', 'opacity-0');
+                qtyControls.classList.add('scale-100', 'opacity-100');
+            }
+        }
+
+        closeVariantModal();
+    }
+
+    // Close modal on backdrop click
+    document.getElementById('variant-modal-overlay').addEventListener('click', function(e) {
+        if (e.target === this) closeVariantModal();
+    });
+
+    // Called when variant dropdown changes (hidden select)
     function onVariantChange(productId, select) {
         var key = cartKey(productId, select.value);
         var container = document.getElementById('btn-container-' + productId);
@@ -530,7 +976,8 @@
                 name: prod.name,
                 variant_name: variantName,
                 price: finalPrice,
-                qty: 1
+                qty: 1,
+                note: ''
             };
         }
         updateCartState(productId);
@@ -634,6 +1081,7 @@
                     '<div class="flex-1 min-w-0">' +
                         '<p class="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">' + displayName + '</p>' +
                         '<p class="text-xs text-gray-500">Rp ' + item.price.toLocaleString('id-ID') + ' x ' + item.qty + '</p>' +
+                        (item.note ? '<p class="text-[11px] text-amber-700 dark:text-amber-400 mt-0.5 font-medium italic">" ' + item.note + ' "</p>' : '') +
                     '</div>' +
                     '<p class="text-sm font-semibold text-gray-800 dark:text-gray-200 ml-2">Rp ' + (item.price * item.qty).toLocaleString('id-ID') + '</p>' +
                 '</div>';
@@ -644,7 +1092,7 @@
 
         // 10% OFF discount (if enabled)
         if (discountEnabled) {
-            discount = Math.round(totalPrice * 0.1);
+            discount = Math.round(totalPrice * discountPercentage / 100);
         }
 
         // Update Floating Cart Bar
@@ -689,7 +1137,8 @@
             hiddenContainer.innerHTML += '' +
                 '<input type="hidden" name="items[' + idx + '][product_id]" value="' + item.product_id + '">' +
                 '<input type="hidden" name="items[' + idx + '][variant_id]" value="' + (item.variant_id || '') + '">' +
-                '<input type="hidden" name="items[' + idx + '][quantity]" value="' + item.qty + '">';
+                '<input type="hidden" name="items[' + idx + '][quantity]" value="' + item.qty + '">' +
+                '<input type="hidden" name="items[' + idx + '][note]" value="' + (item.note || '') + '">';
             idx++;
         });
     }

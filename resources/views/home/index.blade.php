@@ -139,36 +139,22 @@
             <h2 class="text-3xl md:text-4xl font-bold text-amber-900 mb-3">Apa Kata Pelanggan</h2>
         </div>
         <div class="grid md:grid-cols-3 gap-6">
+            @forelse($testimonials as $t)
             <div class="bg-amber-50 rounded-xl p-6">
                 <div class="flex items-center mb-3">
-                    <div class="w-12 h-12 bg-amber-200 rounded-full flex items-center justify-center text-xl">👩</div>
+                    <div class="w-12 h-12 bg-amber-200 rounded-full flex items-center justify-center text-xl select-none">{{ $t->avatar }}</div>
                     <div class="ml-3">
-                        <p class="font-semibold text-gray-800">Ibu Sari</p>
-                        <p class="text-yellow-500 text-sm">★★★★★</p>
+                        <p class="font-semibold text-gray-800">{{ $t->name }}</p>
+                        <p class="text-yellow-500 text-sm">
+                            {{ str_repeat('★', $t->rating) }}{{ str_repeat('☆', 5 - $t->rating) }}
+                        </p>
                     </div>
                 </div>
-                <p class="text-gray-600 text-sm leading-relaxed">"Rotinya enak banget, fresh dan lembut. Anak-anak suka banget. Pesan juga gampang, tinggal WA."</p>
+                <p class="text-gray-600 text-sm leading-relaxed">"{{ $t->body }}"</p>
             </div>
-            <div class="bg-amber-50 rounded-xl p-6">
-                <div class="flex items-center mb-3">
-                    <div class="w-12 h-12 bg-amber-200 rounded-full flex items-center justify-center text-xl">👨</div>
-                    <div class="ml-3">
-                        <p class="font-semibold text-gray-800">Pak Bambang</p>
-                        <p class="text-yellow-500 text-sm">★★★★★</p>
-                    </div>
-                </div>
-                <p class="text-gray-600 text-sm leading-relaxed">"Pesen snack box untuk rapat kantor, semua puas. Terima kasih Mamitha Bakery!"</p>
-            </div>
-            <div class="bg-amber-50 rounded-xl p-6">
-                <div class="flex items-center mb-3">
-                    <div class="w-12 h-12 bg-amber-200 rounded-full flex items-center justify-center text-xl">👩</div>
-                    <div class="ml-3">
-                        <p class="font-semibold text-gray-800">Ibu Dewi</p>
-                        <p class="text-yellow-500 text-sm">★★★★★</p>
-                    </div>
-                </div>
-                <p class="text-gray-600 text-sm leading-relaxed">"Cake ultahnya cantik banget, rasanya enak tidak terlalu manis. Recommended!"</p>
-            </div>
+            @empty
+            <p class="col-span-full text-center text-gray-500 py-8">Belum ada testimoni.</p>
+            @endforelse
         </div>
     </div>
 </section>

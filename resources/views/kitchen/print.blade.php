@@ -34,8 +34,18 @@
         <tbody>
             @foreach($order->items as $item)
             <tr>
-                <td colspan="2" class="bold" style="padding-top:6px;">{{ $item->product->name }}</td>
+                <td colspan="2" class="bold" style="padding-top:6px;">
+                    {{ $item->product->name }}
+                    @if($item->variant)
+                    <span style="font-size:10px; font-weight:normal; color:#666;">({{ $item->variant->name }})</span>
+                    @endif
+                </td>
             </tr>
+            @if($item->note)
+            <tr>
+                <td colspan="2" style="font-size:10px; font-style:italic; padding-left:8px; color:#555;">Catatan: "{{ $item->note }}"</td>
+            </tr>
+            @endif
             <tr style="border-bottom: 1px solid #eee;">
                 <td style="color:#555; padding-left:8px;">{{ $item->quantity }} x Rp{{ number_format($item->price, 0, ',', '.') }}</td>
                 <td style="text-align:right;">Rp{{ number_format($item->subtotal, 0, ',', '.') }}</td>

@@ -30,6 +30,7 @@ class SettingController extends Controller
             'delivery_fee_enabled' => 'boolean',
             'discount_enabled' => 'boolean',
             'delivery_fee_amount' => 'integer|min:0',
+            'discount_percentage' => 'integer|min:1|max:100',
             'about_text' => 'nullable|string',
             'google_maps_api_key' => 'nullable|string',
             'store_latitude' => 'nullable|string',

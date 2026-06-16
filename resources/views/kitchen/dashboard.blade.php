@@ -40,9 +40,19 @@
 
         <div class="border-t border-gray-100 pt-3 space-y-1">
             @foreach($task->order->items as $item)
-            <div class="flex justify-between text-sm">
-                <span>{{ $item->product->name }}</span>
-                <span class="font-medium">x{{ $item->quantity }}</span>
+            <div class="mb-1">
+                <div class="flex justify-between text-sm">
+                    <span>
+                        {{ $item->product->name }}
+                        @if($item->variant)
+                        <span class="text-xs text-purple-600 font-semibold">({{ $item->variant->name }})</span>
+                        @endif
+                    </span>
+                    <span class="font-medium">x{{ $item->quantity }}</span>
+                </div>
+                @if($item->note)
+                <p class="text-[11px] text-amber-700 font-medium italic mt-0.5">" {{ $item->note }} "</p>
+                @endif
             </div>
             @endforeach
         </div>
@@ -96,12 +106,21 @@
                     "address" => $task->order->address,
                     "notes" => $task->order->notes,
                     "total" => $task->order->total,
-                    "items" => $task->order->items->map(fn($i) => [
-                        "name" => $i->product->name,
-                        "quantity" => $i->quantity,
-                        "price" => $i->price,
-                        "subtotal" => $i->subtotal,
-                    ])->toArray(),
+                    "items" => $task->order->items->map(function($i) {
+                        $name = $i->product->name;
+                        if ($i->variant) {
+                            $name .= ' (' . $i->variant->name . ')';
+                        }
+                        if ($i->note) {
+                            $name .= "\n  * " . $i->note;
+                        }
+                        return [
+                            "name" => $name,
+                            "quantity" => $i->quantity,
+                            "price" => $i->price,
+                            "subtotal" => $i->subtotal,
+                        ];
+                    })->toArray(),
                 ]) !!}'>
                 🖨️ BT Print
             </button>

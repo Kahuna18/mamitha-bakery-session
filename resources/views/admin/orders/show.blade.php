@@ -72,6 +72,9 @@
                     <div>
                         <p class="font-medium">{{ $item->product->name }} @if($item->variant) <span class="text-xs text-purple-600 font-semibold">({{ $item->variant->name }})</span> @endif</p>
                         <p class="text-sm text-gray-500">Rp {{ number_format($item->price, 0, ',', '.') }} x {{ $item->quantity }}</p>
+                        @if($item->note)
+                        <p class="text-xs text-amber-700 font-medium italic mt-0.5">" {{ $item->note }} "</p>
+                        @endif
                     </div>
                     <p class="font-semibold">Rp {{ number_format($item->subtotal, 0, ',', '.') }}</p>
                 </div>
@@ -129,8 +132,8 @@
                     📍 Buka di Google Maps
                 </a>
                 @php
-                    $storeLat = \App\Models\Setting::getValue('store_latitude', '-7.7705163');
-                    $storeLng = \App\Models\Setting::getValue('store_longitude', '110.2474903');
+                    $storeLat = \App\Models\Setting::getValue('store_latitude', '-7.7609582');
+                    $storeLng = \App\Models\Setting::getValue('store_longitude', '110.2529556');
                 @endphp
                 <a href="https://www.google.com/maps/dir/?api=1&origin={{ $storeLat }},{{ $storeLng }}&destination={{ $order->latitude }},{{ $order->longitude }}" target="_blank" class="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold rounded-lg shadow-sm transition">
                     🚗 Rute Pengantaran (Kurir)
@@ -164,12 +167,18 @@
                         "notes" => $order->notes,
                         "total" => $order->total,
                         "status" => $order->statusLabel(),
-                        "items" => $order->items->map(fn($i) => [
-                            "name" => $i->product->name . ($i->variant ? " ({$i->variant->name})" : ""),
-                            "quantity" => $i->quantity,
-                            "price" => $i->price,
-                            "subtotal" => $i->subtotal,
-                        ])->toArray(),
+                        "items" => $order->items->map(function($i) {
+                            $name = $i->product->name . ($i->variant ? " ({$i->variant->name})" : "");
+                            if ($i->note) {
+                                $name .= "\n  * " . $i->note;
+                            }
+                            return [
+                                "name" => $name,
+                                "quantity" => $i->quantity,
+                                "price" => $i->price,
+                                "subtotal" => $i->subtotal,
+                            ];
+                        })->toArray(),
                     ]) !!}'>
                     🖨️ Print Struk Bluetooth
                 </button>
@@ -185,12 +194,18 @@
                         "address" => $order->address,
                         "notes" => $order->notes,
                         "total" => $order->total,
-                        "items" => $order->items->map(fn($i) => [
-                            "name" => $i->product->name . ($i->variant ? " ({$i->variant->name})" : ""),
-                            "quantity" => $i->quantity,
-                            "price" => $i->price,
-                            "subtotal" => $i->subtotal,
-                        ])->toArray(),
+                        "items" => $order->items->map(function($i) {
+                            $name = $i->product->name . ($i->variant ? " ({$i->variant->name})" : "");
+                            if ($i->note) {
+                                $name .= "\n  * " . $i->note;
+                            }
+                            return [
+                                "name" => $name,
+                                "quantity" => $i->quantity,
+                                "price" => $i->price,
+                                "subtotal" => $i->subtotal,
+                            ];
+                        })->toArray(),
                     ]) !!}'>
                     🍳 Print Struk Dapur (BT)
                 </button>

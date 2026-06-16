@@ -22,13 +22,14 @@ class OrderController extends Controller
         $storeWhatsapp = Setting::getValue('store_whatsapp');
         $canOrder = Setting::canAcceptOrder();
         $googleMapsKey = Setting::getValue('google_maps_api_key', '');
-        $storeLat = Setting::getValue('store_latitude', '-7.7705163');
-        $storeLng = Setting::getValue('store_longitude', '110.2474903');
+        $storeLat = Setting::getValue('store_latitude', '-7.7609582');
+        $storeLng = Setting::getValue('store_longitude', '110.2529556');
         $deliveryFeeEnabled = Setting::getValue('delivery_fee_enabled', 'true') === 'true';
         $deliveryFeeAmount = (int) Setting::getValue('delivery_fee_amount', 10000);
         $discountEnabled = Setting::getValue('discount_enabled', 'true') === 'true';
+        $discountPercentage = (int) Setting::getValue('discount_percentage', 10);
 
-        return view('order.create', compact('products', 'categories', 'storeWhatsapp', 'canOrder', 'googleMapsKey', 'storeLat', 'storeLng', 'deliveryFeeEnabled', 'deliveryFeeAmount', 'discountEnabled'));
+        return view('order.create', compact('products', 'categories', 'storeWhatsapp', 'canOrder', 'googleMapsKey', 'storeLat', 'storeLng', 'deliveryFeeEnabled', 'deliveryFeeAmount', 'discountEnabled', 'discountPercentage'));
     }
 
     public function store(Request $request)
@@ -48,6 +49,7 @@ class OrderController extends Controller
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.variant_id' => 'nullable|exists:product_variants,id',
             'items.*.quantity' => 'required|integer|min:1',
+            'items.*.note' => 'nullable|string|max:200',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
         ]);
@@ -94,6 +96,7 @@ class OrderController extends Controller
                 'quantity' => $item['quantity'],
                 'price' => $itemPrice,
                 'subtotal' => $subtotal,
+                'note' => !empty($item['note']) ? $item['note'] : null,
             ];
         }
 
@@ -181,7 +184,11 @@ class OrderController extends Controller
             if ($item->variant) {
                 $itemName .= ' (' . $item->variant->name . ')';
             }
-            $message .= "- {$itemName} x {$item->quantity}\n";
+            $message .= "- {$itemName} x {$item->quantity}";
+            if ($item->note) {
+                $message .= " (Catatan: {$item->note})";
+            }
+            $message .= "\n";
         }
 
         $message .= "\nTerima kasih.";
