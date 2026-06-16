@@ -41,6 +41,7 @@
                         @endif
                     </td>
                     <td class="px-4 py-3">
+                        <a href="{{ route('admin.products.variants.index', $product) }}" class="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium rounded-lg transition inline-block">Varian</a>
                         <a href="{{ route('admin.products.edit', $product) }}" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition inline-block">Edit</a>
                         <form action="{{ route('admin.products.destroy', $product) }}" method="POST" class="inline" onsubmit="return confirm('Hapus produk ini?')">
                             @csrf @method('DELETE')

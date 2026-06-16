@@ -741,6 +741,7 @@
     {{-- Hidden field for is_closed when unchecked --}}
     <input type="hidden" name="is_closed" value="0">
     <input type="hidden" name="delivery_fee_enabled" value="0">
+    <input type="hidden" name="discount_enabled" value="0">
 
     <div class="settings-container">
 
@@ -879,6 +880,19 @@
                     <input type="number" name="delivery_fee_amount" value="{{ $settings['delivery_fee_amount'] ?? '10000' }}" min="0" class="form-input" placeholder="10000">
                     <div class="form-hint">Biaya ongkir yang dikenakan saat customer pilih pengiriman (delivery). Set 0 jika gratis ongkir.</div>
                 </div>
+            </div>
+
+            {{-- Diskon Otomatis --}}
+            <div class="toggle-item">
+                <div class="toggle-icon">🏷️</div>
+                <div class="toggle-info">
+                    <div class="toggle-title">Diskon Otomatis (10% OFF)</div>
+                    <div class="toggle-desc">Aktifkan diskon 10% untuk semua pesanan</div>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" name="discount_enabled" value="1" {{ ($settings['discount_enabled'] ?? 'true') == 'true' ? 'checked' : '' }}>
+                    <span class="toggle-slider"></span>
+                </label>
             </div>
         </div>
 

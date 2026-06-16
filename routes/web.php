@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\CategoryController as AdminCategory;
 use App\Http\Controllers\Admin\CustomerController as AdminCustomer;
 use App\Http\Controllers\Admin\SettingController as AdminSetting;
 use App\Http\Controllers\Admin\ReportController as AdminReport;
+use App\Http\Controllers\Admin\ProductVariantController as AdminProductVariant;
 use App\Http\Controllers\Kitchen\DashboardController as KitchenDashboard;
 use Illuminate\Support\Facades\Route;
 
@@ -46,6 +47,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
 
     // Products
     Route::resource('products', AdminProduct::class)->except('show');
+    Route::resource('products.variants', AdminProductVariant::class)->except('show');
 
     // Categories
     Route::resource('categories', AdminCategory::class)->except('show');
@@ -53,6 +55,8 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     // Customers
     Route::get('/customers', [AdminCustomer::class, 'index'])->name('customers');
     Route::get('/customers/{customer}', [AdminCustomer::class, 'show'])->name('customers.show');
+    Route::delete('/customers/{customer}', [AdminCustomer::class, 'destroy'])->name('customers.destroy');
+    Route::post('/customers/reset', [AdminCustomer::class, 'resetAll'])->name('customers.reset');
 
     // Settings
     Route::get('/settings', [AdminSetting::class, 'index'])->name('settings.index');

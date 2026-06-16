@@ -3,9 +3,15 @@
 @section('title', 'Pelanggan')
 
 @section('content')
-<div class="mb-6">
-    <h1 class="text-2xl font-bold text-gray-800">Pelanggan</h1>
-    <p class="text-gray-500 text-sm">Daftar pelanggan toko</p>
+<div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-800">Pelanggan</h1>
+        <p class="text-gray-500 text-sm">Daftar pelanggan toko</p>
+    </div>
+    <form action="{{ route('admin.customers.reset') }}" method="POST" onsubmit="return confirm('Yakin reset semua pelanggan tanpa riwayat pesanan? Data tidak bisa dikembalikan.')">
+        @csrf
+        <button type="submit" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition">Reset Semua</button>
+    </form>
 </div>
 
 <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
@@ -24,6 +30,7 @@
                 <th class="px-4 py-3 font-semibold text-gray-600">Alamat</th>
                 <th class="px-4 py-3 font-semibold text-gray-600">Total Order</th>
                 <th class="px-4 py-3 font-semibold text-gray-600">Bergabung</th>
+                <th class="px-4 py-3 font-semibold text-gray-600">Aksi</th>
             </tr>
         </thead>
         <tbody class="divide-y divide-gray-100">
@@ -34,9 +41,19 @@
                 <td class="px-4 py-3 text-gray-500 max-w-xs truncate">{{ $customer->address ?? '-' }}</td>
                 <td class="px-4 py-3 font-medium">{{ $customer->orders_count }}</td>
                 <td class="px-4 py-3 text-gray-500">{{ $customer->created_at->format('d/m/Y') }}</td>
+                <td class="px-4 py-3">
+                    @if($customer->orders_count > 0)
+                    <span class="text-xs text-gray-400 italic">Memiliki pesanan</span>
+                    @else
+                    <form action="{{ route('admin.customers.destroy', $customer) }}" method="POST" onsubmit="return confirm('Yakin hapus pelanggan {{ $customer->name }}?')">
+                        @csrf @method('DELETE')
+                        <button type="submit" class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded-lg transition">Hapus</button>
+                    </form>
+                    @endif
+                </td>
             </tr>
             @empty
-            <tr><td colspan="5" class="px-4 py-8 text-center text-gray-400">Belum ada pelanggan</td></tr>
+            <tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">Belum ada pelanggan</td></tr>
             @endforelse
         </tbody>
     </table>

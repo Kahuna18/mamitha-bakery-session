@@ -23,6 +23,16 @@ class Product extends Model
         return $this->belongsTo(Category::class);
     }
 
+    public function variants()
+    {
+        return $this->hasMany(ProductVariant::class);
+    }
+
+    public function activeVariants()
+    {
+        return $this->hasMany(ProductVariant::class)->where('is_available', true)->where('stock', '>', 0);
+    }
+
     public function orderItems()
     {
         return $this->hasMany(OrderItem::class);

@@ -6,6 +6,7 @@ use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 
@@ -13,7 +14,7 @@ class OrderController extends Controller
 {
     public function create()
     {
-        $products = Product::with('category')
+        $products = Product::with(['category', 'activeVariants'])
             ->where('is_available', true)
             ->get();
 
@@ -25,8 +26,9 @@ class OrderController extends Controller
         $storeLng = Setting::getValue('store_longitude', '110.2474903');
         $deliveryFeeEnabled = Setting::getValue('delivery_fee_enabled', 'true') === 'true';
         $deliveryFeeAmount = (int) Setting::getValue('delivery_fee_amount', 10000);
+        $discountEnabled = Setting::getValue('discount_enabled', 'true') === 'true';
 
-        return view('order.create', compact('products', 'categories', 'storeWhatsapp', 'canOrder', 'googleMapsKey', 'storeLat', 'storeLng', 'deliveryFeeEnabled', 'deliveryFeeAmount'));
+        return view('order.create', compact('products', 'categories', 'storeWhatsapp', 'canOrder', 'googleMapsKey', 'storeLat', 'storeLng', 'deliveryFeeEnabled', 'deliveryFeeAmount', 'discountEnabled'));
     }
 
     public function store(Request $request)
@@ -44,6 +46,7 @@ class OrderController extends Controller
             'notes' => 'nullable|string|max:500',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
+            'items.*.variant_id' => 'nullable|exists:product_variants,id',
             'items.*.quantity' => 'required|integer|min:1',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
@@ -60,6 +63,19 @@ class OrderController extends Controller
 
         foreach ($validated['items'] as $item) {
             $product = Product::findOrFail($item['product_id']);
+            $variantPrice = 0;
+
+            // Handle variant selection
+            if (!empty($item['variant_id'])) {
+                $variant = ProductVariant::findOrFail($item['variant_id']);
+                if (!$variant->is_available || $variant->stock <= 0) {
+                    return back()->with('error', "Maaf, varian {$variant->name} untuk {$product->name} sudah habis.")->withInput();
+                }
+                if ($item['quantity'] > $variant->stock) {
+                    return back()->with('error', "Maaf, stok varian {$variant->name} untuk {$product->name} hanya tersisa {$variant->stock} pcs.")->withInput();
+                }
+                $variantPrice = $variant->price_adjustment;
+            }
 
             // Validate stock availability
             if ($product->stock <= 0) {
@@ -69,12 +85,14 @@ class OrderController extends Controller
                 return back()->with('error', "Maaf, stok {$product->name} hanya tersisa {$product->stock} pcs.")->withInput();
             }
 
-            $subtotal = $product->price * $item['quantity'];
+            $itemPrice = $product->price + $variantPrice;
+            $subtotal = $itemPrice * $item['quantity'];
             $total += $subtotal;
             $orderItems[] = [
                 'product_id' => $product->id,
+                'variant_id' => !empty($item['variant_id']) ? $item['variant_id'] : null,
                 'quantity' => $item['quantity'],
-                'price' => $product->price,
+                'price' => $itemPrice,
                 'subtotal' => $subtotal,
             ];
         }
@@ -101,6 +119,11 @@ class OrderController extends Controller
 
             // Decrement product stock
             Product::where('id', $item['product_id'])->decrement('stock', $item['quantity']);
+
+            // Decrement variant stock if applicable
+            if (!empty($item['variant_id'])) {
+                ProductVariant::where('id', $item['variant_id'])->decrement('stock', $item['quantity']);
+            }
         }
 
         $order->kitchenTask()->create([
@@ -154,7 +177,11 @@ class OrderController extends Controller
         $message .= "Total: Rp " . number_format($order->total, 0, ',', '.') . "\n\n";
 
         foreach ($order->items as $item) {
-            $message .= "- {$item->product->name} x {$item->quantity}\n";
+            $itemName = $item->product->name;
+            if ($item->variant) {
+                $itemName .= ' (' . $item->variant->name . ')';
+            }
+            $message .= "- {$itemName} x {$item->quantity}\n";
         }
 
         $message .= "\nTerima kasih.";

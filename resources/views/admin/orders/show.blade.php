@@ -70,7 +70,7 @@
                 @foreach($order->items as $item)
                 <div class="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
                     <div>
-                        <p class="font-medium">{{ $item->product->name }}</p>
+                        <p class="font-medium">{{ $item->product->name }} @if($item->variant) <span class="text-xs text-purple-600 font-semibold">({{ $item->variant->name }})</span> @endif</p>
                         <p class="text-sm text-gray-500">Rp {{ number_format($item->price, 0, ',', '.') }} x {{ $item->quantity }}</p>
                     </div>
                     <p class="font-semibold">Rp {{ number_format($item->subtotal, 0, ',', '.') }}</p>
@@ -165,7 +165,7 @@
                         "total" => $order->total,
                         "status" => $order->statusLabel(),
                         "items" => $order->items->map(fn($i) => [
-                            "name" => $i->product->name,
+                            "name" => $i->product->name . ($i->variant ? " ({$i->variant->name})" : ""),
                             "quantity" => $i->quantity,
                             "price" => $i->price,
                             "subtotal" => $i->subtotal,
@@ -186,7 +186,7 @@
                         "notes" => $order->notes,
                         "total" => $order->total,
                         "items" => $order->items->map(fn($i) => [
-                            "name" => $i->product->name,
+                            "name" => $i->product->name . ($i->variant ? " ({$i->variant->name})" : ""),
                             "quantity" => $i->quantity,
                             "price" => $i->price,
                             "subtotal" => $i->subtotal,

@@ -64,7 +64,7 @@
                         <div class="flex flex-wrap justify-center md:justify-start gap-4 mt-3 text-xs text-gray-600 dark:text-gray-300 font-medium">
                             <span class="flex items-center gap-1"><span class="text-amber-500">★</span> 4.9 (1.2k+ rating)</span>
                             <span class="flex items-center gap-1">🕒 07:00 - 20:00</span>
-                            <span class="flex items-center gap-1 text-orange-600 dark:text-orange-400">🏷️ Diskon 10% Otomatis</span>
+                            @if($discountEnabled)<span class="flex items-center gap-1 text-orange-600 dark:text-orange-400">🏷️ Diskon 10% Otomatis</span>@endif
                         </div>
                     </div>
                 </div>
@@ -123,7 +123,7 @@
                             <span class="bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
                                 {{ $product->category->name }}
                             </span>
-                            @if($product->stock > 0)
+                            @if($product->stock > 0 && $discountEnabled)
                             <span class="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
                                 10% OFF
                             </span>
@@ -160,6 +160,16 @@
                         </div>
                         <h3 class="font-bold text-gray-800 dark:text-gray-100 text-lg mt-1 font-serif">{{ $product->name }}</h3>
                         <p class="text-gray-500 dark:text-gray-400 text-xs mt-1 line-clamp-2">{{ $product->description ?? 'Roti hangat dan empuk yang dibuat fresh hari ini.' }}</p>
+                        @if($product->activeVariants->isNotEmpty())
+                        <div class="mt-3">
+                            <select class="variant-select w-full text-xs border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300" data-product-id="{{ $product->id }}" onchange="onVariantChange({{ $product->id }}, this)">
+                                <option value="">Pilih Varian</option>
+                                @foreach($product->activeVariants as $v)
+                                <option value="{{ $v->id }}" data-adjustment="{{ $v->price_adjustment }}" data-stock="{{ $v->stock }}">{{ $v->name }}@if($v->price_adjustment > 0) (+Rp {{ number_format($v->price_adjustment, 0, ',', '.') }}) @endif</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        @endif
                     </div>
                 </div>
 
@@ -177,7 +187,7 @@
                     @if($product->stock > 0)
                     <div class="relative w-28 h-10 flex items-center justify-end" id="btn-container-{{ $product->id }}">
                         <!-- Add Button -->
-                        <button onclick="addToCart({{ $product->id }}, '{{ $product->name }}', {{ $product->price }})" class="add-btn px-4 py-2 bg-gray-900 dark:bg-gray-100 hover:bg-amber-700 dark:hover:bg-amber-500 text-white dark:text-gray-900 text-xs font-extrabold rounded-full shadow-sm hover:shadow-md transition duration-200">
+                        <button onclick="addToCart({{ $product->id }})" class="add-btn px-4 py-2 bg-gray-900 dark:bg-gray-100 hover:bg-amber-700 dark:hover:bg-amber-500 text-white dark:text-gray-900 text-xs font-extrabold rounded-full shadow-sm hover:shadow-md transition duration-200">
                             + ADD
                         </button>
                         
@@ -238,6 +248,14 @@
                     @csrf
                     <!-- Dynamic Hidden Inputs Container -->
                     <div id="hidden-cart-inputs"></div>
+
+                    <!-- Cart Items List -->
+                    <div class="space-y-3">
+                        <h3 class="font-bold text-gray-700 dark:text-gray-300 text-sm tracking-wide uppercase">Pesanan Anda</h3>
+                        <div id="cart-items-list" class="space-y-1">
+                            <p class="text-center text-gray-400 text-sm py-4">Belum ada item dipilih</p>
+                        </div>
+                    </div>
 
                     <!-- Personal Information -->
                     <div class="space-y-4">
@@ -375,7 +393,7 @@
                         <span>Harga Roti (Subtotal)</span>
                         <span id="summary-subtotal" class="font-medium text-gray-800 dark:text-gray-200">Rp 0</span>
                     </div>
-                    <div class="flex justify-between text-green-600 dark:text-green-400">
+                    <div class="flex justify-between text-green-600 dark:text-green-400" id="discount-row" @if(!$discountEnabled) style="display:none" @endif>
                         <span>Diskon Promo (10% OFF)</span>
                         <span id="summary-discount" class="font-bold">-Rp 0</span>
                     </div>
@@ -404,30 +422,114 @@
 <!-- Leaflet.js Map Library -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
-    // Delivery Fee Settings passed from backend
+    // Delivery Fee & Discount Settings passed from backend
     const deliveryFeeEnabled = {{ $deliveryFeeEnabled ? 'true' : 'false' }};
     const deliveryFeeAmount = {{ $deliveryFeeAmount }};
+    const discountEnabled = {{ $discountEnabled ? 'true' : 'false' }};
 
     // Cart State
     let cart = {};
     let products = {};
+
+    // Get composite cart key: productId-variantId (variantId = 0 for no variant)
+    function cartKey(productId, variantId) {
+        return productId + '-' + (variantId || 0);
+    }
+
+    // Get variant select for a product
+    function getVariantSelect(productId) {
+        return document.querySelector('.variant-select[data-product-id="' + productId + '"]');
+    }
+
+    // Get currently selected variant for a product
+    function getSelectedVariant(productId) {
+        var select = getVariantSelect(productId);
+        if (!select || !select.value) return null;
+        return {
+            id: parseInt(select.value),
+            name: select.options[select.selectedIndex].text.split('(+')[0].trim(),
+            adjustment: parseFloat(select.options[select.selectedIndex].dataset.adjustment || 0),
+            stock: parseInt(select.options[select.selectedIndex].dataset.stock || 0)
+        };
+    }
 
     // Load initial products list details into JS object
     @foreach($products as $product)
     products[{{ $product->id }}] = {
         name: '{{ $product->name }}',
         price: {{ $product->price }},
-        stock: {{ $product->stock ?? 0 }}
+        stock: {{ $product->stock ?? 0 }},
+        hasVariants: {{ $product->activeVariants->isNotEmpty() ? 'true' : 'false' }},
+        variants: [
+            @foreach($product->activeVariants as $v)
+            { id: {{ $v->id }}, name: '{{ $v->name }}', price_adjustment: {{ $v->price_adjustment }}, stock: {{ $v->stock }} },
+            @endforeach
+        ]
     };
     @endforeach
 
-    // Add product to Cart
-    function addToCart(productId, name, price) {
-        if (!cart[productId]) {
-            cart[productId] = {
-                id: productId,
-                name: name,
-                price: price,
+    // Called when variant dropdown changes
+    function onVariantChange(productId, select) {
+        var key = cartKey(productId, select.value);
+        var container = document.getElementById('btn-container-' + productId);
+        if (!container) return;
+        var qtyControls = container.querySelector('.qty-controls');
+        var addBtn = container.querySelector('.add-btn');
+        var qtySpan = document.getElementById('card-qty-' + productId);
+
+        if (select.value && cart[key]) {
+            // Already in cart, show qty controls
+            addBtn.classList.add('scale-0', 'opacity-0');
+            qtyControls.classList.remove('scale-0', 'opacity-0');
+            qtyControls.classList.add('scale-100', 'opacity-100');
+            if (qtySpan) qtySpan.textContent = cart[key].qty;
+        } else {
+            // Not in cart, reset to ADD button
+            qtyControls.classList.remove('scale-100', 'opacity-100');
+            qtyControls.classList.add('scale-0', 'opacity-0');
+            addBtn.classList.remove('scale-0', 'opacity-0');
+            addBtn.classList.add('scale-100', 'opacity-100');
+            if (qtySpan) qtySpan.textContent = '0';
+        }
+    }
+
+    // Add product to Cart (reads variant from select if has variants)
+    function addToCart(productId) {
+        var prod = products[productId];
+        if (!prod) return;
+
+        var variantId = 0;
+        var variantName = null;
+        var finalPrice = prod.price;
+        var maxStock = prod.stock;
+
+        if (prod.hasVariants) {
+            var select = getVariantSelect(productId);
+            if (!select || !select.value) {
+                alert('Silakan pilih varian terlebih dahulu.');
+                if (select) select.focus();
+                return;
+            }
+            variantId = parseInt(select.value);
+            var selected = select.options[select.selectedIndex];
+            variantName = selected.text.split('(+')[0].trim();
+            finalPrice = prod.price + parseFloat(selected.dataset.adjustment || 0);
+            maxStock = parseInt(selected.dataset.stock || 0);
+        }
+
+        var key = cartKey(productId, variantId);
+
+        if (!cart[key]) {
+            if (maxStock <= 0) {
+                alert('Maaf, varian ini sedang habis.');
+                return;
+            }
+            cart[key] = {
+                product_id: productId,
+                variant_id: variantId || null,
+                name: prod.name,
+                variant_name: variantName,
+                price: finalPrice,
                 qty: 1
             };
         }
@@ -436,72 +538,119 @@
 
     // Increment qty (respect stock limit)
     function incrementQty(productId) {
-        if (cart[productId]) {
-            const maxStock = products[productId]?.stock || 0;
-            if (cart[productId].qty >= maxStock) {
-                // Show brief shake animation on the qty controls
-                const container = document.getElementById('btn-container-' + productId);
-                if (container) {
-                    container.classList.add('animate-pulse');
-                    setTimeout(() => container.classList.remove('animate-pulse'), 300);
-                }
-                return; // Don't exceed stock
-            }
-            cart[productId].qty++;
-            updateCartState(productId);
+        var variantId = 0;
+        var prod = products[productId];
+        if (prod && prod.hasVariants) {
+            var sel = getSelectedVariant(productId);
+            if (!sel) return;
+            variantId = sel.id;
         }
+        var key = cartKey(productId, variantId);
+        if (!cart[key]) return;
+
+        var maxStock = prod.stock;
+        if (prod.hasVariants) {
+            var sel = getSelectedVariant(productId);
+            if (sel) maxStock = sel.stock;
+        }
+
+        if (cart[key].qty >= maxStock) {
+            var container = document.getElementById('btn-container-' + productId);
+            if (container) {
+                container.classList.add('animate-pulse');
+                setTimeout(function() { container.classList.remove('animate-pulse'); }, 300);
+            }
+            return;
+        }
+        cart[key].qty++;
+        updateCartState(productId);
     }
 
     // Decrement qty
     function decrementQty(productId) {
-        if (cart[productId]) {
-            cart[productId].qty--;
-            if (cart[productId].qty <= 0) {
-                delete cart[productId];
-                resetCardButton(productId);
-            } else {
-                updateCartState(productId);
-            }
-            updateCartState(null); // refresh main calculations
+        var variantId = 0;
+        var prod = products[productId];
+        if (prod && prod.hasVariants) {
+            var sel = getSelectedVariant(productId);
+            if (!sel) return;
+            variantId = sel.id;
         }
+        var key = cartKey(productId, variantId);
+        if (!cart[key]) return;
+
+        cart[key].qty--;
+        if (cart[key].qty <= 0) {
+            delete cart[key];
+            resetCardButton(productId);
+        } else {
+            updateCartState(productId);
+        }
+        updateCartState(null);
     }
 
     // Update dynamic state in DOM
     function updateCartState(productId) {
-        let totalItems = 0;
-        let totalPrice = 0;
-        let discount = 0;
-        let shippingFee = (document.querySelector('input[name="type"]:checked')?.value === 'delivery' && deliveryFeeEnabled) ? deliveryFeeAmount : 0;
-        let serviceTax = 0;
+        var totalItems = 0;
+        var totalPrice = 0;
+        var discount = 0;
+        var shippingFee = (document.querySelector('input[name="type"]:checked')?.value === 'delivery' && deliveryFeeEnabled) ? deliveryFeeAmount : 0;
 
         // Update target card inputs if a specific card was actioned
-        if (productId && cart[productId]) {
-            const cardQtySpan = document.getElementById('card-qty-' + productId);
-            const container = document.getElementById('btn-container-' + productId);
-            const addBtn = container.querySelector('.add-btn');
-            const qtyControls = container.querySelector('.qty-controls');
-
-            // Apply scaling animation
-            addBtn.classList.add('scale-0', 'opacity-0');
-            qtyControls.classList.remove('scale-0', 'opacity-0');
-            qtyControls.classList.add('scale-100', 'opacity-100');
-            
-            if (cardQtySpan) cardQtySpan.textContent = cart[productId].qty;
+        if (productId) {
+            var variantId = 0;
+            var prod = products[productId];
+            if (prod && prod.hasVariants) {
+                var sel = getSelectedVariant(productId);
+                if (sel) variantId = sel.id;
+            }
+            var key = cartKey(productId, variantId);
+            if (cart[key]) {
+                var cardQtySpan = document.getElementById('card-qty-' + productId);
+                var container = document.getElementById('btn-container-' + productId);
+                if (container) {
+                    var addBtn = container.querySelector('.add-btn');
+                    var qtyControls = container.querySelector('.qty-controls');
+                    addBtn.classList.add('scale-0', 'opacity-0');
+                    qtyControls.classList.remove('scale-0', 'opacity-0');
+                    qtyControls.classList.add('scale-100', 'opacity-100');
+                }
+                if (cardQtySpan) cardQtySpan.textContent = cart[key].qty;
+            }
         }
 
         // Loop over cart and sum
-        Object.keys(cart).forEach(id => {
-            totalItems += cart[id].qty;
-            totalPrice += cart[id].price * cart[id].qty;
+        var cartItemsHtml = '';
+        var index = 0;
+        Object.keys(cart).forEach(function(key) {
+            var item = cart[key];
+            totalItems += item.qty;
+            totalPrice += item.price * item.qty;
+
+            // Build cart items list HTML
+            var displayName = item.name;
+            if (item.variant_name) displayName += ' (' + item.variant_name + ')';
+            cartItemsHtml += '' +
+                '<div class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-800 last:border-0">' +
+                    '<div class="flex-1 min-w-0">' +
+                        '<p class="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">' + displayName + '</p>' +
+                        '<p class="text-xs text-gray-500">Rp ' + item.price.toLocaleString('id-ID') + ' x ' + item.qty + '</p>' +
+                    '</div>' +
+                    '<p class="text-sm font-semibold text-gray-800 dark:text-gray-200 ml-2">Rp ' + (item.price * item.qty).toLocaleString('id-ID') + '</p>' +
+                '</div>';
+            index++;
         });
 
-        // 10% OFF discount
-        discount = Math.round(totalPrice * 0.1);
+        document.getElementById('cart-items-list').innerHTML = cartItemsHtml;
+
+        // 10% OFF discount (if enabled)
+        if (discountEnabled) {
+            discount = Math.round(totalPrice * 0.1);
+        }
 
         // Update Floating Cart Bar
-        const floatingCart = document.getElementById('floating-cart');
-        const itemCountSpan = document.getElementById('cart-item-count');
-        const totalPriceSpan = document.getElementById('cart-total-price');
+        var floatingCart = document.getElementById('floating-cart');
+        var itemCountSpan = document.getElementById('cart-item-count');
+        var totalPriceSpan = document.getElementById('cart-total-price');
 
         if (totalItems > 0) {
             floatingCart.classList.remove('translate-y-32', 'opacity-0');
@@ -511,41 +660,53 @@
         } else {
             floatingCart.classList.remove('translate-y-0', 'opacity-100');
             floatingCart.classList.add('translate-y-32', 'opacity-0');
+            // Clear cart items list when empty
+            document.getElementById('cart-items-list').innerHTML = '<p class="text-center text-gray-400 text-sm py-4">Belum ada item dipilih</p>';
         }
 
         // Update Checkout Drawer Summaries
         document.getElementById('summary-subtotal').textContent = 'Rp ' + totalPrice.toLocaleString('id-ID');
-        document.getElementById('summary-discount').textContent = '-Rp ' + discount.toLocaleString('id-ID');
+        document.getElementById('summary-discount').textContent = discountEnabled ? '-Rp ' + discount.toLocaleString('id-ID') : 'Rp 0';
         document.getElementById('summary-shipping').textContent = 'Rp ' + shippingFee.toLocaleString('id-ID');
+
+        // Hide discount row if disabled
+        var discountRow = document.getElementById('discount-row');
+        if (discountRow) {
+            discountRow.style.display = discountEnabled ? 'flex' : 'none';
+        }
         
-        let finalTotal = totalPrice - discount + shippingFee;
-        if (totalItems === 0) finalTotal = 0; // reset total if nothing selected
+        var finalTotal = totalPrice - discount + shippingFee;
+        if (totalItems === 0) finalTotal = 0;
         
         document.getElementById('summary-total').textContent = 'Rp ' + finalTotal.toLocaleString('id-ID');
 
         // Dynamically build hidden input fields inside the form
-        const hiddenContainer = document.getElementById('hidden-cart-inputs');
+        var hiddenContainer = document.getElementById('hidden-cart-inputs');
         hiddenContainer.innerHTML = '';
-        Object.keys(cart).forEach(id => {
-            hiddenContainer.innerHTML += `
-                <input type="hidden" name="items[${id}][product_id]" value="${id}">
-                <input type="hidden" name="items[${id}][quantity]" value="${cart[id].qty}">
-            `;
+        var idx = 0;
+        Object.keys(cart).forEach(function(key) {
+            var item = cart[key];
+            hiddenContainer.innerHTML += '' +
+                '<input type="hidden" name="items[' + idx + '][product_id]" value="' + item.product_id + '">' +
+                '<input type="hidden" name="items[' + idx + '][variant_id]" value="' + (item.variant_id || '') + '">' +
+                '<input type="hidden" name="items[' + idx + '][quantity]" value="' + item.qty + '">';
+            idx++;
         });
     }
 
     // Reset card button back to + ADD
     function resetCardButton(productId) {
-        const container = document.getElementById('btn-container-' + productId);
-        const addBtn = container.querySelector('.add-btn');
-        const qtyControls = container.querySelector('.qty-controls');
+        var container = document.getElementById('btn-container-' + productId);
+        if (!container) return;
+        var addBtn = container.querySelector('.add-btn');
+        var qtyControls = container.querySelector('.qty-controls');
 
         qtyControls.classList.remove('scale-100', 'opacity-100');
         qtyControls.classList.add('scale-0', 'opacity-0');
         addBtn.classList.remove('scale-0', 'opacity-0');
         addBtn.classList.add('scale-100', 'opacity-100');
 
-        const cardQtySpan = document.getElementById('card-qty-' + productId);
+        var cardQtySpan = document.getElementById('card-qty-' + productId);
         if (cardQtySpan) cardQtySpan.textContent = '0';
     }
 

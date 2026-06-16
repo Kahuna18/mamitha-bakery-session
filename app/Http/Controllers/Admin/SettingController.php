@@ -28,6 +28,7 @@ class SettingController extends Controller
             'daily_order_limit' => 'integer|min:0',
             'is_closed' => 'boolean',
             'delivery_fee_enabled' => 'boolean',
+            'discount_enabled' => 'boolean',
             'delivery_fee_amount' => 'integer|min:0',
             'about_text' => 'nullable|string',
             'google_maps_api_key' => 'nullable|string',
@@ -40,6 +41,7 @@ class SettingController extends Controller
 
         $validated['is_closed'] = $request->input('is_closed') == '1' ? 'true' : 'false';
         $validated['delivery_fee_enabled'] = $request->input('delivery_fee_enabled') == '1' ? 'true' : 'false';
+        $validated['discount_enabled'] = $request->input('discount_enabled') == '1' ? 'true' : 'false';
 
         if ($request->filled('store_gmaps_link')) {
             $coords = $this->extractLatLngFromGmaps($request->store_gmaps_link);
