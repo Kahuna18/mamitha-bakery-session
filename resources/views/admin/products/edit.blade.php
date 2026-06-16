@@ -42,6 +42,16 @@
             <label class="block text-sm font-medium text-gray-700 mb-1">Stok</label>
             <input type="number" name="stock" value="{{ old('stock', $product->stock) }}" min="0" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm">
         </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Rating Default <span class="text-red-500">*</span></label>
+            <input type="number" step="0.1" name="rating" value="{{ old('rating', $product->rating) }}" min="0" max="5" required class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm">
+            @error('rating') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Estimasi Waktu Penyajian (Card Menu) <span class="text-red-500">*</span></label>
+            <input type="text" name="ready_time" value="{{ old('ready_time', $product->ready_time) }}" required placeholder="Contoh: 15-20 min, 30 min, dll" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm">
+            @error('ready_time') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+        </div>
         <div class="flex items-center gap-6">
             <label class="flex items-center">
                 <input type="checkbox" name="is_available" value="1" {{ $product->is_available ? 'checked' : '' }} class="rounded border-gray-300 text-amber-600">

@@ -9,14 +9,20 @@ class Product extends Model
 {
     protected $fillable = [
         'category_id', 'name', 'slug', 'description',
-        'price', 'image', 'is_available', 'is_featured', 'stock'
+        'price', 'image', 'is_available', 'is_featured', 'stock', 'rating', 'ready_time'
     ];
 
     protected $casts = [
         'is_available' => 'boolean',
         'is_featured' => 'boolean',
         'price' => 'decimal:2',
+        'rating' => 'float',
     ];
+
+    public function reviews()
+    {
+        return $this->hasMany(ProductReview::class);
+    }
 
     public function category()
     {

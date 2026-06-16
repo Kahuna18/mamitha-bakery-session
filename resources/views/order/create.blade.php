@@ -206,6 +206,11 @@
                             <span class="bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
                                 {{ $product->category->name }}
                             </span>
+                            @if($product->is_featured)
+                            <span class="bg-amber-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shadow-sm">
+                                🔥 Best Seller
+                            </span>
+                            @endif
                             @if($product->stock > 0 && $discountEnabled)
                             <span class="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
                                 {{ $discountPercentage }}% OFF
@@ -365,14 +370,14 @@
                 </div>
 
                 <!-- Per-item Notes -->
-                <div class="px-5 py-3 border-t border-gray-100 dark:border-gray-800">
+                <div id="modal-notes-section" class="px-5 py-3 border-t border-gray-100 dark:border-gray-800">
                     <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">📝 Catatan</p>
                     <textarea id="modal-item-note" rows="2" placeholder="Contoh: jangan terlalu manis, extra topping, dll" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl text-xs text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition resize-none" maxlength="200"></textarea>
                     <p class="text-[10px] text-gray-400 mt-1">Opsional — maks 200 karakter</p>
                 </div>
 
                 <!-- Quantity selector inside modal -->
-                <div class="px-5 py-3 border-t border-gray-100 dark:border-gray-800">
+                <div id="modal-qty-section" class="px-5 py-3 border-t border-gray-100 dark:border-gray-800">
                     <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Jumlah</p>
                     <div class="flex items-center gap-4">
                         <button onclick="modalDecQty()" id="modal-dec-btn" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center font-extrabold text-lg text-gray-700 dark:text-gray-300 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition">-</button>
@@ -381,10 +386,18 @@
                         <span class="text-xs text-gray-400" id="modal-stock-info"></span>
                     </div>
                 </div>
+
+                <!-- Reviews Section -->
+                <div id="modal-reviews-section" class="px-5 py-4 border-t border-gray-100 dark:border-gray-800">
+                    <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">💬 Ulasan Pelanggan</p>
+                    <div id="modal-reviews-list" class="space-y-3 pb-2">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
             </div>
 
             <!-- Footer Action -->
-            <div class="px-5 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50/70 dark:bg-gray-900/50 flex-shrink-0">
+            <div id="modal-footer-action" class="px-5 py-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50/70 dark:bg-gray-900/50 flex-shrink-0">
                 <div class="flex items-center justify-between mb-3">
                     <span class="text-xs text-gray-500 dark:text-gray-400">Total</span>
                     <span class="font-extrabold text-amber-700 dark:text-amber-400 text-base" id="modal-line-total">Rp 0</span>
@@ -636,6 +649,11 @@
             @foreach($product->activeVariants as $v)
             { id: {{ $v->id }}, name: '{{ addslashes($v->name) }}', price_adjustment: {{ $v->price_adjustment }}, stock: {{ $v->stock }} },
             @endforeach
+        ],
+        reviews: [
+            @foreach($product->reviews as $rev)
+            { name: '{{ addslashes($rev->name) }}', rating: {{ $rev->rating }}, comment: '{{ addslashes(str_replace(["\r", "\n"], " ", $rev->comment)) }}', date: '{{ $rev->created_at->format('d M Y') }}' },
+            @endforeach
         ]
     };
     @endforeach
@@ -652,10 +670,41 @@
         qty: 1
     };
 
+    // HTML Escape Helper
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+
+    // Stars Generator Helper
+    function generateStarsHtml(rating) {
+        let html = '';
+        for (let i = 1; i <= 5; i++) {
+            if (i <= rating) {
+                html += '<span class="text-amber-500">★</span>';
+            } else {
+                html += '<span class="text-gray-300 dark:text-gray-600">★</span>';
+            }
+        }
+        return html;
+    }
+
     function openVariantModal(productId) {
         var prod = products[productId];
         if (!prod) return;
-        if (prod.stock <= 0) return; // Already sold out
+
+        var isOutOfStock = (prod.stock <= 0);
+
+        if (isOutOfStock) {
+            document.getElementById('modal-notes-section').classList.add('hidden');
+            document.getElementById('modal-qty-section').classList.add('hidden');
+            document.getElementById('modal-footer-action').classList.add('hidden');
+            document.getElementById('modal-variants-section').classList.add('hidden');
+        } else {
+            document.getElementById('modal-notes-section').classList.remove('hidden');
+            document.getElementById('modal-qty-section').classList.remove('hidden');
+            document.getElementById('modal-footer-action').classList.remove('hidden');
+        }
 
         // Reset modal state
         modalState.productId = productId;
@@ -666,7 +715,7 @@
         modalState.qty = 1;
 
         // Populate product info
-        document.getElementById('modal-product-title').textContent = prod.hasVariants ? 'Pilih Varian' : 'Tambah ke Keranjang';
+        document.getElementById('modal-product-title').textContent = isOutOfStock ? 'Detail Roti (Stok Habis)' : (prod.hasVariants ? 'Pilih Varian' : 'Tambah ke Keranjang');
         document.getElementById('modal-product-name').textContent = prod.name;
         document.getElementById('modal-product-desc').textContent = prod.description;
         document.getElementById('modal-product-price').textContent = 'Rp ' + prod.price.toLocaleString('id-ID');
@@ -697,7 +746,7 @@
         var chipsContainer = document.getElementById('modal-variant-chips');
         chipsContainer.innerHTML = '';
 
-        if (prod.hasVariants && prod.variants.length > 0) {
+        if (!isOutOfStock && prod.hasVariants && prod.variants.length > 0) {
             variantsSection.classList.remove('hidden');
             prod.variants.forEach(function(v) {
                 var chip = document.createElement('button');
@@ -713,18 +762,44 @@
                 }
                 chipsContainer.appendChild(chip);
             });
-            document.getElementById('modal-variant-note').textContent = 'Wajib pilih varian sebelum menambahkan ke keranjang';
+            var noteEl = document.getElementById('modal-variant-note');
+            if (noteEl) noteEl.textContent = 'Wajib pilih varian sebelum menambahkan ke keranjang';
             // Disable add button until variant selected
             document.getElementById('modal-add-btn').disabled = true;
         } else {
             variantsSection.classList.add('hidden');
-            document.getElementById('modal-add-btn').disabled = false;
+            document.getElementById('modal-add-btn').disabled = isOutOfStock;
         }
 
         // Stock info
         document.getElementById('modal-stock-info').textContent = 'Stok: ' + prod.stock;
         document.getElementById('modal-qty-display').textContent = '1';
         updateModalTotal();
+
+        // Populate customer reviews dynamically
+        var reviewsContainer = document.getElementById('modal-reviews-list');
+        if (reviewsContainer) {
+            reviewsContainer.innerHTML = '';
+            if (prod.reviews && prod.reviews.length > 0) {
+                prod.reviews.forEach(function(r) {
+                    var revDiv = document.createElement('div');
+                    revDiv.className = 'bg-gray-50 dark:bg-gray-800/40 rounded-2xl p-3 border border-amber-50/20 dark:border-gray-700/20';
+                    revDiv.innerHTML = `
+                        <div class="flex items-center justify-between">
+                            <p class="text-xs font-extrabold text-gray-800 dark:text-gray-200">${escapeHtml(r.name)}</p>
+                            <span class="text-[10px] text-gray-400 font-medium">${r.date}</span>
+                        </div>
+                        <div class="flex items-center mt-1 text-xs">
+                            ${generateStarsHtml(r.rating)}
+                        </div>
+                        <p class="text-xs text-gray-650 dark:text-gray-350 mt-1.5 leading-relaxed italic">"${escapeHtml(r.comment)}"</p>
+                    `;
+                    reviewsContainer.appendChild(revDiv);
+                });
+            } else {
+                reviewsContainer.innerHTML = '<p class="text-xs text-gray-400 dark:text-gray-500 italic py-2 text-center">Belum ada ulasan untuk produk ini.</p>';
+            }
+        }
 
         // Clear or load existing notes
         var noteInput = document.getElementById('modal-item-note');

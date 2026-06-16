@@ -10,30 +10,25 @@ class ProductController extends Controller
     public function index()
     {
         $categories = Category::where('is_active', true)->get();
-        $products = Product::with('category')
-            ->where('is_available', true)
-            ->latest()
-            ->paginate(12);
+        $categorySlug = request('category');
+        $search = request('search');
+
+        $query = Product::with('category')->where('is_available', true);
+
+        if ($categorySlug) {
+            $category = Category::where('slug', $categorySlug)->first();
+            if ($category) {
+                $query->where('category_id', $category->id);
+            }
+        }
+
+        if ($search) {
+            $query->where('name', 'like', "%{$search}%");
+        }
+
+        $products = $query->latest()->paginate(12);
 
         if (request()->ajax()) {
-            $categorySlug = request('category');
-            $search = request('search');
-
-            $query = Product::with('category')->where('is_available', true);
-
-            if ($categorySlug) {
-                $category = Category::where('slug', $categorySlug)->first();
-                if ($category) {
-                    $query->where('category_id', $category->id);
-                }
-            }
-
-            if ($search) {
-                $query->where('name', 'like', "%{$search}%");
-            }
-
-            $products = $query->latest()->paginate(12);
-
             return view('home.products-grid', compact('products'))->render();
         }
 

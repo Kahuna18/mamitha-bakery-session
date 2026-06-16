@@ -14,7 +14,7 @@ class OrderController extends Controller
 {
     public function create()
     {
-        $products = Product::with(['category', 'activeVariants'])
+        $products = Product::with(['category', 'activeVariants', 'reviews'])
             ->where('is_available', true)
             ->get();
 

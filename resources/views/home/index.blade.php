@@ -52,8 +52,16 @@
                     @else
                         <span class="text-6xl opacity-30 {{ $product->stock <= 0 ? 'grayscale' : '' }}">🍞</span>
                     @endif
+                    <!-- Tags overlay -->
+                    @if($product->is_featured)
+                    <div class="absolute top-2 left-2" style="position: absolute; top: 8px; left: 8px; z-index: 10;">
+                        <span class="bg-amber-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shadow-sm">
+                            🔥 Best Seller
+                        </span>
+                    </div>
+                    @endif
                     <!-- Stock Badge -->
-                    <div class="absolute top-2 right-2">
+                    <div class="absolute top-2 right-2" style="position: absolute; top: 8px; right: 8px; z-index: 10;">
                         @if($product->stock <= 0)
                             <span class="bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">Habis</span>
                         @else
@@ -61,7 +69,7 @@
                         @endif
                     </div>
                     @if($product->stock <= 0)
-                    <div class="absolute inset-0 bg-gray-900/20 flex items-center justify-center rounded-lg">
+                    <div class="absolute inset-0 bg-gray-900/20 flex items-center justify-center rounded-lg" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background-color: rgba(17, 24, 39, 0.2); z-index: 5;">
                         <span class="bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md transform -rotate-12">SOLD OUT</span>
                     </div>
                     @endif

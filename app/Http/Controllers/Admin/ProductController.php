@@ -33,6 +33,8 @@ class ProductController extends Controller
             'is_available' => 'boolean',
             'is_featured' => 'boolean',
             'stock' => 'integer|min:0',
+            'rating' => 'required|numeric|min:0|max:5',
+            'ready_time' => 'required|string|max:50',
         ]);
 
         $validated['slug'] = Str::slug($validated['name']);
@@ -78,6 +80,8 @@ class ProductController extends Controller
             'is_available' => 'boolean',
             'is_featured' => 'boolean',
             'stock' => 'integer|min:0',
+            'rating' => 'required|numeric|min:0|max:5',
+            'ready_time' => 'required|string|max:50',
         ]);
 
         $validated['is_available'] = $request->boolean('is_available');

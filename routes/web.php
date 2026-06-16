@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\SettingController as AdminSetting;
 use App\Http\Controllers\Admin\ReportController as AdminReport;
 use App\Http\Controllers\Admin\ProductVariantController as AdminProductVariant;
 use App\Http\Controllers\Admin\TestimonialController as AdminTestimonial;
+use App\Http\Controllers\Admin\ProductReviewController as AdminProductReview;
 use App\Http\Controllers\Kitchen\DashboardController as KitchenDashboard;
 use Illuminate\Support\Facades\Route;
 
@@ -55,6 +56,9 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
 
     // Testimonials
     Route::resource('testimonials', AdminTestimonial::class)->except('show');
+
+    // Product Reviews
+    Route::resource('reviews', AdminProductReview::class)->except('show');
 
     // Customers
     Route::get('/customers', [AdminCustomer::class, 'index'])->name('customers');
