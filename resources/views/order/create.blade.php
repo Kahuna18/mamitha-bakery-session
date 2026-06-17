@@ -639,12 +639,12 @@
     // Load initial products list details into JS object
     @foreach($products as $product)
     products[{{ $product->id }}] = {
-        name: '{{ addslashes($product->name) }}',
+        name: '{{ addslashes(str_replace(["\r", "\n"], " ", $product->name)) }}',
         price: {{ $product->price }},
         stock: {{ $product->stock ?? 0 }},
         hasVariants: {{ $product->activeVariants->isNotEmpty() ? 'true' : 'false' }},
         imageUrl: '{{ $product->image ? $product->image_url : '' }}',
-        description: '{{ addslashes($product->description ?? 'Roti hangat dan empuk yang dibuat fresh hari ini.') }}',
+        description: '{{ addslashes(str_replace(["\r", "\n"], " ", $product->description ?? 'Roti hangat dan empuk yang dibuat fresh hari ini.')) }}',
         variants: [
             @foreach($product->activeVariants as $v)
             { id: {{ $v->id }}, name: '{{ addslashes($v->name) }}', price_adjustment: {{ $v->price_adjustment }}, stock: {{ $v->stock }} },
