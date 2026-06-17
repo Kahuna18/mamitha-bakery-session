@@ -116,6 +116,98 @@
     #modal-add-btn {
         transition: all 0.2s ease;
     }
+
+    /* Drawer Tab Navigation */
+    .drawer-tab {
+        position: relative;
+        padding: 10px 20px;
+        font-size: 13px;
+        font-weight: 800;
+        border-radius: 9999px;
+        cursor: pointer;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        user-select: none;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+    }
+    .drawer-tab.active {
+        background: linear-gradient(135deg, #b45309, #d97706);
+        color: #fff;
+        box-shadow: 0 4px 14px rgba(180, 83, 9, 0.35);
+    }
+    .drawer-tab.inactive {
+        background: #f3f4f6;
+        color: #6b7280;
+    }
+    .dark .drawer-tab.inactive {
+        background: #1f2937;
+        color: #9ca3af;
+    }
+    .drawer-tab.inactive:hover {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    .dark .drawer-tab.inactive:hover {
+        background: #451a03;
+        color: #fbbf24;
+    }
+    .drawer-tab .tab-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 20px;
+        height: 20px;
+        padding: 0 6px;
+        border-radius: 9999px;
+        font-size: 10px;
+        font-weight: 900;
+        line-height: 1;
+    }
+    .drawer-tab.active .tab-badge {
+        background: rgba(255,255,255,0.25);
+        color: #fff;
+    }
+    .drawer-tab.inactive .tab-badge {
+        background: #e5e7eb;
+        color: #6b7280;
+    }
+    .dark .drawer-tab.inactive .tab-badge {
+        background: #374151;
+        color: #9ca3af;
+    }
+    /* Step indicator dots */
+    .step-indicator {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .step-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 9999px;
+        transition: all 0.3s ease;
+    }
+    .step-dot.active {
+        background: #b45309;
+        width: 24px;
+    }
+    .step-dot.inactive {
+        background: #d1d5db;
+    }
+    .dark .step-dot.inactive {
+        background: #4b5563;
+    }
+    .step-connector {
+        width: 20px;
+        height: 2px;
+        background: #e5e7eb;
+        border-radius: 9999px;
+    }
+    .dark .step-connector {
+        background: #374151;
+    }
 </style>
 @endpush
 
@@ -413,163 +505,191 @@
     <div id="checkout-overlay" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-50 opacity-0 pointer-events-none transition-all duration-300">
         <div class="absolute inset-y-0 right-0 max-w-lg w-full bg-white dark:bg-gray-900 shadow-2xl flex flex-col justify-between drawer-transition transform translate-x-full">
             
-            <!-- Drawer Header -->
-            <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                    <button onclick="toggleCheckoutDrawer(false)" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500">
-                        ←
-                    </button>
-                    <h2 class="text-xl font-bold font-serif text-gray-800 dark:text-gray-100">Checkout</h2>
+            <!-- Drawer Header with Tabs -->
+            <div class="px-5 pt-4 pb-3 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
+                <!-- Top row: back button + brand -->
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                        <button id="drawer-back-btn" onclick="handleDrawerBack()" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 font-extrabold text-base transition">
+                            ←
+                        </button>
+                        <h2 id="drawer-title" class="text-lg font-bold font-serif text-gray-800 dark:text-gray-100">Pesanan Anda</h2>
+                    </div>
+                    <span class="text-xs text-amber-700 dark:text-amber-400 font-bold bg-amber-50 dark:bg-amber-950/30 px-3 py-1 rounded-full">Mamitha Bakery</span>
                 </div>
-                <span class="text-xs text-amber-700 dark:text-amber-400 font-bold bg-amber-50 dark:bg-amber-950/30 px-3 py-1 rounded-full">Mamitha Bakery</span>
+
+                <!-- Tab Navigation -->
+                <div class="flex items-center gap-2">
+                    <button id="tab-cart" onclick="goToStep('cart')" class="drawer-tab active">
+                        🛒 Keranjang
+                        <span class="tab-badge" id="tab-cart-badge">0</span>
+                    </button>
+                    <button id="tab-checkout" onclick="goToStep('checkout')" class="drawer-tab inactive">
+                        📋 Checkout
+                    </button>
+                </div>
+
+                <!-- Step Indicator Dots -->
+                <div class="flex justify-center mt-3">
+                    <div class="step-indicator">
+                        <div id="step-dot-cart" class="step-dot active"></div>
+                        <div class="step-connector"></div>
+                        <div id="step-dot-checkout" class="step-dot inactive"></div>
+                    </div>
+                </div>
             </div>
 
-            <!-- Drawer Body (Form Content) -->
-            <div class="flex-1 overflow-y-auto px-6 py-4 space-y-6">
-                <form id="orderForm" method="POST" action="{{ route('order.store') }}">
-                    @csrf
-                    <!-- Dynamic Hidden Inputs Container -->
-                    <div id="hidden-cart-inputs"></div>
-
-                    <!-- Cart Items List -->
+            <!-- Drawer Body -->
+            <div class="flex-1 overflow-y-auto px-6 py-4">
+                <!-- Step 1: Keranjang Belanja -->
+                <div id="drawer-step-cart" class="space-y-6">
                     <div class="space-y-3">
-                        <h3 class="font-bold text-gray-700 dark:text-gray-300 text-sm tracking-wide uppercase">Pesanan Anda</h3>
+                        <h3 class="font-bold text-gray-700 dark:text-gray-300 text-sm tracking-wide uppercase">Daftar Belanjaan</h3>
                         <div id="cart-items-list" class="space-y-1">
                             <p class="text-center text-gray-400 text-sm py-4">Belum ada item dipilih</p>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Personal Information -->
-                    <div class="space-y-4">
-                        <h3 class="font-bold text-gray-700 dark:text-gray-300 text-sm tracking-wide uppercase">Data Diri</h3>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Nama Lengkap</label>
-                            <input type="text" name="name" required placeholder="Masukkan nama Anda" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border-0 rounded-2xl text-sm focus:ring-2 focus:ring-amber-500">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Nomor WhatsApp</label>
-                            <input type="tel" name="phone" required placeholder="Contoh: 08123456789" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border-0 rounded-2xl text-sm focus:ring-2 focus:ring-amber-500">
-                        </div>
-                    </div>
+                <!-- Step 2: Form Checkout -->
+                <div id="drawer-step-checkout" class="hidden space-y-6">
+                    <form id="orderForm" method="POST" action="{{ route('order.store') }}">
+                        @csrf
+                        <!-- Dynamic Hidden Inputs Container -->
+                        <div id="hidden-cart-inputs"></div>
 
-                    <!-- Delivery Type Options -->
-                    <div class="space-y-4 mt-6">
-                        <h3 class="font-bold text-gray-700 dark:text-gray-300 text-sm tracking-wide uppercase">Pilihan Pengiriman</h3>
-                        <div class="grid grid-cols-2 gap-3">
-                            <label class="border-2 border-gray-100 dark:border-gray-800 rounded-2xl p-4 cursor-pointer hover:border-amber-500 dark:hover:border-amber-600 transition flex flex-col items-center justify-center text-center has-[:checked]:border-amber-600 has-[:checked]:bg-amber-50/35">
-                                <input type="radio" name="type" value="pickup" checked class="hidden" onchange="updateDeliveryType('pickup')">
-                                <span class="text-2xl mb-1">🏪</span>
-                                <span class="font-bold text-xs text-gray-800 dark:text-gray-200">Ambil di Toko</span>
-                            </label>
-                            <label class="border-2 border-gray-100 dark:border-gray-800 rounded-2xl p-4 cursor-pointer hover:border-amber-500 dark:hover:border-amber-600 transition flex flex-col items-center justify-center text-center has-[:checked]:border-amber-600 has-[:checked]:bg-amber-50/35">
-                                <input type="radio" name="type" value="delivery" class="hidden" onchange="updateDeliveryType('delivery')">
-                                <span class="text-2xl mb-1">🚚</span>
-                                <span class="font-bold text-xs text-gray-800 dark:text-gray-200">Diantar Kurir</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <!-- Delivery Address & Leaflet Map (Shows only for delivery) -->
-                    <div id="delivery-details-section" class="hidden mt-6 space-y-4">
-                        <h3 class="font-bold text-gray-700 dark:text-gray-300 text-sm tracking-wide uppercase">Detail Lokasi</h3>
-                        <div class="relative">
-                            <input type="text" id="map-search" placeholder="Cari alamat di peta..." class="w-full pl-4 pr-10 py-3 bg-gray-50 dark:bg-gray-800 border-0 rounded-2xl text-sm focus:ring-2 focus:ring-amber-500" onkeydown="if(event.key==='Enter'){ searchAddress(); event.preventDefault(); }">
-                            <button type="button" onclick="searchAddress()" class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-500 hover:text-amber-500">
-                                🔍
-                            </button>
-                        </div>
-
-                        <!-- GPS Locate Me Button -->
-                        <button type="button" onclick="useMyLocation()" id="gps-btn" class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white text-xs font-extrabold rounded-2xl shadow-md transition-all duration-200 active:scale-[0.98]">
-                            <svg class="w-4 h-4 animate-none" id="gps-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                            <span id="gps-text">📍 Gunakan Lokasi Saya (GPS)</span>
-                        </button>
-                        
-                        <!-- Map Visual Container -->
-                        <div class="w-full rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden shadow-sm">
-                            <div id="map-container"></div>
-                        </div>
-
-                        <!-- Lat/Lng Hidden Inputs -->
-                        <input type="hidden" name="latitude" id="latitude">
-                        <input type="hidden" name="longitude" id="longitude">
-
-                        <div>
-                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Alamat Lengkap Pengiriman</label>
-                            <textarea name="address" id="address-text" rows="3" required placeholder="Tuliskan nama jalan, blok, nomor rumah..." class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border-0 rounded-2xl text-sm focus:ring-2 focus:ring-amber-500"></textarea>
-                        </div>
-
-                        <!-- Shipping Option Card -->
-                        <div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-2xl border border-gray-100 dark:border-gray-800 flex items-center justify-between">
-                            <div class="flex items-center gap-3">
-                                <span class="text-2xl">⚡</span>
-                                <div>
-                                    <p class="text-xs font-extrabold text-gray-800 dark:text-gray-200">Standard Delivery</p>
-                                    <p class="text-[10px] text-gray-400">Arriving in 15-20 min • Tercepat</p>
-                                </div>
+                        <!-- Personal Information -->
+                        <div class="space-y-4">
+                            <h3 class="font-bold text-gray-700 dark:text-gray-300 text-sm tracking-wide uppercase">Data Diri</h3>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Nama Lengkap</label>
+                                <input type="text" name="name" required placeholder="Masukkan nama Anda" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 dark:text-white transition">
                             </div>
-                            <span class="text-xs font-bold text-amber-700 dark:text-amber-400">Rp 10.000</span>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Nomor WhatsApp</label>
+                                <input type="tel" name="phone" required placeholder="Contoh: 08123456789" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 dark:text-white transition">
+                            </div>
                         </div>
-                    </div>
 
-                    <!-- Pickup/Delivery Schedule Date -->
-                    <div class="space-y-4 mt-6">
-                        <h3 class="font-bold text-gray-700 dark:text-gray-300 text-sm tracking-wide uppercase">Waktu Pengambilan</h3>
-                        <input type="date" name="pickup_date" id="pickup-date-input" value="{{ date('Y-m-d') }}" min="{{ date('Y-m-d') }}" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border-0 rounded-2xl text-sm focus:ring-2 focus:ring-amber-500">
-                    </div>
-
-                    <!-- Order Notes -->
-                    <div class="space-y-4 mt-6">
-                        <h3 class="font-bold text-gray-700 dark:text-gray-300 text-sm tracking-wide uppercase">Catatan Tambahan</h3>
-                        <textarea name="notes" rows="2" placeholder="Catatan opsional (contoh: jangan terlalu manis, dll)" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border-0 rounded-2xl text-sm focus:ring-2 focus:ring-amber-500"></textarea>
-                    </div>
-
-                    <!-- Payment Methods (Tiktok Checkout Style) -->
-                    <div class="space-y-4 mt-6">
-                        <h3 class="font-bold text-gray-700 dark:text-gray-300 text-sm tracking-wide uppercase">Metode Pembayaran</h3>
-                        <div class="space-y-2">
-                            <!-- Transfer Bank -->
-                            <label class="border-2 border-gray-100 dark:border-gray-800 rounded-2xl p-4 cursor-pointer hover:border-amber-500 dark:hover:border-amber-600 transition flex items-center justify-between has-[:checked]:border-amber-600 has-[:checked]:bg-amber-50/35">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 bg-amber-50 dark:bg-amber-950/20 rounded-xl flex items-center justify-center text-lg">🏦</div>
-                                    <div>
-                                        <p class="font-bold text-xs text-gray-800 dark:text-gray-200">Transfer Bank / QRIS</p>
-                                        <p class="text-[10px] text-gray-400">Verifikasi otomatis & aman</p>
-                                    </div>
-                                </div>
-                                <input type="radio" name="payment_method" value="transfer" checked class="text-amber-600 focus:ring-amber-500">
-                            </label>
-
-                            <!-- WhatsApp Manual -->
-                            <label class="border-2 border-gray-100 dark:border-gray-800 rounded-2xl p-4 cursor-pointer hover:border-amber-500 dark:hover:border-amber-600 transition flex items-center justify-between has-[:checked]:border-amber-600 has-[:checked]:bg-amber-50/35">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 bg-green-50 dark:bg-green-950/20 rounded-xl flex items-center justify-center text-lg">💬</div>
-                                    <div>
-                                        <p class="font-bold text-xs text-gray-800 dark:text-gray-200">WhatsApp Confirmation</p>
-                                        <p class="text-[10px] text-gray-400">Konfirmasi detail manual dengan admin</p>
-                                    </div>
-                                </div>
-                                <input type="radio" name="payment_method" value="whatsapp" class="text-amber-600 focus:ring-amber-500">
-                            </label>
-
-                            <!-- Cash On Delivery -->
-                            <label class="border-2 border-gray-100 dark:border-gray-800 rounded-2xl p-4 cursor-pointer hover:border-amber-500 dark:hover:border-amber-600 transition flex items-center justify-between has-[:checked]:border-amber-600 has-[:checked]:bg-amber-50/35">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 bg-orange-50 dark:bg-orange-950/20 rounded-xl flex items-center justify-center text-lg">💵</div>
-                                    <div>
-                                        <p class="font-bold text-xs text-gray-800 dark:text-gray-200">Cash On Delivery / COD</p>
-                                        <p class="text-[10px] text-gray-400">Bayar saat roti diterima</p>
-                                    </div>
-                                </div>
-                                <input type="radio" name="payment_method" value="cod" class="text-amber-600 focus:ring-amber-500">
-                            </label>
+                        <!-- Delivery Type Options -->
+                        <div class="space-y-4 mt-6">
+                            <h3 class="font-bold text-gray-700 dark:text-gray-300 text-sm tracking-wide uppercase">Pilihan Pengiriman</h3>
+                            <div class="grid grid-cols-2 gap-3">
+                                <label class="border-2 border-gray-100 dark:border-gray-800 rounded-2xl p-4 cursor-pointer hover:border-amber-500 dark:hover:border-amber-600 transition flex flex-col items-center justify-center text-center has-[:checked]:border-amber-600 has-[:checked]:bg-amber-50/35">
+                                    <input type="radio" name="type" value="pickup" checked class="hidden" onchange="updateDeliveryType('pickup')">
+                                    <span class="text-2xl mb-1">🏪</span>
+                                    <span class="font-bold text-xs text-gray-800 dark:text-gray-200">Ambil di Toko</span>
+                                </label>
+                                <label class="border-2 border-gray-100 dark:border-gray-800 rounded-2xl p-4 cursor-pointer hover:border-amber-500 dark:hover:border-amber-600 transition flex flex-col items-center justify-center text-center has-[:checked]:border-amber-600 has-[:checked]:bg-amber-50/35">
+                                    <input type="radio" name="type" value="delivery" class="hidden" onchange="updateDeliveryType('delivery')">
+                                    <span class="text-2xl mb-1">🚚</span>
+                                    <span class="font-bold text-xs text-gray-800 dark:text-gray-200">Diantar Kurir</span>
+                                </label>
+                            </div>
                         </div>
-                    </div>
-                </form>
+
+                        <!-- Delivery Address & Leaflet Map (Shows only for delivery) -->
+                        <div id="delivery-details-section" class="hidden mt-6 space-y-4">
+                            <h3 class="font-bold text-gray-700 dark:text-gray-300 text-sm tracking-wide uppercase">Detail Lokasi</h3>
+                            <div class="relative">
+                                <input type="text" id="map-search" placeholder="Cari alamat di peta..." class="w-full pl-4 pr-10 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 dark:text-white transition" onkeydown="if(event.key==='Enter'){ searchAddress(); event.preventDefault(); }">
+                                <button type="button" onclick="searchAddress()" class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-500 hover:text-amber-500">
+                                    🔍
+                                </button>
+                            </div>
+
+                            <!-- GPS Locate Me Button -->
+                            <button type="button" onclick="useMyLocation()" id="gps-btn" class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white text-xs font-extrabold rounded-2xl shadow-md transition-all duration-200 active:scale-[0.98]">
+                                <svg class="w-4 h-4 animate-none" id="gps-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                <span id="gps-text">📍 Gunakan Lokasi Saya (GPS)</span>
+                            </button>
+                            
+                            <!-- Map Visual Container -->
+                            <div class="w-full rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden shadow-sm">
+                                <div id="map-container" style="height: 200px;"></div>
+                            </div>
+
+                            <!-- Lat/Lng Hidden Inputs -->
+                            <input type="hidden" name="latitude" id="latitude">
+                            <input type="hidden" name="longitude" id="longitude">
+
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Alamat Lengkap Pengiriman</label>
+                                <textarea name="address" id="address-text" rows="3" placeholder="Tuliskan nama jalan, blok, nomor rumah..." class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 dark:text-white transition"></textarea>
+                            </div>
+
+                            <!-- Shipping Option Card -->
+                            <div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-2xl border border-gray-100 dark:border-gray-800 flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-2xl">⚡</span>
+                                    <div>
+                                        <p class="text-xs font-extrabold text-gray-800 dark:text-gray-200">Standard Delivery</p>
+                                        <p class="text-[10px] text-gray-400">Arriving in 15-20 min • Tercepat</p>
+                                    </div>
+                                </div>
+                                <span class="text-xs font-bold text-amber-700 dark:text-amber-400">Rp 10.000</span>
+                            </div>
+                        </div>
+
+                        <!-- Pickup/Delivery Schedule Date -->
+                        <div class="space-y-4 mt-6">
+                            <h3 class="font-bold text-gray-700 dark:text-gray-300 text-sm tracking-wide uppercase">Waktu Pengambilan</h3>
+                            <input type="date" name="pickup_date" id="pickup-date-input" value="{{ date('Y-m-d') }}" min="{{ date('Y-m-d') }}" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 dark:text-white transition">
+                        </div>
+
+                        <!-- Order Notes -->
+                        <div class="space-y-4 mt-6">
+                            <h3 class="font-bold text-gray-700 dark:text-gray-300 text-sm tracking-wide uppercase">Catatan Tambahan</h3>
+                            <textarea name="notes" rows="2" placeholder="Catatan opsional (contoh: jangan terlalu manis, dll)" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 dark:text-white transition"></textarea>
+                        </div>
+
+                        <!-- Payment Methods (Tiktok Checkout Style) -->
+                        <div class="space-y-4 mt-6">
+                            <h3 class="font-bold text-gray-700 dark:text-gray-300 text-sm tracking-wide uppercase">Metode Pembayaran</h3>
+                            <div class="space-y-2">
+                                <!-- Transfer Bank -->
+                                <label class="border-2 border-gray-100 dark:border-gray-800 rounded-2xl p-4 cursor-pointer hover:border-amber-500 dark:hover:border-amber-600 transition flex items-center justify-between has-[:checked]:border-amber-600 has-[:checked]:bg-amber-50/35">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 bg-amber-50 dark:bg-amber-950/20 rounded-xl flex items-center justify-center text-lg">🏦</div>
+                                        <div>
+                                            <p class="font-bold text-xs text-gray-800 dark:text-gray-200">Transfer Bank / QRIS</p>
+                                            <p class="text-[10px] text-gray-400">Verifikasi otomatis & aman</p>
+                                        </div>
+                                    </div>
+                                    <input type="radio" name="payment_method" value="transfer" checked class="text-amber-600 focus:ring-amber-500">
+                                </label>
+
+                                <!-- WhatsApp Manual -->
+                                <label class="border-2 border-gray-100 dark:border-gray-800 rounded-2xl p-4 cursor-pointer hover:border-amber-500 dark:hover:border-amber-600 transition flex items-center justify-between has-[:checked]:border-amber-600 has-[:checked]:bg-amber-50/35">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 bg-green-50 dark:bg-green-950/20 rounded-xl flex items-center justify-center text-lg">💬</div>
+                                        <div>
+                                            <p class="font-bold text-xs text-gray-800 dark:text-gray-200">WhatsApp Confirmation</p>
+                                            <p class="text-[10px] text-gray-400">Konfirmasi detail manual dengan admin</p>
+                                        </div>
+                                    </div>
+                                    <input type="radio" name="payment_method" value="whatsapp" class="text-amber-600 focus:ring-amber-500">
+                                </label>
+
+                                <!-- Cash On Delivery -->
+                                <label class="border-2 border-gray-100 dark:border-gray-800 rounded-2xl p-4 cursor-pointer hover:border-amber-500 dark:hover:border-amber-600 transition flex items-center justify-between has-[:checked]:border-amber-600 has-[:checked]:bg-amber-50/35">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 bg-orange-50 dark:bg-orange-950/20 rounded-xl flex items-center justify-center text-lg">💵</div>
+                                        <div>
+                                            <p class="font-bold text-xs text-gray-800 dark:text-gray-200">Cash On Delivery / COD</p>
+                                            <p class="text-[10px] text-gray-400">Bayar saat roti diterima</p>
+                                        </div>
+                                    </div>
+                                    <input type="radio" name="payment_method" value="cod" class="text-amber-600 focus:ring-amber-500">
+                                </label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
             </div>
 
-            <!-- Drawer Footer (Order Summary & Pay Button) -->
-            <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 space-y-4 bg-gray-50/70 dark:bg-gray-900/50">
+            <!-- Drawer Footer (Order Summary & Action Buttons) -->
+            <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-800 space-y-4 bg-gray-50/70 dark:bg-gray-900/50 flex-shrink-0">
                 <div class="space-y-1.5 text-xs text-gray-500 dark:text-gray-400">
                     <div class="flex justify-between">
                         <span>Harga Roti (Subtotal)</span>
@@ -589,8 +709,11 @@
                     </div>
                 </div>
 
-                <!-- Pay Button -->
-                <button type="button" onclick="submitOrder()" class="w-full py-4 bg-gray-900 dark:bg-gray-100 hover:bg-amber-700 dark:hover:bg-amber-600 text-white dark:text-gray-900 font-extrabold text-sm rounded-2xl shadow-xl transition-all duration-200">
+                <!-- Footer Step Buttons -->
+                <button type="button" id="cart-next-btn" onclick="goToStep('checkout')" class="w-full py-4 bg-gray-900 dark:bg-gray-100 hover:bg-amber-700 dark:hover:bg-amber-600 text-white dark:text-gray-900 font-extrabold text-sm rounded-2xl shadow-xl transition-all duration-200">
+                    Lanjut ke Checkout →
+                </button>
+                <button type="button" id="checkout-submit-btn" onclick="submitOrder()" class="hidden w-full py-4 bg-gray-900 dark:bg-gray-100 hover:bg-amber-700 dark:hover:bg-amber-600 text-white dark:text-gray-900 font-extrabold text-sm rounded-2xl shadow-xl transition-all duration-200">
                     Pesan Sekarang & Hubungi Admin →
                 </button>
             </div>
@@ -1175,6 +1298,10 @@
         var itemCountSpan = document.getElementById('cart-item-count');
         var totalPriceSpan = document.getElementById('cart-total-price');
 
+        // Update tab badge count
+        var tabBadge = document.getElementById('tab-cart-badge');
+        if (tabBadge) tabBadge.textContent = totalItems;
+
         if (totalItems > 0) {
             floatingCart.classList.remove('translate-y-32', 'opacity-0');
             floatingCart.classList.add('translate-y-0', 'opacity-100');
@@ -1272,6 +1399,9 @@
         const drawer = overlay.querySelector('.drawer-transition');
 
         if (open) {
+            // Always start on the cart tab when opening
+            goToStep('cart');
+
             overlay.classList.remove('opacity-0', 'pointer-events-none');
             overlay.classList.add('opacity-100');
             drawer.classList.remove('translate-x-full');
@@ -1288,6 +1418,85 @@
             overlay.classList.remove('opacity-100');
             drawer.classList.add('translate-x-full');
             drawer.classList.remove('translate-x-0');
+        }
+    }
+
+    // =========================================================================
+    // Drawer Step/Tab Navigation
+    // =========================================================================
+    let currentDrawerStep = 'cart';
+
+    function goToStep(step) {
+        currentDrawerStep = step;
+
+        const cartStep = document.getElementById('drawer-step-cart');
+        const checkoutStep = document.getElementById('drawer-step-checkout');
+        const cartNextBtn = document.getElementById('cart-next-btn');
+        const checkoutSubmitBtn = document.getElementById('checkout-submit-btn');
+        const tabCart = document.getElementById('tab-cart');
+        const tabCheckout = document.getElementById('tab-checkout');
+        const dotCart = document.getElementById('step-dot-cart');
+        const dotCheckout = document.getElementById('step-dot-checkout');
+
+        if (step === 'cart') {
+            // Show cart step
+            cartStep.classList.remove('hidden');
+            checkoutStep.classList.add('hidden');
+            cartNextBtn.classList.remove('hidden');
+            checkoutSubmitBtn.classList.add('hidden');
+
+            // Update tabs
+            tabCart.classList.remove('inactive');
+            tabCart.classList.add('active');
+            tabCheckout.classList.remove('active');
+            tabCheckout.classList.add('inactive');
+
+            // Update dots
+            dotCart.classList.remove('inactive');
+            dotCart.classList.add('active');
+            dotCheckout.classList.remove('active');
+            dotCheckout.classList.add('inactive');
+        } else if (step === 'checkout') {
+            // Check if cart is empty
+            if (Object.keys(cart).length === 0) {
+                // Shake the cart tab to hint it's empty
+                tabCart.classList.add('animate-pulse');
+                setTimeout(() => tabCart.classList.remove('animate-pulse'), 600);
+                return;
+            }
+
+            // Show checkout step
+            cartStep.classList.add('hidden');
+            checkoutStep.classList.remove('hidden');
+            cartNextBtn.classList.add('hidden');
+            checkoutSubmitBtn.classList.remove('hidden');
+
+            // Update tabs
+            tabCheckout.classList.remove('inactive');
+            tabCheckout.classList.add('active');
+            tabCart.classList.remove('active');
+            tabCart.classList.add('inactive');
+
+            // Update dots
+            dotCheckout.classList.remove('inactive');
+            dotCheckout.classList.add('active');
+            dotCart.classList.remove('active');
+            dotCart.classList.add('inactive');
+
+            // Trigger map resize if delivery is selected
+            setTimeout(() => {
+                if (map) map.invalidateSize();
+            }, 300);
+        }
+    }
+
+    function handleDrawerBack() {
+        if (currentDrawerStep === 'checkout') {
+            // Go back to cart
+            goToStep('cart');
+        } else {
+            // Close the drawer entirely
+            toggleCheckoutDrawer(false);
         }
     }
 
