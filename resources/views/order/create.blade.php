@@ -292,7 +292,7 @@
                         </button>
                         
                         <!-- Quantity Selector Controls (Hidden initially) -->
-                        <div class="qty-controls absolute inset-0 bg-gray-900 dark:bg-gray-100 rounded-full flex items-center justify-between px-2 text-white dark:text-gray-900 scale-0 opacity-0 transition duration-200">
+                        <div class="qty-controls absolute inset-0 bg-gray-900 dark:bg-gray-100 rounded-full flex items-center justify-between px-2 text-white dark:text-gray-900 scale-0 opacity-0 pointer-events-none transition duration-200">
                             <button onclick="event.stopPropagation(); decrementQty({{ $product->id }})" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-800 dark:hover:bg-gray-200 font-extrabold text-sm">-</button>
                             <span class="font-extrabold text-sm" id="card-qty-{{ $product->id }}">0</span>
                             <button onclick="event.stopPropagation(); incrementQty({{ $product->id }})" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-800 dark:hover:bg-gray-200 font-extrabold text-sm">+</button>
@@ -975,9 +975,9 @@
             var addBtn = container.querySelector('.add-btn');
             var qtyControls = container.querySelector('.qty-controls');
             if (addBtn && qtyControls) {
-                addBtn.classList.add('scale-0', 'opacity-0');
-                qtyControls.classList.remove('scale-0', 'opacity-0');
-                qtyControls.classList.add('scale-100', 'opacity-100');
+                addBtn.classList.add('scale-0', 'opacity-0', 'pointer-events-none');
+                qtyControls.classList.remove('scale-0', 'opacity-0', 'pointer-events-none');
+                qtyControls.classList.add('scale-100', 'opacity-100', 'pointer-events-auto');
             }
         }
 
@@ -1000,15 +1000,15 @@
 
         if (select.value && cart[key]) {
             // Already in cart, show qty controls
-            addBtn.classList.add('scale-0', 'opacity-0');
-            qtyControls.classList.remove('scale-0', 'opacity-0');
-            qtyControls.classList.add('scale-100', 'opacity-100');
+            addBtn.classList.add('scale-0', 'opacity-0', 'pointer-events-none');
+            qtyControls.classList.remove('scale-0', 'opacity-0', 'pointer-events-none');
+            qtyControls.classList.add('scale-100', 'opacity-100', 'pointer-events-auto');
             if (qtySpan) qtySpan.textContent = cart[key].qty;
         } else {
             // Not in cart, reset to ADD button
-            qtyControls.classList.remove('scale-100', 'opacity-100');
-            qtyControls.classList.add('scale-0', 'opacity-0');
-            addBtn.classList.remove('scale-0', 'opacity-0');
+            qtyControls.classList.remove('scale-100', 'opacity-100', 'pointer-events-auto');
+            qtyControls.classList.add('scale-0', 'opacity-0', 'pointer-events-none');
+            addBtn.classList.remove('scale-0', 'opacity-0', 'pointer-events-none');
             addBtn.classList.add('scale-100', 'opacity-100');
             if (qtySpan) qtySpan.textContent = '0';
         }
@@ -1132,9 +1132,9 @@
                 if (container) {
                     var addBtn = container.querySelector('.add-btn');
                     var qtyControls = container.querySelector('.qty-controls');
-                    addBtn.classList.add('scale-0', 'opacity-0');
-                    qtyControls.classList.remove('scale-0', 'opacity-0');
-                    qtyControls.classList.add('scale-100', 'opacity-100');
+                    addBtn.classList.add('scale-0', 'opacity-0', 'pointer-events-none');
+                    qtyControls.classList.remove('scale-0', 'opacity-0', 'pointer-events-none');
+                    qtyControls.classList.add('scale-100', 'opacity-100', 'pointer-events-auto');
                 }
                 if (cardQtySpan) cardQtySpan.textContent = cart[key].qty;
             }
@@ -1225,9 +1225,9 @@
         var addBtn = container.querySelector('.add-btn');
         var qtyControls = container.querySelector('.qty-controls');
 
-        qtyControls.classList.remove('scale-100', 'opacity-100');
-        qtyControls.classList.add('scale-0', 'opacity-0');
-        addBtn.classList.remove('scale-0', 'opacity-0');
+        qtyControls.classList.remove('scale-100', 'opacity-100', 'pointer-events-auto');
+        qtyControls.classList.add('scale-0', 'opacity-0', 'pointer-events-none');
+        addBtn.classList.remove('scale-0', 'opacity-0', 'pointer-events-none');
         addBtn.classList.add('scale-100', 'opacity-100');
 
         var cardQtySpan = document.getElementById('card-qty-' + productId);
