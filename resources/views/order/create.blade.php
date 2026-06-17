@@ -287,7 +287,7 @@
                     @if($product->stock > 0)
                     <div class="relative w-28 h-10 flex items-center justify-end" id="btn-container-{{ $product->id }}">
                         <!-- Add Button -->
-                        <button onclick="event.stopPropagation(); {{ $product->activeVariants->isNotEmpty() ? 'openVariantModal(' . $product->id . ')' : 'addToCart(' . $product->id . ')' }}" class="add-btn px-4 py-2 bg-gray-900 dark:bg-gray-100 hover:bg-amber-700 dark:hover:bg-amber-500 text-white dark:text-gray-900 text-xs font-extrabold rounded-full shadow-sm hover:shadow-md transition duration-200">
+                        <button onclick="event.stopPropagation(); openVariantModal({{ $product->id }})" class="add-btn px-4 py-2 bg-gray-900 dark:bg-gray-100 hover:bg-amber-700 dark:hover:bg-amber-500 text-white dark:text-gray-900 text-xs font-extrabold rounded-full shadow-sm hover:shadow-md transition duration-200">
                             + ADD
                         </button>
                         
