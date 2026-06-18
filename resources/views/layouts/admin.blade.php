@@ -110,7 +110,7 @@
         }
         /* Sidebar dark mode */
         html.dark aside#sidebar,
-        html.dark aside#mobile-sidebar aside {
+        html.dark #mobile-sidebar aside {
             background-color: #16120e !important;
             border-right: 1px solid rgba(255, 255, 255, 0.05) !important;
         }
