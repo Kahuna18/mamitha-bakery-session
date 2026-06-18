@@ -133,6 +133,10 @@
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
                     Dashboard
                 </a>
+                <a href="{{ route('home') }}" class="flex items-center px-4 py-2.5 rounded-lg text-sm text-amber-200 hover:bg-amber-800 hover:text-white transition">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                    Halaman Toko
+                </a>
                 <a href="{{ route('admin.reports.index') }}" class="flex items-center px-4 py-2.5 rounded-lg text-sm {{ request()->routeIs('admin.reports.*') ? 'bg-amber-800 text-white font-medium' : 'text-amber-200 hover:bg-amber-800 hover:text-white' }} transition">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
                     Laporan Keuangan
@@ -184,9 +188,15 @@
         <div class="flex-1 flex flex-col overflow-hidden">
             <header class="bg-white shadow-sm border-b border-gray-200">
                 <div class="flex items-center justify-between px-4 py-3">
-                    <button id="sidebar-toggle" class="md:hidden p-2 rounded-lg hover:bg-gray-100">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-                    </button>
+                    <div class="flex items-center space-x-2">
+                        <button id="sidebar-toggle" class="md:hidden p-2 rounded-lg hover:bg-gray-100">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        </button>
+                        <a href="{{ route('admin.dashboard') }}" class="flex md:hidden items-center space-x-2">
+                            <img src="{{ asset('images/logo.jpeg') }}" class="h-8 w-8 rounded-lg object-cover" alt="Logo">
+                            <span class="font-semibold text-base text-gray-800 dark:text-white">Mamitha Admin</span>
+                        </a>
+                    </div>
                     <div class="flex items-center space-x-3">
                         <div id="printer-status"></div>
                         <button onclick="ThermalPrinter.openSettings()" class="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-medium rounded-lg transition flex items-center gap-1.5" title="Pengaturan Printer">
@@ -214,25 +224,70 @@
         <div class="absolute inset-0 bg-black/50" onclick="document.getElementById('mobile-sidebar').classList.add('hidden')"></div>
         <aside class="absolute left-0 top-0 bottom-0 bg-amber-900 text-amber-100 w-64 flex flex-col">
             <div class="p-4 border-b border-amber-800 flex justify-between items-center">
-                <span class="font-semibold text-lg">Menu</span>
+                <a href="{{ route('admin.dashboard') }}" class="flex items-center space-x-2">
+                    <img src="{{ asset('images/logo.jpeg') }}" class="h-8 w-8 rounded-lg object-cover" alt="Logo">
+                    <span class="font-semibold text-lg">Mamitha Admin</span>
+                </a>
                 <button onclick="document.getElementById('mobile-sidebar').classList.add('hidden')" class="p-1 hover:bg-amber-800 rounded">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
             <nav class="flex-1 overflow-y-auto p-3 space-y-1">
-                <a href="{{ route('admin.dashboard') }}" class="flex items-center px-4 py-2.5 rounded-lg text-sm {{ request()->routeIs('admin.dashboard') ? 'bg-amber-800 text-white font-medium' : 'text-amber-200 hover:bg-amber-800 hover:text-white' }}">Dashboard</a>
-                <a href="{{ route('admin.reports.index') }}" class="flex items-center px-4 py-2.5 rounded-lg text-sm {{ request()->routeIs('admin.reports.*') ? 'bg-amber-800 text-white font-medium' : 'text-amber-200 hover:bg-amber-800 hover:text-white' }}">Laporan Keuangan</a>
-                <a href="{{ route('admin.orders.index') }}" class="flex items-center px-4 py-2.5 rounded-lg text-sm {{ request()->routeIs('admin.orders.*') ? 'bg-amber-800 text-white font-medium' : 'text-amber-200 hover:bg-amber-800 hover:text-white' }}">Order Masuk</a>
-                <a href="{{ route('admin.products.index') }}" class="flex items-center px-4 py-2.5 rounded-lg text-sm {{ request()->routeIs('admin.products.*') ? 'bg-amber-800 text-white font-medium' : 'text-amber-200 hover:bg-amber-800 hover:text-white' }}">Produk</a>
-                <a href="{{ route('admin.categories.index') }}" class="flex items-center px-4 py-2.5 rounded-lg text-sm {{ request()->routeIs('admin.categories.*') ? 'bg-amber-800 text-white font-medium' : 'text-amber-200 hover:bg-amber-800 hover:text-white' }}">Kategori</a>
-                <a href="{{ route('admin.testimonials.index') }}" class="flex items-center px-4 py-2.5 rounded-lg text-sm {{ request()->routeIs('admin.testimonials.*') ? 'bg-amber-800 text-white font-medium' : 'text-amber-200 hover:bg-amber-800 hover:text-white' }}">Testimoni Toko</a>
-                <a href="{{ route('admin.reviews.index') }}" class="flex items-center px-4 py-2.5 rounded-lg text-sm {{ request()->routeIs('admin.reviews.*') ? 'bg-amber-800 text-white font-medium' : 'text-amber-200 hover:bg-amber-800 hover:text-white' }}">Ulasan Produk</a>
-                <a href="{{ route('admin.kitchen') }}" class="flex items-center px-4 py-2.5 rounded-lg text-sm {{ request()->routeIs('admin.kitchen') ? 'bg-amber-800 text-white font-medium' : 'text-amber-200 hover:bg-amber-800 hover:text-white' }}">Kitchen</a>
-                <a href="{{ route('admin.customers') }}" class="flex items-center px-4 py-2.5 rounded-lg text-sm {{ request()->routeIs('admin.customers') ? 'bg-amber-800 text-white font-medium' : 'text-amber-200 hover:bg-amber-800 hover:text-white' }}">Pelanggan</a>
-                <a href="{{ route('admin.settings.index') }}" class="flex items-center px-4 py-2.5 rounded-lg text-sm {{ request()->routeIs('admin.settings.*') ? 'bg-amber-800 text-white font-medium' : 'text-amber-200 hover:bg-amber-800 hover:text-white' }}">Pengaturan Toko</a>
+                <a href="{{ route('admin.dashboard') }}" class="flex items-center px-4 py-2.5 rounded-lg text-sm {{ request()->routeIs('admin.dashboard') ? 'bg-amber-800 text-white font-medium' : 'text-amber-200 hover:bg-amber-800 hover:text-white' }} transition">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+                    Dashboard
+                </a>
+                <a href="{{ route('home') }}" class="flex items-center px-4 py-2.5 rounded-lg text-sm text-amber-200 hover:bg-amber-800 hover:text-white transition">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                    Halaman Toko
+                </a>
+                <a href="{{ route('admin.reports.index') }}" class="flex items-center px-4 py-2.5 rounded-lg text-sm {{ request()->routeIs('admin.reports.*') ? 'bg-amber-800 text-white font-medium' : 'text-amber-200 hover:bg-amber-800 hover:text-white' }} transition">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                    Laporan Keuangan
+                </a>
+                <a href="{{ route('admin.orders.index') }}" class="flex items-center px-4 py-2.5 rounded-lg text-sm {{ request()->routeIs('admin.orders.*') ? 'bg-amber-800 text-white font-medium' : 'text-amber-200 hover:bg-amber-800 hover:text-white' }} transition">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                    Order Masuk
+                </a>
+                <a href="{{ route('admin.products.index') }}" class="flex items-center px-4 py-2.5 rounded-lg text-sm {{ request()->routeIs('admin.products.*') ? 'bg-amber-800 text-white font-medium' : 'text-amber-200 hover:bg-amber-800 hover:text-white' }} transition">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                    Produk
+                </a>
+                <a href="{{ route('admin.categories.index') }}" class="flex items-center px-4 py-2.5 rounded-lg text-sm {{ request()->routeIs('admin.categories.*') ? 'bg-amber-800 text-white font-medium' : 'text-amber-200 hover:bg-amber-800 hover:text-white' }} transition">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                    Kategori
+                </a>
+                <a href="{{ route('admin.testimonials.index') }}" class="flex items-center px-4 py-2.5 rounded-lg text-sm {{ request()->routeIs('admin.testimonials.*') ? 'bg-amber-800 text-white font-medium' : 'text-amber-200 hover:bg-amber-800 hover:text-white' }} transition">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                    Testimoni Toko
+                </a>
+                <a href="{{ route('admin.reviews.index') }}" class="flex items-center px-4 py-2.5 rounded-lg text-sm {{ request()->routeIs('admin.reviews.*') ? 'bg-amber-800 text-white font-medium' : 'text-amber-200 hover:bg-amber-800 hover:text-white' }} transition">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.907c.961 0 1.361 1.248.58 1.81l-3.97 2.883a1 1 0 00-.364 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.971-2.883a1 1 0 00-1.18 0l-3.97 2.883c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.364-1.118L2.98 9.42c-.782-.563-.382-1.81.58-1.81h4.908a1 1 0 00.95-.69l1.519-4.674z"/></svg>
+                    Ulasan Produk
+                </a>
+                <a href="{{ route('admin.kitchen') }}" class="flex items-center px-4 py-2.5 rounded-lg text-sm {{ request()->routeIs('admin.kitchen') ? 'bg-amber-800 text-white font-medium' : 'text-amber-200 hover:bg-amber-800 hover:text-white' }} transition">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"/></svg>
+                    Kitchen
+                </a>
+                <a href="{{ route('admin.customers') }}" class="flex items-center px-4 py-2.5 rounded-lg text-sm {{ request()->routeIs('admin.customers') ? 'bg-amber-800 text-white font-medium' : 'text-amber-200 hover:bg-amber-800 hover:text-white' }} transition">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/></svg>
+                    Pelanggan
+                </a>
+                <a href="{{ route('admin.settings.index') }}" class="flex items-center px-4 py-2.5 rounded-lg text-sm {{ request()->routeIs('admin.settings.*') ? 'bg-amber-800 text-white font-medium' : 'text-amber-200 hover:bg-amber-800 hover:text-white' }} transition">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    Pengaturan Toko
+                </a>
             </nav>
+            <div class="p-3 border-t border-amber-800">
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button type="submit" class="flex items-center w-full px-4 py-2.5 rounded-lg text-sm text-amber-200 hover:bg-amber-800 hover:text-white transition">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                        Keluar
+                    </button>
+                </form>
+            </div>
         </aside>
-    </div>
 
     <script>
         document.getElementById('sidebar-toggle')?.addEventListener('click', function() {
