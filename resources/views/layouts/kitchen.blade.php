@@ -19,9 +19,9 @@
                     <span class="text-xl">🍳</span>
                     <span class="font-semibold">Mamitha Kitchen</span>
                 </div>
-                <div class="flex items-center space-x-3">
+                <div class="flex items-center space-x-2 sm:space-x-3">
                     <!-- Printer status badge -->
-                    <div id="printer-status"></div>
+                    <div id="printer-status" class="hidden sm:block"></div>
 
                     <!-- Printer settings button -->
                     <button onclick="ThermalPrinter.openSettings()"
@@ -30,7 +30,7 @@
                         🖨️ Printer
                     </button>
 
-                    <span class="text-sm text-amber-200">{{ auth()->user()->name }}</span>
+                    <span class="text-sm text-amber-200 hidden md:inline">{{ auth()->user()->name }}</span>
                     @if(auth()->user()->role === 'admin')
                         <a href="{{ route('admin.dashboard') }}" class="px-3 py-1.5 bg-amber-800 hover:bg-amber-700 text-sm rounded-lg transition">Dashboard Admin</a>
                         <a href="{{ route('kitchen.dashboard') }}" class="px-3 py-1.5 bg-amber-700 hover:bg-amber-600 text-sm rounded-lg transition">Dashboard Kitchen</a>

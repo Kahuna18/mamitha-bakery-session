@@ -197,13 +197,13 @@
                             <span class="font-semibold text-base text-gray-800 dark:text-white">Mamitha Admin</span>
                         </a>
                     </div>
-                    <div class="flex items-center space-x-3">
-                        <div id="printer-status"></div>
+                    <div class="flex items-center space-x-2 sm:space-x-3">
+                        <div id="printer-status" class="hidden sm:block"></div>
                         <button onclick="ThermalPrinter.openSettings()" class="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-medium rounded-lg transition flex items-center gap-1.5" title="Pengaturan Printer">
                             🖨️ Printer
                         </button>
-                        <span class="text-sm text-gray-600">{{ auth()->user()->name }}</span>
-                        <span class="px-2 py-1 bg-amber-100 text-amber-800 text-xs font-medium rounded-full">{{ ucfirst(auth()->user()->role) }}</span>
+                        <span class="text-sm text-gray-600 hidden md:inline">{{ auth()->user()->name }}</span>
+                        <span class="px-2 py-1 bg-amber-100 text-amber-800 text-xs font-medium rounded-full hidden md:inline-flex">{{ ucfirst(auth()->user()->role) }}</span>
                     </div>
                 </div>
             </header>
