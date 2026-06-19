@@ -1,4 +1,14 @@
 <x-guest-layout>
+    <!-- Back to Home Button -->
+    <div class="mb-5 flex justify-start">
+        <a href="{{ route('home') }}" class="inline-flex items-center gap-1.5 text-xs font-bold text-gray-400 hover:text-amber-700 dark:hover:text-amber-400 transition-colors">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+            Kembali ke Beranda
+        </a>
+    </div>
+
     <!-- Tab Controls -->
     <div class="flex border-b border-gray-200 dark:border-gray-700 mb-6 bg-gray-50 dark:bg-gray-800 rounded-xl p-1 gap-1">
         <button type="button" id="tab-member" onclick="switchTab('member')" 
