@@ -141,7 +141,7 @@
         <div class="w-20 h-20 bg-orange-100 dark:bg-orange-950/30 rounded-full flex items-center justify-center mx-auto text-4xl shadow-inner mb-5 animate-bounce">
             🔔
         </div>
-        <h3 class="text-2xl font-black text-gray-850 dark:text-white">Pesanan Baru Masuk!</h3>
+        <h3 class="text-2xl font-black text-gray-800 dark:text-white">Pesanan Baru Masuk!</h3>
         <p class="text-gray-500 dark:text-gray-400 mt-2 text-sm">Ada pesanan baru yang perlu segera diproses di dapur.</p>
         
         <div class="mt-6">

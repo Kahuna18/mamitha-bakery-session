@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script>
-        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        if (localStorage.getItem('theme') === 'dark') {
             document.documentElement.classList.add('dark');
         } else {
             document.documentElement.classList.remove('dark');
@@ -20,39 +20,56 @@
     <style>
         body { font-family: 'Inter', sans-serif; }
         h1, h2, h3, h4, .font-serif { font-family: 'Playfair Display', serif; }
+
+        /* View Transition Animations for theme toggling */
+        ::view-transition-old(root),
+        ::view-transition-new(root) {
+            animation: none;
+            mix-blend-mode: normal;
+        }
+        ::view-transition-old(root) {
+            z-index: 1;
+        }
+        ::view-transition-new(root) {
+            z-index: 9999;
+        }
     </style>
 </head>
-<body class="bg-cream-50 text-gray-800 antialiased pb-20 md:pb-0">
-    <nav class="bg-white shadow-sm sticky top-0 z-50 border-b border-amber-100">
+<body class="bg-cream-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 antialiased pb-20 md:pb-0 transition-colors duration-200">
+    <nav class="bg-white dark:bg-gray-900/90 shadow-sm sticky top-0 z-50 border-b border-amber-100 dark:border-gray-800 backdrop-blur-md transition-colors duration-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16 items-center">
                 <a href="{{ route('home') }}" class="flex items-center space-x-2">
                     <img src="{{ asset('images/logo.jpeg') }}" class="h-8 w-8 rounded-lg object-cover" alt="Logo">
-                    <span class="font-serif text-xl font-bold text-amber-800">Mamitha Bakery</span>
+                    <span class="font-serif text-xl font-bold text-amber-800 dark:text-amber-400">Mamitha Bakery</span>
                 </a>
                 <div class="hidden md:flex items-center space-x-1">
-                    <a href="{{ route('home') }}" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:text-amber-700 hover:bg-amber-50 transition">Beranda</a>
-                    <a href="{{ route('menu') }}" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:text-amber-700 hover:bg-amber-50 transition">Menu Roti</a>
-                    <a href="{{ route('how-to-order') }}" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:text-amber-700 hover:bg-amber-50 transition">Cara Pesan</a>
-                    <a href="{{ route('about') }}" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:text-amber-700 hover:bg-amber-50 transition">Tentang Kami</a>
-                    <a href="{{ route('contact') }}" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:text-amber-700 hover:bg-amber-50 transition">Kontak</a>
+                    <a href="{{ route('home') }}" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-gray-800 transition">Beranda</a>
+                    <a href="{{ route('menu') }}" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-gray-800 transition">Menu Roti</a>
+                    <a href="{{ route('how-to-order') }}" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-gray-800 transition">Cara Pesan</a>
+                    <a href="{{ route('about') }}" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-gray-800 transition">Tentang Kami</a>
+                    <a href="{{ route('contact') }}" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-gray-800 transition">Kontak</a>
                     @auth
+                        <!-- Global Theme Toggle (Desktop) -->
+                        <button onclick="toggleThemeGlobally(event)" class="mr-2 p-2 rounded-2xl border border-amber-100 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:bg-amber-50 dark:hover:bg-gray-800 transition duration-150 cursor-pointer select-none active:scale-95 flex items-center justify-center w-9 h-9" title="Ubah Tema">
+                            <span id="theme-toggle-btn-icon" class="text-sm">🌙</span>
+                        </button>
                         @if(auth()->user()->role === 'admin')
-                            <a href="{{ route('admin.dashboard') }}" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:text-amber-700 hover:bg-amber-50 transition">Dashboard Admin</a>
+                            <a href="{{ route('admin.dashboard') }}" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-gray-800 transition">Dashboard Admin</a>
                             <form method="POST" action="{{ route('logout') }}" class="inline">
                                 @csrf
-                                <button type="submit" class="px-4 py-2 rounded-lg text-sm font-medium text-red-605 hover:text-red-750 hover:bg-red-50 transition">Keluar</button>
+                                <button type="submit" class="px-4 py-2 rounded-lg text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/20 transition">Keluar</button>
                             </form>
                         @elseif(auth()->user()->role === 'kitchen')
-                            <a href="{{ route('kitchen.dashboard') }}" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:text-amber-700 hover:bg-amber-50 transition">Dashboard Kitchen</a>
+                            <a href="{{ route('kitchen.dashboard') }}" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-gray-800 transition">Dashboard Kitchen</a>
                             <form method="POST" action="{{ route('logout') }}" class="inline">
                                 @csrf
-                                <button type="submit" class="px-4 py-2 rounded-lg text-sm font-medium text-red-605 hover:text-red-750 hover:bg-red-50 transition">Keluar</button>
+                                <button type="submit" class="px-4 py-2 rounded-lg text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/20 transition">Keluar</button>
                             </form>
                         @else
                             <!-- Member Profile Dropdown (Alpine.js) -->
                             <div x-data="{ open: false }" @click.away="open = false" class="relative inline-block text-left">
-                                <button @click="open = !open" type="button" class="inline-flex items-center px-4 py-2 border border-amber-100 rounded-2xl text-sm font-medium text-gray-700 bg-amber-50/20 hover:bg-amber-50 hover:text-amber-800 transition duration-150 cursor-pointer active:scale-95">
+                                <button @click="open = !open" type="button" class="inline-flex items-center px-4 py-2 border border-amber-100 dark:border-gray-700 rounded-2xl text-sm font-medium text-gray-700 dark:text-gray-300 bg-amber-50/20 dark:bg-gray-850 hover:bg-amber-50 dark:hover:bg-gray-800 hover:text-amber-800 dark:hover:text-amber-400 transition duration-150 cursor-pointer active:scale-95">
                                     @php
                                         $customerRecord = auth()->user()->customer;
                                         $rankBadge = $customerRecord ? $customerRecord->rank_badge : '🥉';
@@ -72,27 +89,27 @@
                                      x-transition:leave="transition ease-in duration-75"
                                      x-transition:leave-start="transform opacity-100 scale-100"
                                      x-transition:leave-end="transform opacity-0 scale-95"
-                                     class="absolute right-0 mt-2 w-48 rounded-2xl bg-white border border-amber-100/60 shadow-xl py-1.5 z-50 ring-1 ring-black/5"
+                                     class="absolute right-0 mt-2 w-48 rounded-2xl bg-white dark:bg-gray-800 border border-amber-100/60 dark:border-gray-700 shadow-xl py-1.5 z-50 ring-1 ring-black/5"
                                      style="display: none;">
                                      
-                                    <div class="px-4 py-2 border-b border-amber-50">
+                                    <div class="px-4 py-2 border-b border-amber-50 dark:border-gray-700/50">
                                         <p class="text-[9px] uppercase tracking-wider text-gray-400 font-bold">Peringkat Member</p>
-                                        <p class="text-xs font-black text-amber-800 mt-0.5">{{ $rankName }} Member</p>
+                                        <p class="text-xs font-black text-amber-800 dark:text-amber-400 mt-0.5">{{ $rankName }} Member</p>
                                     </div>
 
-                                    <a href="{{ route('member.profile') }}" class="flex items-center px-4 py-2 text-xs font-bold text-gray-700 hover:bg-amber-50 hover:text-amber-800 transition">
+                                    <a href="{{ route('member.profile') }}" class="flex items-center px-4 py-2 text-xs font-bold text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-gray-700 hover:text-amber-800 dark:hover:text-amber-400 transition">
                                         👤 Profil Member Saya
                                     </a>
                                     
-                                    <a href="{{ route('order.history') }}" class="flex items-center px-4 py-2 text-xs font-bold text-gray-700 hover:bg-amber-50 hover:text-amber-800 transition">
+                                    <a href="{{ route('order.history') }}" class="flex items-center px-4 py-2 text-xs font-bold text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-gray-700 hover:text-amber-800 dark:hover:text-amber-400 transition">
                                         📋 Riwayat Pesanan
                                     </a>
 
-                                    <div class="border-t border-amber-50 my-1"></div>
+                                    <div class="border-t border-amber-50 dark:border-gray-700/50 my-1"></div>
 
                                     <form method="POST" action="{{ route('logout') }}">
                                         @csrf
-                                        <button type="submit" class="w-full flex items-center px-4 py-2 text-xs font-bold text-red-600 hover:bg-red-50 hover:text-red-750 transition text-left cursor-pointer">
+                                        <button type="submit" class="w-full flex items-center px-4 py-2 text-xs font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-750 dark:hover:text-red-300 transition text-left cursor-pointer">
                                             🚪 Keluar
                                         </button>
                                     </form>
@@ -100,37 +117,45 @@
                             </div>
                         @endif
                     @else
-                        <a href="{{ route('login') }}" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:text-amber-700 hover:bg-amber-50 transition">Masuk</a>
+                        <a href="{{ route('login') }}" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-gray-800 transition">Masuk</a>
                     @endauth
                     <a href="{{ route('order.create') }}" class="ml-2 px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-lg shadow-sm transition text-sm">Pesan Sekarang</a>
                 </div>
-                <button id="mobile-menu-btn" class="md:hidden p-2 rounded-lg hover:bg-amber-50">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-                </button>
+                <div class="flex items-center gap-2 md:hidden">
+                    @auth
+                        <!-- Global Theme Toggle (Mobile) -->
+                        <button onclick="toggleThemeGlobally(event)" class="p-2 rounded-2xl border border-amber-100 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:bg-amber-50 dark:hover:bg-gray-800 transition duration-150 cursor-pointer select-none active:scale-95 flex items-center justify-center w-9 h-9" title="Ubah Tema">
+                            <span id="theme-toggle-btn-icon-mobile" class="text-sm">🌙</span>
+                        </button>
+                    @endauth
+                    <button id="mobile-menu-btn" class="p-2 rounded-lg hover:bg-amber-50 dark:hover:bg-gray-800 dark:text-gray-300">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                    </button>
+                </div>
             </div>
         </div>
-        <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-amber-100">
+        <div id="mobile-menu" class="hidden md:hidden bg-white dark:bg-gray-900 border-t border-amber-100 dark:border-gray-800">
             <div class="px-4 py-3 space-y-1">
-                <a href="{{ route('home') }}" class="block px-4 py-2 rounded-lg text-gray-700 hover:bg-amber-50">Beranda</a>
-                <a href="{{ route('menu') }}" class="block px-4 py-2 rounded-lg text-gray-700 hover:bg-amber-50">Menu Roti</a>
-                <a href="{{ route('how-to-order') }}" class="block px-4 py-2 rounded-lg text-gray-700 hover:bg-amber-50">Cara Pesan</a>
-                <a href="{{ route('about') }}" class="block px-4 py-2 rounded-lg text-gray-700 hover:bg-amber-50">Tentang Kami</a>
-                <a href="{{ route('contact') }}" class="block px-4 py-2 rounded-lg text-gray-700 hover:bg-amber-50">Kontak</a>
+                <a href="{{ route('home') }}" class="block px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-gray-800">Beranda</a>
+                <a href="{{ route('menu') }}" class="block px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-gray-800">Menu Roti</a>
+                <a href="{{ route('how-to-order') }}" class="block px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-gray-800">Cara Pesan</a>
+                <a href="{{ route('about') }}" class="block px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-gray-800">Tentang Kami</a>
+                <a href="{{ route('contact') }}" class="block px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-gray-800">Kontak</a>
                 @auth
                     @if(auth()->user()->role === 'admin')
-                        <a href="{{ route('admin.dashboard') }}" class="block px-4 py-2 rounded-lg text-gray-700 hover:bg-amber-50">Dashboard Admin</a>
+                        <a href="{{ route('admin.dashboard') }}" class="block px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-gray-800">Dashboard Admin</a>
                     @elseif(auth()->user()->role === 'kitchen')
-                        <a href="{{ route('kitchen.dashboard') }}" class="block px-4 py-2 rounded-lg text-gray-700 hover:bg-amber-50">Dashboard Kitchen</a>
+                        <a href="{{ route('kitchen.dashboard') }}" class="block px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-gray-800">Dashboard Kitchen</a>
                     @else
-                        <a href="{{ route('member.profile') }}" class="block px-4 py-2 rounded-lg text-gray-700 hover:bg-amber-50">👤 Profil Member</a>
-                        <a href="{{ route('order.history') }}" class="block px-4 py-2 rounded-lg text-gray-700 hover:bg-amber-50">📋 Riwayat Pesanan</a>
+                        <a href="{{ route('member.profile') }}" class="block px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-gray-800">👤 Profil Member</a>
+                        <a href="{{ route('order.history') }}" class="block px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-gray-800">📋 Riwayat Pesanan</a>
                     @endif
                     <form method="POST" action="{{ route('logout') }}" class="block">
                         @csrf
-                        <button type="submit" class="block w-full text-left px-4 py-2 rounded-lg text-red-650 hover:bg-red-50">Keluar</button>
+                        <button type="submit" class="block w-full text-left px-4 py-2 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20">Keluar</button>
                     </form>
                 @else
-                    <a href="{{ route('login') }}" class="block px-4 py-2 rounded-lg text-gray-700 hover:bg-amber-50">Masuk</a>
+                    <a href="{{ route('login') }}" class="block px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-gray-800">Masuk</a>
                 @endauth
                 <a href="{{ route('order.create') }}" class="block px-4 py-2.5 bg-amber-600 text-white font-semibold rounded-lg text-center">Pesan Sekarang</a>
             </div>
@@ -151,12 +176,13 @@
         @yield('content')
     </main>
 
+    @if(!request()->routeIs('member.profile'))
     <footer class="bg-amber-900 text-amber-100 mt-16">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
             <div class="grid md:grid-cols-3 gap-8">
                 <div>
                     <h4 class="font-serif text-xl font-bold text-white mb-3">{{ \App\Models\Setting::getValue('store_name', 'Mamitha Bakery') }}</h4>
-                    <p class="text-sm text-amber-200 leading-relaxed">{{ \App\Models\Setting::getValue('about_text') ?: 'Roti fresh setiap hari, dibuat dengan bahan berkualitas dan penuh cinta. Siap melayani pesanan Anda.' }}</p>
+                    <p class="text-sm text-amber-200 leading-relaxed">{{ \App\Models\Setting::getValue('about_text') ?: 'Roti fresh setiap hari, dibuat dengan bahan berkualitas and penuh cinta. Siap melayani pesanan Anda.' }}</p>
                 </div>
                 <div>
                     <h4 class="font-semibold text-white mb-3">Jam Operasional</h4>
@@ -179,6 +205,7 @@
             </div>
         </div>
     </footer>
+    @endif
 
     <!-- Mobile Bottom Navigation Bar (Sticky) -->
     @php
@@ -225,7 +252,7 @@
         </a>
 
         <!-- Profile -->
-        <a href="{{ auth()->check() ? (auth()->user()->role === 'customer' ? route('member.profile') : (auth()->user()->role === 'admin' ? route('admin.dashboard') : route('kitchen.dashboard'))) : route('login') }}" class="flex flex-col items-center justify-center transition select-none {{ $isProfile ? 'text-amber-800 dark:text-amber-400' : 'text-gray-400 hover:text-gray-600' }}">
+        <a href="{{ auth()->check() ? route('member.profile') : route('login') }}" class="flex flex-col items-center justify-center transition select-none {{ $isProfile ? 'text-amber-800 dark:text-amber-400' : 'text-gray-400 hover:text-gray-600' }}">
             @if($isProfile)
                 <div class="bg-amber-100/60 dark:bg-amber-950/35 rounded-2xl px-4 py-1.5 flex items-center gap-1.5 text-xs text-amber-900 dark:text-amber-400 font-extrabold">
                     <span class="text-sm">👤</span>
@@ -237,14 +264,103 @@
         </a>
     </div>
 
+    @if(!request()->routeIs('member.profile'))
     <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', \App\Models\Setting::getValue('store_whatsapp', '6281234567890')) }}" target="_blank" class="fixed bottom-24 md:bottom-6 right-6 bg-green-500 hover:bg-green-600 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center z-50 transition transform hover:scale-105">
         <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 448 512"><path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7.9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z"/></svg>
     </a>
+    @endif
 
     <script>
         document.getElementById('mobile-menu-btn')?.addEventListener('click', function() {
             const menu = document.getElementById('mobile-menu');
             menu.classList.toggle('hidden');
+        });
+
+        // Global theme helper functions
+        function applyTheme(isDark) {
+            if (isDark) {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+                
+                // Update profile page UI elements if they exist
+                document.getElementById('theme-midnight')?.classList.add('border-amber-500', 'bg-amber-50/5');
+                document.getElementById('theme-midnight')?.classList.remove('border-gray-200', 'dark:border-gray-700');
+                const midnightRadio = document.querySelector('#theme-midnight .theme-radio');
+                if (midnightRadio) midnightRadio.className = 'theme-radio w-5 h-5 rounded-full border-2 border-amber-500 flex items-center justify-center transition';
+                document.querySelector('#theme-midnight .theme-radio-inner')?.classList.remove('hidden');
+                
+                document.getElementById('theme-daylight')?.classList.remove('border-amber-500', 'bg-amber-50/5');
+                document.getElementById('theme-daylight')?.classList.add('border-gray-200', 'dark:border-gray-700');
+                const daylightRadio = document.querySelector('#theme-daylight .theme-radio');
+                if (daylightRadio) daylightRadio.className = 'theme-radio w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center transition';
+                document.querySelector('#theme-daylight .theme-radio-inner')?.classList.add('hidden');
+            } else {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+                
+                document.getElementById('theme-daylight')?.classList.add('border-amber-500', 'bg-amber-50/5');
+                document.getElementById('theme-daylight')?.classList.remove('border-gray-200', 'dark:border-gray-700');
+                const daylightRadio = document.querySelector('#theme-daylight .theme-radio');
+                if (daylightRadio) daylightRadio.className = 'theme-radio w-5 h-5 rounded-full border-2 border-amber-500 flex items-center justify-center transition';
+                document.querySelector('#theme-daylight .theme-radio-inner')?.classList.remove('hidden');
+                
+                document.getElementById('theme-midnight')?.classList.remove('border-amber-500', 'bg-amber-50/5');
+                document.getElementById('theme-midnight')?.classList.add('border-gray-200', 'dark:border-gray-700');
+                const midnightRadio = document.querySelector('#theme-midnight .theme-radio');
+                if (midnightRadio) midnightRadio.className = 'theme-radio w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center transition';
+                document.querySelector('#theme-midnight .theme-radio-inner')?.classList.add('hidden');
+            }
+            
+            // Update navbar theme button icons
+            const themeBtnIcon = document.getElementById('theme-toggle-btn-icon');
+            if (themeBtnIcon) themeBtnIcon.textContent = isDark ? '☀️' : '🌙';
+            
+            const themeBtnIconMobile = document.getElementById('theme-toggle-btn-icon-mobile');
+            if (themeBtnIconMobile) themeBtnIconMobile.textContent = isDark ? '☀️' : '🌙';
+        }
+
+        function setAppTheme(theme, event) {
+            const isDark = theme === 'dark';
+            if (!document.startViewTransition) {
+                applyTheme(isDark);
+                return;
+            }
+            const x = event ? event.clientX : window.innerWidth / 2;
+            const y = event ? event.clientY : window.innerHeight / 2;
+            const endRadius = Math.hypot(
+                Math.max(x, window.innerWidth - x),
+                Math.max(y, window.innerHeight - y)
+            );
+            const transition = document.startViewTransition(() => {
+                applyTheme(isDark);
+            });
+            transition.ready.then(() => {
+                const clipPath = [
+                    `circle(0px at ${x}px ${y}px)`,
+                    `circle(${endRadius}px at ${x}px ${y}px)`
+                ];
+                document.documentElement.animate(
+                    {
+                        clipPath: clipPath
+                    },
+                    {
+                        duration: 450,
+                        easing: 'ease-in-out',
+                        pseudoElement: '::view-transition-new(root)'
+                    }
+                );
+            });
+        }
+
+        function toggleThemeGlobally(event) {
+            const isDark = document.documentElement.classList.contains('dark');
+            setAppTheme(isDark ? 'light' : 'dark', event);
+        }
+
+        // Apply current theme on page load to keep navbar icons synced
+        window.addEventListener('DOMContentLoaded', () => {
+            const currentTheme = localStorage.getItem('theme') || 'light';
+            applyTheme(currentTheme === 'dark');
         });
     </script>
     @stack('scripts')

@@ -37,4 +37,31 @@ class MemberProfileController extends Controller
 
         return view('member.profile', compact('customer', 'orders', 'storeWhatsapp'));
     }
+
+    public function update(Request $request)
+    {
+        $user = auth()->user();
+        $customer = $user->customer;
+        
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'phone' => 'required|string|max:20',
+            'address' => 'nullable|string|max:500',
+        ]);
+        
+        if ($customer) {
+            $customer->update([
+                'name' => $request->name,
+                'phone' => $request->phone,
+                'address' => $request->address,
+            ]);
+        }
+        
+        $user->update([
+            'name' => $request->name,
+        ]);
+        
+        return back()->with('success', 'Profil berhasil diperbarui!');
+    }
 }
+

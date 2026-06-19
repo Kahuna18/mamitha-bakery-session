@@ -35,9 +35,20 @@
 
         <div>
             <label for="password" class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wider">Password</label>
-            <input id="password" type="password" name="password" required autocomplete="current-password"
-                class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 dark:text-white transition @error('password') border-red-500 @enderror"
-                placeholder="Masukkan password">
+            <div class="relative">
+                <input id="password" type="password" name="password" required autocomplete="current-password"
+                    class="w-full pl-4 pr-12 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 dark:text-white transition @error('password') border-red-500 @enderror"
+                    placeholder="Masukkan password">
+                <button type="button" onclick="togglePasswordVisibility('password', this)" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 cursor-pointer focus:outline-none select-none">
+                    <svg class="w-5 h-5 eye-open-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    <svg class="w-5 h-5 eye-closed-icon hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+                    </svg>
+                </button>
+            </div>
             @error('password')
                 <p class="text-red-500 text-xs mt-1 font-semibold">{{ $message }}</p>
             @enderror
@@ -119,7 +130,7 @@
 
                 // Footer Link
                 authFooter.innerHTML = `
-                    <span class="text-xs text-gray-450 dark:text-gray-500 font-semibold uppercase tracking-wider">Khusus Admin & Dapur</span>
+                    <span class="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wider">Khusus Admin & Dapur</span>
                 `;
             }
         }
@@ -136,5 +147,22 @@
             }
             switchTab(role);
         });
+
+        // Toggle password input type and eye icon visibility
+        function togglePasswordVisibility(inputId, button) {
+            const input = document.getElementById(inputId);
+            const eyeOpen = button.querySelector('.eye-open-icon');
+            const eyeClosed = button.querySelector('.eye-closed-icon');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                eyeOpen.classList.add('hidden');
+                eyeClosed.classList.remove('hidden');
+            } else {
+                input.type = 'password';
+                eyeOpen.classList.remove('hidden');
+                eyeClosed.classList.add('hidden');
+            }
+        }
     </script>
 </x-guest-layout>

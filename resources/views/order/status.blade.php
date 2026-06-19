@@ -33,7 +33,7 @@
             
             <form method="POST" action="{{ route('order.check-status') }}" class="flex flex-col sm:flex-row gap-3">
                 @csrf
-                <input type="tel" name="phone" required placeholder="Contoh: 08123456789" value="{{ old('phone', isset($customer) ? $customer->phone : '') }}" class="flex-1 px-4 py-3 bg-gray-50 dark:bg-gray-750 border-0 rounded-2xl text-sm focus:ring-2 focus:ring-amber-500">
+                <input type="tel" name="phone" required placeholder="Contoh: 08123456789" value="{{ old('phone', isset($customer) ? $customer->phone : '') }}" class="flex-1 px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-2xl text-sm focus:ring-2 focus:ring-amber-500 text-gray-800 dark:text-white">
                 <button type="submit" class="px-6 py-3 bg-gray-900 dark:bg-gray-100 hover:bg-amber-700 dark:hover:bg-amber-600 text-white dark:text-gray-900 font-extrabold text-sm rounded-2xl transition shadow">
                     Lacak Sekarang
                 </button>
@@ -63,7 +63,7 @@
                     <div class="p-6 border-b border-gray-100 dark:border-gray-700/50 bg-gray-50/50 dark:bg-gray-800/30 flex justify-between items-center gap-4">
                         <div>
                             <p class="text-[10px] text-gray-400 font-extrabold uppercase tracking-wider">No. Order</p>
-                            <p class="font-serif font-black text-gray-850 dark:text-gray-150">{{ $order->order_number }}</p>
+                            <p class="font-serif font-black text-gray-800 dark:text-gray-200">{{ $order->order_number }}</p>
                         </div>
                         <div class="text-right flex items-center gap-3">
                             <span class="px-3 py-1 text-[10px] font-extrabold rounded-full tracking-wider uppercase
@@ -71,7 +71,7 @@
                                 @elseif($order->status == 'confirmed') bg-blue-100 text-blue-700
                                 @elseif($order->status == 'producing') bg-orange-100 text-orange-700
                                 @elseif($order->status == 'ready') bg-green-100 text-green-700
-                                @elseif($order->status == 'done') bg-gray-100 text-gray-750
+                                @elseif($order->status == 'done') bg-gray-100 text-gray-700
                                 @else bg-red-100 text-red-700 @endif">
                                 {{ $order->statusLabel() }}
                             </span>
@@ -202,15 +202,15 @@
                             @endforeach
                         </div>
                         
-                        <div class="pt-4 border-t border-gray-150 dark:border-gray-750 flex justify-between items-center text-xs font-bold">
+                        <div class="pt-4 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center text-xs font-bold">
                             <div class="text-gray-400 uppercase tracking-wider">Total</div>
                             <div class="text-lg font-black text-amber-800 dark:text-amber-400">Rp {{ number_format($order->total, 0, ',', '.') }}</div>
                         </div>
 
-                        <div class="pt-4 border-t border-gray-150 dark:border-gray-750 space-y-2.5 text-xs">
+                        <div class="pt-4 border-t border-gray-200 dark:border-gray-700 space-y-2.5 text-xs">
                             <div class="flex justify-between items-start">
                                 <span class="text-gray-400 uppercase tracking-wider font-bold">Alamat Toko</span>
-                                <span class="text-gray-650 dark:text-gray-350 text-right">{{ \App\Models\Setting::getValue('store_address') }}</span>
+                                <span class="text-gray-600 dark:text-gray-300 text-right">{{ \App\Models\Setting::getValue('store_address') }}</span>
                             </div>
                             @php
                                 $gmapsLink = \App\Models\Setting::getValue('store_gmaps_link') ?: "https://www.google.com/maps?q={$storeLat},{$storeLng}";

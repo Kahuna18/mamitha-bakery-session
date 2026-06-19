@@ -414,7 +414,7 @@
                 <span class="text-xl">📍</span>
                 <div>
                     <p class="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Pengiriman Ke</p>
-                    <button type="button" onclick="toggleCheckoutDrawer(true); goToStep('checkout');" class="font-extrabold text-gray-800 dark:text-gray-255 hover:text-amber-600 dark:hover:text-amber-500 transition flex items-center gap-1.5 mt-0.5 text-left">
+                    <button type="button" onclick="toggleCheckoutDrawer(true); goToStep('checkout');" class="font-extrabold text-gray-800 dark:text-gray-200 hover:text-amber-600 dark:hover:text-amber-500 transition flex items-center gap-1.5 mt-0.5 text-left">
                         <span id="selected-address-summary">Ambil di Outlet Mamitha (Sleman)</span>
                         <svg class="w-3.5 h-3.5 text-amber-600 dark:text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
@@ -748,7 +748,7 @@
                                 <input type="checkbox" name="is_member" id="is_member" value="1" class="w-5 h-5 mt-0.5 rounded-lg text-amber-600 focus:ring-amber-500 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 transition cursor-pointer">
                                 <label for="is_member" class="cursor-pointer">
                                     <span class="block text-xs font-black text-amber-800 dark:text-amber-400 uppercase tracking-wide">Gabung Member Mamitha</span>
-                                    <span class="block text-[11px] text-gray-505 dark:text-gray-400 mt-0.5 leading-relaxed">Daftar sekarang untuk membuka Rank Gold, prioritas baking cepat, dan voucher diskon 10%!</span>
+                                    <span class="block text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 leading-relaxed">Daftar sekarang untuk membuka Rank Gold, prioritas baking cepat, dan voucher diskon 10%!</span>
                                 </label>
                             </div>
                         </div>
@@ -1428,7 +1428,7 @@
                         <div class="flex items-center mt-1 text-xs">
                             ${generateStarsHtml(r.rating)}
                         </div>
-                        <p class="text-xs text-gray-650 dark:text-gray-350 mt-1.5 leading-relaxed italic">"${escapeHtml(r.comment)}"</p>
+                        <p class="text-xs text-gray-600 dark:text-gray-300 mt-1.5 leading-relaxed italic">"${escapeHtml(r.comment)}"</p>
                     `;
                     reviewsContainer.appendChild(revDiv);
                 });

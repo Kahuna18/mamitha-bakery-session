@@ -33,6 +33,7 @@ Route::get('/status', [OrderController::class, 'statusForm'])->name('order.statu
 Route::post('/status', [OrderController::class, 'checkStatus'])->name('order.check-status');
 Route::get('/riwayat', [OrderController::class, 'history'])->middleware('auth')->name('order.history');
 Route::get('/profil', [MemberProfileController::class, 'index'])->middleware('auth')->name('member.profile');
+Route::post('/profil', [MemberProfileController::class, 'update'])->middleware('auth')->name('member.profile.update');
 
 // Admin Routes
 Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {

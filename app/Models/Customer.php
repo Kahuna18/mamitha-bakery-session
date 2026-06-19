@@ -87,7 +87,7 @@ class Customer extends Model
         if ($rank === 'Gold') {
             return [
                 'text' => 'text-amber-600 dark:text-amber-400',
-                'bg' => 'from-amber-400 via-amber-250 to-yellow-500',
+                'bg' => 'from-amber-400 via-amber-300 to-yellow-500',
                 'border' => 'border-amber-300 dark:border-amber-700/60',
                 'glow' => 'rgba(245, 158, 11, 0.4)',
                 'animation' => 'animate-pulse-gold'
@@ -96,7 +96,7 @@ class Customer extends Model
         if ($rank === 'Silver') {
             return [
                 'text' => 'text-slate-500 dark:text-slate-400',
-                'bg' => 'from-slate-400 via-gray-250 to-slate-500',
+                'bg' => 'from-slate-400 via-gray-300 to-slate-500',
                 'border' => 'border-slate-300 dark:border-slate-700/60',
                 'glow' => 'rgba(148, 163, 184, 0.3)',
                 'animation' => 'animate-pulse-silver'
@@ -105,7 +105,7 @@ class Customer extends Model
         // Bronze
         return [
             'text' => 'text-orange-700 dark:text-orange-500',
-            'bg' => 'from-orange-500 via-orange-350 to-amber-600',
+            'bg' => 'from-orange-500 via-orange-400 to-amber-600',
             'border' => 'border-orange-300 dark:border-orange-700/60',
             'glow' => 'rgba(234, 88, 12, 0.3)',
             'animation' => 'animate-pulse-bronze'

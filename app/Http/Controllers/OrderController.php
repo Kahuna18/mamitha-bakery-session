@@ -55,6 +55,7 @@ class OrderController extends Controller
         ]);
 
         $customer = Customer::where('phone', $validated['phone'])->first();
+        $wasMember = $customer ? $customer->is_member : false;
 
         if ($customer) {
             $customer->update([
@@ -71,6 +72,10 @@ class OrderController extends Controller
                 'is_member' => $request->has('is_member') || auth()->check(),
                 'user_id' => auth()->check() ? auth()->id() : null,
             ]);
+        }
+
+        if (!$wasMember && $customer->is_member) {
+            session()->flash('newly_joined_member', true);
         }
 
         $total = 0;

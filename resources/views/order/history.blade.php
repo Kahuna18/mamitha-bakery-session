@@ -23,7 +23,7 @@
                         <span class="text-xs text-gray-400 uppercase font-bold tracking-wider">No. Pesanan:</span>
                         <span class="font-extrabold text-sm text-amber-800 dark:text-amber-400">{{ $order->order_number }}</span>
                     </div>
-                    <p class="text-xs text-gray-450 dark:text-gray-400 mt-0.5">{{ $order->order_date->format('d M Y, H:i') }}</p>
+                    <p class="text-xs text-gray-400 mt-0.5">{{ $order->order_date->format('d M Y, H:i') }}</p>
                 </div>
                 
                 <div class="flex items-center gap-2">
@@ -78,7 +78,7 @@
             </div>
 
             <!-- Footer Summary: Total & Details/Track Action -->
-            <div class="border-t border-gray-150/40 dark:border-gray-700/50 pt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="border-t border-gray-200/40 dark:border-gray-700/50 pt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div class="text-center sm:text-left">
                     <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Total Pembayaran</p>
                     <p class="text-lg font-black text-amber-800 dark:text-amber-400 mt-0.5">Rp {{ number_format($order->total, 0, ',', '.') }}</p>
@@ -101,7 +101,7 @@
         <!-- Empty State -->
         <div class="bg-white dark:bg-gray-800 rounded-3xl border border-amber-100/50 dark:border-gray-700/50 p-12 shadow-sm text-center space-y-4">
             <span class="text-5xl block select-none">🥐</span>
-            <h3 class="text-xl font-bold text-gray-850 dark:text-gray-100 font-serif">Belum ada pesanan</h3>
+            <h3 class="text-xl font-bold text-gray-800 dark:text-gray-100 font-serif">Belum ada pesanan</h3>
             <p class="text-xs text-gray-500 dark:text-gray-400 max-w-xs mx-auto leading-relaxed">Anda belum pernah melakukan pemesanan roti hangat Mamitha Bakery. Mari mulai pesan roti pertama Anda!</p>
             <a href="{{ route('order.create') }}" class="inline-block px-6 py-3 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-extrabold text-xs rounded-2xl shadow-md transition transform active:scale-95">
                 Pesan Sekarang

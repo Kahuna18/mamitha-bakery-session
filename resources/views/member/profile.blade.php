@@ -1,12 +1,23 @@
 @extends('layouts.app')
 
-@section('title', 'Profil Member Saya')
+@section('title', 'Settings')
 
 @push('styles')
 <style>
-    /* -------------------------------------------------------------------------
-     * Custom Rank Animations (TikTok Game style UI)
-     * ------------------------------------------------------------------------- */
+    /* Custom Stacking and Animations for circular theme reveal */
+    ::view-transition-old(root),
+    ::view-transition-new(root) {
+        animation: none;
+        mix-blend-mode: normal;
+    }
+    ::view-transition-old(root) {
+        z-index: 1;
+    }
+    ::view-transition-new(root) {
+        z-index: 9999;
+    }
+
+    /* Rank card animations */
     @keyframes spin-slow {
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
@@ -14,7 +25,6 @@
     .animate-spin-slow {
         animation: spin-slow 15s linear infinite;
     }
-
     @keyframes bounce-slow {
         0%, 100% { transform: translateY(0); }
         50% { transform: translateY(-8px); }
@@ -22,484 +32,616 @@
     .animate-bounce-slow {
         animation: bounce-slow 3s ease-in-out infinite;
     }
-
-    /* Silver Metallic Shimmer Glare */
-    @keyframes metallic-sweep {
-        0% { background-position: -200% 0; }
-        100% { background-position: 200% 0; }
-    }
-    .shimmer-silver {
-        background: linear-gradient(110deg, rgba(255,255,255,0) 35%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 65%);
-        background-size: 200% 100%;
-        animation: metallic-sweep 3s infinite linear;
-    }
-
-    /* Gold Sparkles */
-    @keyframes gold-sparkle {
-        0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.8; }
-        50% { transform: scale(1.25) rotate(180deg); opacity: 1; }
-    }
-    .sparkle-star {
-        animation: gold-sparkle 2.5s infinite ease-in-out;
-    }
-
-    /* Platinum Neon Pulse Drop-shadow */
-    @keyframes plat-breathing {
-        0%, 100% { filter: drop-shadow(0 0 8px rgba(6, 182, 212, 0.4)) drop-shadow(0 0 15px rgba(6, 182, 212, 0.2)); }
-        50% { filter: drop-shadow(0 0 20px rgba(6, 182, 212, 0.75)) drop-shadow(0 0 30px rgba(6, 182, 212, 0.4)); }
-    }
-    .animate-plat-breathing {
-        animation: plat-breathing 3.5s infinite ease-in-out;
-    }
-
-    /* Progress bar slide animation */
-    @keyframes progress-slide {
-        from { width: 0%; }
-        to { width: var(--progress-width); }
-    }
-    .progress-bar-fill {
-        animation: progress-slide 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-    }
 </style>
 @endpush
 
 @section('content')
-@php
-    $theme = $customer->rank_theme;
-    $progressPercent = $customer->rank_progress_percentage;
-@endphp
-
-<div class="min-h-screen bg-cream-50 dark:bg-gray-900 py-12 px-4 transition-colors duration-200">
-    <div class="max-w-4xl mx-auto space-y-8">
+<div class="min-h-screen bg-cream-50 dark:bg-gray-950 py-10 px-4 transition-colors duration-200">
+    <div class="max-w-md mx-auto space-y-6 relative">
         
-        <!-- Welcome Greeting & Header -->
-        <div class="flex flex-col sm:flex-row justify-between items-center sm:items-start gap-4 border-b border-amber-100/50 dark:border-gray-800 pb-6">
-            <div class="text-center sm:text-left space-y-1">
-                <h1 class="text-3xl font-black text-amber-900 dark:text-amber-100 font-serif">Dashboard Member</h1>
-                <p class="text-xs text-gray-500 dark:text-gray-400">Selamat datang kembali, <span class="font-extrabold text-amber-800 dark:text-amber-400">{{ $customer->name }}</span>! Terima kasih telah setia bersama Mamitha Bakery.</p>
-            </div>
-            <div class="bg-amber-100/40 dark:bg-amber-950/20 px-4 py-2 rounded-2xl border border-amber-200/30 text-xs font-bold text-amber-800 dark:text-amber-400">
-                📅 Member Sejak: {{ $customer->created_at->format('d M Y') }}
-            </div>
+        <!-- Header: Title and Save Changes button -->
+        <div class="flex justify-between items-center">
+            <h1 class="text-3xl font-black text-gray-850 dark:text-white font-serif">Settings</h1>
+            <button type="submit" form="profile-form" onclick="triggerHaptic()" class="px-5 py-2.5 bg-[#ff6310] hover:bg-orange-700 text-white text-xs font-black rounded-full shadow-md transition-all active:scale-95 cursor-pointer select-none">
+                Save Changes
+            </button>
         </div>
 
-        <!-- 2 Column Layout -->
-        <div class="grid md:grid-cols-5 gap-8">
-            
-            <!-- Left Column: Rank Progression Card (TikTok game theme) -->
-            <div class="md:col-span-2 space-y-6">
-                <div class="bg-white dark:bg-gray-800 rounded-[36px] border border-amber-100/50 dark:border-gray-700/50 shadow-md p-6 relative overflow-hidden text-center group">
-                    <!-- Spinning glowing backdrop layer -->
-                    <div class="absolute -top-12 -left-12 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl pointer-events-none"></div>
-                    <div class="absolute -bottom-12 -right-12 w-64 h-64 bg-orange-500/5 rounded-full blur-3xl pointer-events-none"></div>
+        @if ($errors->any())
+            <div class="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-2xl text-xs space-y-1">
+                <p class="font-bold">Gagal memperbarui profil:</p>
+                <ul class="list-disc pl-4">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
 
-                    <!-- Rank Title Header -->
-                    <div class="space-y-1 relative z-10">
-                        <span class="text-[9px] font-black text-amber-600 dark:text-amber-500 uppercase tracking-[0.2em] block">Status Keanggotaan</span>
-                        <h2 class="text-2xl font-black text-gray-900 dark:text-white font-serif tracking-tight">
-                            Member <span class="{{ $theme['text'] }}">{{ $customer->rank_name }}</span>
-                        </h2>
-                    </div>
+        @if (session('success'))
+            <div class="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 px-4 py-3 rounded-2xl text-xs font-bold">
+                {{ session('success') }}
+            </div>
+        @endif
 
-                    <!-- Rank Badge Center Stage -->
-                    <div class="relative w-44 h-44 mx-auto flex items-center justify-center my-6">
-                        <!-- Outer rotating blur aura ring -->
-                        <div class="absolute inset-0 bg-gradient-to-tr {{ $theme['bg'] }} rounded-full blur-xl opacity-35 animate-spin-slow"></div>
-                        
-                        <!-- Inner Glowing Circle -->
-                        <div class="relative w-32 h-32 bg-gradient-to-tr {{ $theme['bg'] }} rounded-full shadow-2xl flex items-center justify-center border-4 border-white dark:border-gray-800 transition duration-300 transform group-hover:scale-105 {{ $customer->rank_name === 'Platinum' ? 'animate-plat-breathing' : 'animate-bounce-slow' }}">
-                            <!-- Shimmer light overlay (Specifically for silver) -->
-                            @if($customer->rank_name === 'Silver')
-                            <div class="absolute inset-0 rounded-full shimmer-silver pointer-events-none"></div>
-                            @endif
-                            <span class="text-6xl select-none filter drop-shadow">{{ $customer->rank_badge }}</span>
+        <!-- Form wrapper for profile edit -->
+        <form id="profile-form" action="{{ route('member.profile.update') }}" method="POST" class="space-y-6">
+            @csrf
+
+            <!-- 1. Profile Header Card -->
+            <div class="bg-gradient-to-r from-amber-900 to-stone-900 rounded-[32px] p-6 text-white shadow-xl relative overflow-hidden border border-amber-800/30">
+                <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:12px_12px] pointer-events-none"></div>
+                <div class="relative z-10 flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <!-- Profile Avatar -->
+                        <div class="w-16 h-16 rounded-full bg-white/20 border-2 border-white/40 flex items-center justify-center text-2xl font-black shadow-inner select-none uppercase">
+                            {{ substr($customer->name, 0, 1) }}
                         </div>
-
-                        <!-- Ornaments / Particles depending on rank -->
-                        @if($customer->rank_name === 'Gold')
-                            <span class="absolute top-2 left-6 text-amber-400 text-lg sparkle-star">⭐</span>
-                            <span class="absolute top-8 right-6 text-yellow-300 text-sm sparkle-star" style="animation-delay:0.5s;">⭐</span>
-                            <span class="absolute bottom-6 left-6 text-amber-500 text-lg sparkle-star" style="animation-delay:1s;">✨</span>
-                        @elseif($customer->rank_name === 'Platinum')
-                            <span class="absolute top-4 left-6 text-cyan-400 text-sm animate-pulse">✨</span>
-                            <span class="absolute top-10 right-4 text-teal-300 text-lg animate-pulse" style="animation-delay:0.7s;">💎</span>
-                            <span class="absolute bottom-4 left-8 text-blue-400 text-sm animate-pulse" style="animation-delay:1.4s;">✨</span>
-                        @endif
-                    </div>
-
-                    <!-- Points Progression Section -->
-                    <div class="space-y-4 relative z-10">
-                        <div class="flex justify-between items-end px-2">
-                            <div class="text-left">
-                                <p class="text-[9px] text-gray-400 uppercase font-bold tracking-wider">Total Poin Saya</p>
-                                <p class="text-2xl font-black text-amber-800 dark:text-amber-400">{{ $customer->points }} <span class="text-xs text-gray-400 font-semibold">Poin</span></p>
-                            </div>
-                            <div class="text-right">
-                                <p class="text-[9px] text-gray-400 uppercase font-bold tracking-wider">Target Rank Berikutnya</p>
-                                <p class="text-xs font-black text-gray-700 dark:text-gray-300">{{ $customer->next_rank_name }}</p>
-                            </div>
+                        <div>
+                            <h2 class="text-lg font-black tracking-wide">{{ $customer->name }}</h2>
+                            <p class="text-xs text-amber-200/80 font-mono mt-0.5">{{ $customer->user->email }}</p>
                         </div>
-
-                        <!-- Progress Bar (TikTok animated style) -->
-                        <div class="w-full h-3 bg-gray-150 dark:bg-gray-700 rounded-full overflow-hidden relative shadow-inner p-[1px]">
-                            <div class="h-full bg-gradient-to-r {{ $theme['bg'] }} rounded-full progress-bar-fill shadow" 
-                                 style="--progress-width: {{ $progressPercent }}%; width: {{ $progressPercent }}%;"></div>
-                        </div>
-
-                        <!-- Progress status text -->
-                        <p class="text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed">
-                            @if($customer->rank_name === 'Platinum')
-                                👑 Anda telah mencapai kasta tertinggi! Nikmati layanan prioritas utama.
-                            @else
-                                Kumpulkan <span class="font-extrabold text-amber-700 dark:text-amber-400">{{ $customer->points_for_next_rank }} Poin</span> lagi untuk naik ke <span class="font-bold text-gray-700 dark:text-gray-350">{{ $customer->next_rank_name }} Member</span>.
-                            @endif
-                        </p>
                     </div>
                 </div>
             </div>
 
-            <!-- Right Column: Member Info & Order Stats -->
-            <div class="md:col-span-3 space-y-6">
-                <!-- Member Virtual Card (TikTok Style) -->
-                <div class="bg-gradient-to-br from-amber-700 to-amber-900 rounded-[32px] p-6 text-white shadow-xl relative overflow-hidden border border-amber-600/30">
-                    <!-- Bakery Background patterns overlay -->
-                    <div class="absolute inset-0 opacity-15 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:12px_12px] z-0"></div>
-                    <div class="absolute -right-10 -bottom-10 w-44 h-44 bg-white/5 rounded-full blur-xl pointer-events-none"></div>
-                    
-                    <div class="relative z-10 h-full flex flex-col justify-between space-y-8">
-                        <!-- Top details -->
+            <!-- Profile Info Fields Card -->
+            <div class="space-y-3">
+                <span class="text-[9px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] block pl-2">Personal Information</span>
+                <div class="bg-white dark:bg-gray-800 rounded-3xl border border-amber-200/70 dark:border-gray-750 p-5 space-y-4 shadow-sm">
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-400 mb-1.5 uppercase tracking-wider">Nama Lengkap</label>
+                        <input type="text" name="name" value="{{ $customer->name }}" required class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 dark:text-white transition">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-400 mb-1.5 uppercase tracking-wider">Nomor WhatsApp</label>
+                        <input type="text" name="phone" value="{{ $customer->phone }}" placeholder="Contoh: 081234567890" class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 dark:text-white transition">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-400 mb-1.5 uppercase tracking-wider">Alamat default</label>
+                        <textarea name="address" rows="3" placeholder="Masukkan alamat lengkap pengiriman" class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 dark:text-white transition">{{ $customer->address }}</textarea>
+                    </div>
+                </div>
+            </div>
+
+        <!-- Collapsible Membership Status -->
+        <div class="bg-white dark:bg-gray-800 rounded-3xl border border-amber-200/70 dark:border-gray-750 shadow-sm overflow-hidden transition duration-200">
+            <button type="button" onclick="toggleSection('member-status-content')" class="w-full px-6 py-4 flex items-center justify-between text-left focus:outline-none select-none cursor-pointer">
+                <div class="flex items-center gap-3">
+                    <span class="text-lg">🥇</span>
+                    <span class="text-xs font-black text-gray-850 dark:text-gray-100 uppercase tracking-wider">Membership Rank Status</span>
+                </div>
+                <svg id="arrow-member-status" class="w-4 h-4 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </button>
+            
+            <div id="member-status-content" class="px-6 pb-6 space-y-6 hidden border-t border-amber-50/50 dark:border-gray-700/30 pt-4">
+                <!-- Virtual Card -->
+                <div class="bg-gradient-to-br from-amber-700 to-amber-900 rounded-2xl p-5 text-white shadow-md relative overflow-hidden border border-amber-600/30">
+                    <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:10px_10px] pointer-events-none"></div>
+                    <div class="relative z-10 flex flex-col justify-between h-28">
                         <div class="flex justify-between items-start">
                             <div>
-                                <p class="text-[9px] uppercase font-bold tracking-widest text-amber-200">Kartu Member Eksklusif</p>
-                                <h3 class="text-xl font-bold font-serif mt-1">MAMITHA MEMBER</h3>
+                                <p class="text-[8px] uppercase font-bold tracking-widest text-amber-200">Kartu Member Eksklusif</p>
+                                <h3 class="text-sm font-bold font-serif">MAMITHA MEMBER</h3>
                             </div>
-                            <span class="text-3xl filter drop-shadow">🥐</span>
+                            <span class="text-2xl select-none">🥐</span>
                         </div>
-
-                        <!-- Code / ID -->
-                        <div>
-                            <p class="text-[9px] uppercase font-bold tracking-widest text-amber-200">ID Anggota</p>
-                            <p class="text-xl font-mono font-bold tracking-wider mt-0.5">MTH-MBR-{{ str_pad($customer->id, 5, '0', STR_PAD_LEFT) }}</p>
-                        </div>
-
-                        <!-- Bottom row: owner & rank badge -->
-                        <div class="flex justify-between items-end pt-2 border-t border-white/10">
+                        <div class="flex justify-between items-end border-t border-white/10 pt-2 mt-2">
                             <div>
-                                <p class="text-[9px] uppercase font-bold tracking-widest text-amber-200">Nama Pemegang</p>
-                                <p class="text-sm font-black uppercase mt-0.5 tracking-wide">{{ $customer->name }}</p>
+                                <p class="text-[8px] uppercase font-bold tracking-widest text-amber-200">ID Anggota</p>
+                                <p class="text-xs font-mono font-bold">MTH-MBR-{{ str_pad($customer->id, 5, '0', STR_PAD_LEFT) }}</p>
                             </div>
-                            <span class="bg-white/20 border border-white/30 rounded-xl px-3 py-1 text-xs font-black uppercase tracking-wider flex items-center gap-1.5 backdrop-blur-sm shadow-sm select-none">
+                            <span class="bg-white/20 border border-white/30 rounded-lg px-2 py-0.5 text-[10px] font-black uppercase tracking-wider">
                                 {{ $customer->rank_badge }} {{ $customer->rank_name }}
                             </span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Personal Information Section -->
-                <div class="bg-white dark:bg-gray-800 rounded-3xl border border-amber-100/50 dark:border-gray-700/50 shadow-sm p-6 space-y-4">
-                    <h3 class="font-bold text-gray-800 dark:text-gray-100 font-serif text-lg">Informasi Profil</h3>
-                    <div class="grid grid-cols-2 gap-4 text-xs">
-                        <div class="space-y-1">
-                            <span class="text-gray-400 font-medium">Nama Lengkap</span>
-                            <p class="font-bold text-gray-800 dark:text-gray-200">{{ $customer->name }}</p>
+                <!-- Points progression -->
+                <div class="space-y-3">
+                    <div class="flex justify-between items-end">
+                        <div>
+                            <p class="text-[9px] text-gray-400 uppercase font-bold">Total Poin</p>
+                            <p class="text-lg font-black text-amber-800 dark:text-amber-400">{{ $customer->points }} <span class="text-xs text-gray-400 font-semibold">Poin</span></p>
                         </div>
-                        <div class="space-y-1">
-                            <span class="text-gray-400 font-medium">Nomor WhatsApp</span>
-                            <p class="font-bold text-gray-800 dark:text-gray-200">{{ $customer->phone ?: '-' }}</p>
-                        </div>
-                        <div class="space-y-1">
-                            <span class="text-gray-400 font-medium">Email Terdaftar</span>
-                            <p class="font-bold text-gray-800 dark:text-gray-200">{{ $customer->user->email }}</p>
-                        </div>
-                        <div class="space-y-1 col-span-2">
-                            <span class="text-gray-400 font-medium">Alamat Default Pengantaran</span>
-                            <p class="font-bold text-gray-800 dark:text-gray-200 leading-relaxed">{{ $customer->address ?: '-' }}</p>
+                        <div class="text-right">
+                            <p class="text-[9px] text-gray-400 uppercase font-bold">Target Berikutnya</p>
+                            <p class="text-xs font-black text-gray-700 dark:text-gray-300">{{ $customer->next_rank_name }}</p>
                         </div>
                     </div>
-                </div>
-
-                <!-- Appearance Customization Card (TikTok Style) -->
-                <div class="bg-white dark:bg-gray-800 rounded-3xl border border-amber-100/50 dark:border-gray-700/50 shadow-sm p-6 space-y-4">
-                    <div class="space-y-1">
-                        <span class="text-[9px] font-black text-amber-600 dark:text-amber-500 uppercase tracking-[0.2em] block">Kustomisasi Tampilan</span>
-                        <h3 class="font-bold text-gray-850 dark:text-gray-100 font-serif text-lg">Tema Tampilan (Appearance)</h3>
+                    <!-- Progress Bar -->
+                    <div class="w-full h-2.5 bg-gray-150 dark:bg-gray-700 rounded-full overflow-hidden relative shadow-inner">
+                        <div class="h-full bg-gradient-to-r {{ $customer->rank_theme['bg'] }} rounded-full" 
+                             style="width: {{ $customer->rank_progress_percentage }}%;"></div>
                     </div>
-                    
-                    <div class="grid grid-cols-2 gap-4">
-                        <!-- Daylight Option -->
-                        <div id="theme-daylight" onclick="setAppTheme('light')" class="border-2 rounded-2xl p-4 cursor-pointer transition flex flex-col justify-between text-left h-36 relative overflow-hidden group select-none bg-amber-50/10 dark:bg-amber-950/5">
-                            <div class="flex justify-between items-start">
-                                <!-- Card Mockup Icon -->
-                                <div class="w-12 h-8 bg-gradient-to-br from-amber-100 to-amber-200 border border-amber-200/50 rounded-md flex items-center justify-center text-xs shadow-sm">
-                                    🍞
-                                </div>
-                                <!-- Radio indicator -->
-                                <div class="theme-radio w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center transition">
-                                    <div class="theme-radio-inner w-2.5 h-2.5 rounded-full bg-amber-600 hidden"></div>
-                                </div>
-                            </div>
-                            <div>
-                                <h4 class="text-xs font-black text-gray-850 dark:text-gray-100 tracking-wide flex items-center gap-1.5">
-                                    ☀️ Daylight
-                                </h4>
-                                <p class="text-[10px] text-gray-500 dark:text-gray-400 mt-1 leading-normal">
-                                    Bright & warm cream bakery theme.
-                                </p>
-                            </div>
-                        </div>
-
-                        <!-- Midnight Option -->
-                        <div id="theme-midnight" onclick="setAppTheme('dark')" class="border-2 rounded-2xl p-4 cursor-pointer transition flex flex-col justify-between text-left h-36 relative overflow-hidden group select-none bg-gray-900/5 dark:bg-gray-800/20">
-                            <div class="flex justify-between items-start">
-                                <!-- Card Mockup Icon -->
-                                <div class="w-12 h-8 bg-gradient-to-br from-gray-750 to-gray-900 border border-gray-700/50 rounded-md flex items-center justify-center text-xs shadow-sm text-white">
-                                    🥐
-                                </div>
-                                <!-- Radio indicator -->
-                                <div class="theme-radio w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center transition">
-                                    <div class="theme-radio-inner w-2.5 h-2.5 rounded-full bg-amber-600 hidden"></div>
-                                </div>
-                            </div>
-                            <div>
-                                <h4 class="text-xs font-black text-gray-850 dark:text-gray-100 tracking-wide flex items-center gap-1.5">
-                                    🌙 Midnight
-                                </h4>
-                                <p class="text-[10px] text-gray-500 dark:text-gray-400 mt-1 leading-normal">
-                                    Easy on the eyes night-shift mode.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Preferences Card (TikTok Style) -->
-                <div class="bg-white dark:bg-gray-800 rounded-3xl border border-amber-100/50 dark:border-gray-700/50 shadow-sm p-6 space-y-4">
-                    <div class="space-y-1">
-                        <span class="text-[9px] font-black text-amber-600 dark:text-amber-500 uppercase tracking-[0.2em] block">Preferensi</span>
-                        <h3 class="font-bold text-gray-850 dark:text-gray-100 font-serif text-lg">Pengaturan Tambahan</h3>
-                    </div>
-                    
-                    <div class="divide-y divide-amber-50 dark:divide-gray-700/50">
-                        <!-- Push Notifications Preference -->
-                        <div class="py-3.5 flex items-center justify-between">
-                            <div class="flex items-center gap-3">
-                                <div class="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/30 flex items-center justify-center text-sm shadow-inner select-none">
-                                    🔔
-                                </div>
-                                <div>
-                                    <h4 class="text-xs font-black text-gray-800 dark:text-gray-255">Push Notifications</h4>
-                                    <p class="text-[9px] text-gray-400 dark:text-gray-500">Terima info diskon roti hangat terbaru.</p>
-                                </div>
-                            </div>
-                            <!-- Switch Button -->
-                            <button type="button" onclick="togglePreference('push_notif')" id="pref-push_notif" class="w-12 h-6 rounded-full bg-gray-200 dark:bg-gray-700 relative p-1 transition-colors duration-200 focus:outline-none select-none cursor-pointer">
-                                <div class="switch-dot w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-200"></div>
-                            </button>
-                        </div>
-
-                        <!-- Face ID Preference -->
-                        <div class="py-3.5 flex items-center justify-between">
-                            <div class="flex items-center gap-3">
-                                <div class="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/30 flex items-center justify-center text-sm shadow-inner select-none">
-                                    📸
-                                </div>
-                                <div>
-                                    <h4 class="text-xs font-black text-gray-800 dark:text-gray-255">Unlock with Face ID</h4>
-                                    <p class="text-[9px] text-gray-400 dark:text-gray-500">Masuk cepat menggunakan deteksi wajah.</p>
-                                </div>
-                            </div>
-                            <!-- Switch Button -->
-                            <button type="button" onclick="togglePreference('face_id')" id="pref-face_id" class="w-12 h-6 rounded-full bg-gray-200 dark:bg-gray-700 relative p-1 transition-colors duration-200 focus:outline-none select-none cursor-pointer">
-                                <div class="switch-dot w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-200"></div>
-                            </button>
-                        </div>
-                    </div>
+                    <p class="text-[10px] text-gray-500 dark:text-gray-400 leading-normal">
+                        @if($customer->rank_name === 'Platinum')
+                            👑 Anda telah mencapai peringkat tertinggi! Nikmati layanan prioritas utama.
+                        @else
+                            Kumpulkan <span class="font-extrabold text-amber-700 dark:text-amber-400">{{ $customer->points_for_next_rank }} Poin</span> lagi untuk naik ke <span class="font-bold">{{ $customer->next_rank_name }} Member</span>.
+                        @endif
+                    </p>
                 </div>
             </div>
         </div>
 
-        <!-- Section: Order History -->
-        <div class="space-y-4">
-            <h3 class="text-xl font-bold text-amber-900 dark:text-amber-100 font-serif">Riwayat Pesanan Member</h3>
+        <!-- 2. APPEARANCE SECTION -->
+        <div class="space-y-3">
+            <span class="text-[9px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] block pl-2">Appearance</span>
+            <div class="grid grid-cols-2 gap-4">
+                
+                <!-- Daylight Option -->
+                <div id="theme-daylight-card" onclick="setAppTheme('light', event)" class="theme-card border-2 rounded-[28px] p-4 cursor-pointer transition flex flex-col justify-between text-left h-44 relative select-none bg-white dark:bg-gray-800 border-amber-200/50 dark:border-gray-700 shadow-sm">
+                    <!-- Daylight Card Mockup (exact preview from screenshot) -->
+                    <div class="w-full h-20 bg-gradient-to-br from-amber-50 via-cream-50 to-orange-100 border border-amber-200/50 rounded-xl p-3 flex flex-col justify-between shadow-inner">
+                        <div class="space-y-1.5">
+                            <div class="h-1.5 w-10 bg-amber-800/30 rounded-full"></div>
+                            <div class="h-1 w-16 bg-amber-800/10 rounded-full"></div>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <div class="h-3 w-8 bg-amber-600 rounded-full"></div>
+                            <div class="h-2 w-2 bg-amber-200 rounded-full"></div>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center mt-2.5">
+                        <div>
+                            <h4 class="text-xs font-black text-gray-850 dark:text-gray-100 tracking-wide">Daylight</h4>
+                            <p class="text-[9px] text-gray-400 dark:text-gray-500 mt-0.5">Light theme</p>
+                        </div>
+                        <!-- Radio indicator -->
+                        <div class="theme-radio w-5 h-5 rounded-full border-2 border-gray-250 dark:border-gray-650 flex items-center justify-center transition">
+                            <div class="theme-radio-inner w-2.5 h-2.5 rounded-full bg-[#ff6310] hidden"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Midnight Option -->
+                <div id="theme-midnight-card" onclick="setAppTheme('dark', event)" class="theme-card border-2 rounded-[28px] p-4 cursor-pointer transition flex flex-col justify-between text-left h-44 relative select-none bg-white dark:bg-gray-800 border-amber-200/50 dark:border-gray-700 shadow-sm">
+                    <!-- Midnight Card Mockup (exact preview from screenshot) -->
+                    <div class="w-full h-20 bg-gray-900 border border-gray-800 rounded-xl p-3 flex flex-col justify-between shadow-inner">
+                        <div class="space-y-1.5">
+                            <div class="h-1.5 w-10 bg-white/20 rounded-full"></div>
+                            <div class="h-1 w-16 bg-white/5 rounded-full"></div>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <div class="h-3 w-8 bg-[#ff6310] rounded-full"></div>
+                            <div class="h-2 w-2 bg-gray-800 rounded-full"></div>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center mt-2.5">
+                        <div>
+                            <h4 class="text-xs font-black text-gray-850 dark:text-gray-100 tracking-wide">Midnight</h4>
+                            <p class="text-[9px] text-gray-400 dark:text-gray-500 mt-0.5">Dark theme</p>
+                        </div>
+                        <!-- Radio indicator -->
+                        <div class="theme-radio w-5 h-5 rounded-full border-2 border-gray-200 dark:border-gray-700 flex items-center justify-center transition">
+                            <div class="theme-radio-inner w-2.5 h-2.5 rounded-full bg-[#ff6310] hidden"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- 3. PREFERENCES SECTION -->
+        <div class="space-y-3">
+            <span class="text-[9px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] block pl-2">Preferences</span>
+            <div class="bg-white dark:bg-gray-800 rounded-3xl border border-amber-200/70 dark:border-gray-750 p-4 space-y-4 shadow-sm">
+                
+                <!-- Push Notifications -->
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-xl bg-amber-50 dark:bg-gray-900 flex items-center justify-center text-sm shadow-inner select-none">
+                            🔔
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-black text-gray-800 dark:text-gray-100">Notifikasi Pemberitahuan</h4>
+                            <p class="text-[9px] text-gray-450 dark:text-gray-500">Dapatkan Update Tentang Order dan Menu Terbaru</p>
+                        </div>
+                    </div>
+                    <!-- Custom Switch (styled like screenshot) -->
+                    <button type="button" onclick="togglePreference('push_notif')" id="pref-push_notif" class="pref-switch w-12 h-6 rounded-full bg-gray-200 dark:bg-gray-700 relative p-1 transition-colors duration-250 cursor-pointer focus:outline-none select-none">
+                        <div class="switch-dot w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-250"></div>
+                    </button>
+                </div>
+
+                <!-- Unlock with Face ID -->
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-xl bg-amber-50 dark:bg-gray-900 flex items-center justify-center text-sm shadow-inner select-none">
+                            👤
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-black text-gray-800 dark:text-gray-100">Buka Dengan Face ID</h4>
+                            <p class="text-[9px] text-gray-450 dark:text-gray-500">Mengamankan Akses Ke Portal Membership</p>
+                        </div>
+                    </div>
+                    <button type="button" onclick="togglePreference('face_id')" id="pref-face_id" class="pref-switch w-12 h-6 rounded-full bg-gray-200 dark:bg-gray-700 relative p-1 transition-colors duration-250 cursor-pointer focus:outline-none select-none">
+                        <div class="switch-dot w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-250"></div>
+                    </button>
+                </div>
+
+                <!-- Haptic Feedback -->
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-xl bg-amber-50 dark:bg-gray-900 flex items-center justify-center text-sm shadow-inner select-none">
+                            📳
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-black text-gray-800 dark:text-gray-100">Getaran Umpan Balik</h4>
+                            <p class="text-[9px] text-gray-450 dark:text-gray-500">Umpan Balik Fisik Taktil Melalui Getaran di Ponsel Anda</p>
+                        </div>
+                    </div>
+                    <button type="button" onclick="togglePreference('haptic_feedback')" id="pref-haptic_feedback" class="pref-switch w-12 h-6 rounded-full bg-gray-200 dark:bg-gray-700 relative p-1 transition-colors duration-250 cursor-pointer focus:outline-none select-none">
+                        <div class="switch-dot w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-250"></div>
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- 4. ACCOUNT SECTION -->
+        <div class="space-y-3">
+            <span class="text-[9px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] block pl-2">Account</span>
+            <div class="bg-white dark:bg-gray-800 rounded-3xl border border-amber-200/70 dark:border-gray-750 p-2 shadow-sm divide-y divide-amber-100 dark:divide-gray-750">
+                
+                <!-- My orders -->
+                <button type="button" onclick="toggleSection('orders-section'); triggerHaptic();" class="w-full flex items-center justify-between p-3.5 hover:bg-amber-50/20 dark:hover:bg-gray-700/30 rounded-2xl transition cursor-pointer select-none text-left focus:outline-none">
+                    <div class="flex items-center gap-3">
+                        <span class="text-base select-none">📦</span>
+                        <span class="text-xs font-black text-gray-800 dark:text-gray-200">Pesanan Saya</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="bg-orange-500/10 text-[#ff6310] text-[9px] font-bold px-2 py-0.5 rounded-full">{{ count($orders) }}</span>
+                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                    </div>
+                </button>
+
+                <!-- Payment methods -->
+                <button type="button" onclick="openModal('modal-payment-methods')" class="w-full flex items-center justify-between p-3.5 hover:bg-amber-50/20 dark:hover:bg-gray-700/30 rounded-2xl transition cursor-pointer select-none text-left focus:outline-none">
+                    <div class="flex items-center gap-3">
+                        <span class="text-base select-none">💳</span>
+                        <span class="text-xs font-black text-gray-800 dark:text-gray-200">Metode Pembayaran</span>
+                    </div>
+                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                </button>
+
+                <!-- Saved addresses -->
+                <button type="button" onclick="openModal('modal-saved-addresses')" class="w-full flex items-center justify-between p-3.5 hover:bg-amber-50/20 dark:hover:bg-gray-700/30 rounded-2xl transition cursor-pointer select-none text-left focus:outline-none">
+                    <div class="flex items-center gap-3">
+                        <span class="text-base select-none">📍</span>
+                        <span class="text-xs font-black text-gray-800 dark:text-gray-200">Alamat Tersimpan</span>
+                    </div>
+                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                </button>
+
+            </div>
+        </div>
+
+        </form>
+
+        <!-- 5. GREEN LOGOUT BUTTON (Matching screenshots) -->
+        <form method="POST" action="{{ route('logout') }}" id="logout-form">
+            @csrf
+            <button type="submit" onclick="triggerHaptic()" class="w-full py-4.5 bg-[#10b981] hover:bg-emerald-600 text-white font-extrabold text-sm rounded-[24px] shadow-lg shadow-emerald-500/10 transition-all duration-200 transform active:scale-95 flex items-center justify-center gap-2.5 cursor-pointer">
+                <!-- Log out door icon -->
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                <span>Keluar dari Akun</span>
+            </button>
+        </form>
+
+        <!-- 6. DYNAMIC ORDER HISTORY PANEL (slides down when clicking My Orders) -->
+        <div id="orders-section" class="hidden space-y-4 pt-2">
+            <h3 class="text-lg font-bold text-gray-850 dark:text-white font-serif">Riwayat Pesanan Member</h3>
             
             @forelse($orders as $order)
             <!-- Order Card -->
-            <div class="bg-white dark:bg-gray-800 rounded-3xl border border-amber-100/50 dark:border-gray-700/50 shadow-sm p-6 hover:shadow-md transition duration-200 space-y-4">
-                <!-- Top Header: Date, Number & Status -->
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-50 dark:border-gray-700/50 pb-4">
+            <div class="bg-white dark:bg-gray-800 rounded-3xl border border-amber-100/50 dark:border-gray-700/50 shadow-sm p-5 space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-amber-50 dark:border-gray-700/50 pb-3">
                     <div>
-                        <div class="flex items-center gap-2">
-                            <span class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">No. Pesanan:</span>
-                            <span class="font-extrabold text-sm text-amber-800 dark:text-amber-400">{{ $order->order_number }}</span>
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-[9px] text-gray-400 font-bold uppercase">No:</span>
+                            <span class="font-extrabold text-xs text-amber-800 dark:text-amber-400">{{ $order->order_number }}</span>
                         </div>
-                        <p class="text-[10px] text-gray-400 mt-0.5">{{ $order->order_date->format('d M Y, H:i') }}</p>
+                        <p class="text-[9px] text-gray-400 mt-0.5">{{ $order->order_date->format('d M Y, H:i') }}</p>
                     </div>
                     
-                    <div class="flex items-center gap-2">
-                        <!-- Tipe Badge -->
-                        <span class="px-2 py-0.5 text-[10px] font-extrabold rounded-lg shadow-inner {{ $order->type === 'delivery' ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/20 dark:text-blue-400' : 'bg-amber-50 text-amber-800 dark:bg-amber-950/20 dark:text-amber-300' }}">
+                    <div class="flex items-center gap-1.5">
+                        <span class="px-2 py-0.5 text-[9px] font-black rounded-lg {{ $order->type === 'delivery' ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/20 dark:text-blue-400' : 'bg-amber-50 text-amber-800 dark:bg-amber-950/20 dark:text-amber-300' }}">
                             {{ $order->type === 'delivery' ? '🚚 Delivery' : '🏪 Pickup' }}
                         </span>
                         
-                        <!-- Status Badge -->
                         @if($order->status == 'pending')
-                            <span class="px-2.5 py-0.5 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 text-[10px] font-black rounded-lg border border-yellow-500/20">⏳ Pending</span>
+                            <span class="px-2 py-0.5 bg-yellow-500/10 text-yellow-600 dark:text-yellow-450 text-[9px] font-black rounded-lg border border-yellow-500/20">⏳ Pending</span>
                         @elseif($order->status == 'confirmed')
-                            <span class="px-2.5 py-0.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-black rounded-lg border border-blue-500/20">👍 Dikonfirmasi</span>
+                            <span class="px-2 py-0.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[9px] font-black rounded-lg border border-blue-500/20">👍 Dikonfirmasi</span>
                         @elseif($order->status == 'producing')
-                            <span class="px-2.5 py-0.5 bg-orange-500/10 text-orange-600 dark:text-orange-400 text-[10px] font-black rounded-lg border border-orange-500/20">🔥 Dipanggang</span>
+                            <span class="px-2 py-0.5 bg-orange-500/10 text-orange-600 dark:text-orange-400 text-[9px] font-black rounded-lg border border-orange-500/20">🔥 Dipanggang</span>
                         @elseif($order->status == 'ready')
-                            <span class="px-2.5 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-black rounded-lg border border-emerald-500/20">🛵 Siap</span>
+                            <span class="px-2 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[9px] font-black rounded-lg border border-emerald-500/20">🛵 Siap</span>
                         @elseif($order->status == 'done')
-                            <span class="px-2.5 py-0.5 bg-green-500/10 text-green-600 dark:text-green-400 text-[10px] font-black rounded-lg border border-green-500/20">✅ Selesai</span>
+                            <span class="px-2 py-0.5 bg-green-500/10 text-green-600 dark:text-green-400 text-[9px] font-black rounded-lg border border-green-500/20">✅ Selesai</span>
                         @else
-                            <span class="px-2.5 py-0.5 bg-red-500/10 text-red-600 dark:text-red-400 text-[10px] font-black rounded-lg border border-red-500/20">❌ Dibatalkan</span>
+                            <span class="px-2 py-0.5 bg-red-500/10 text-red-600 dark:text-red-400 text-[9px] font-black rounded-lg border border-red-500/20">❌ Dibatalkan</span>
                         @endif
                     </div>
                 </div>
 
-                <!-- Items list -->
-                <div class="divide-y divide-gray-50 dark:divide-gray-700/30">
+                <!-- Item details -->
+                <div class="divide-y divide-amber-50 dark:divide-gray-700/30">
                     @foreach($order->items as $item)
-                    <div class="py-2.5 flex items-center justify-between text-xs">
-                        <div class="flex items-center gap-3">
+                    <div class="py-2 flex items-center justify-between text-xs">
+                        <div class="flex items-center gap-2">
                             @if($item->product && $item->product->image)
-                                <img src="{{ $item->product->image_url }}" alt="{{ $item->product->name }}" class="w-8 h-8 object-cover rounded-lg shadow-sm">
+                                <img src="{{ $item->product->image_url }}" alt="{{ $item->product->name }}" class="w-8 h-8 object-cover rounded-lg">
                             @else
-                                <div class="w-8 h-8 bg-amber-50 dark:bg-amber-950/20 rounded-lg flex items-center justify-center text-base shadow-inner">🍞</div>
+                                <div class="w-8 h-8 bg-amber-50 dark:bg-amber-950/20 rounded-lg flex items-center justify-center text-sm">🍞</div>
                             @endif
                             <div>
                                 <p class="font-bold text-gray-800 dark:text-gray-200">
                                     {{ $item->product->name }}
                                     @if($item->variant)
-                                        <span class="text-[10px] text-gray-500 dark:text-gray-400 font-normal">({{ $item->variant->name }})</span>
+                                        <span class="text-[9px] text-gray-500 dark:text-gray-400 font-normal">({{ $item->variant->name }})</span>
                                     @endif
                                 </p>
-                                <p class="text-[10px] text-gray-450 mt-0.5">Rp {{ number_format($item->price, 0, ',', '.') }} x {{ $item->quantity }}</p>
+                                <p class="text-[9px] text-gray-400 mt-0.5">Rp {{ number_format($item->price, 0, ',', '.') }} x {{ $item->quantity }}</p>
                             </div>
                         </div>
-                        <span class="font-bold text-gray-800 dark:text-gray-200">Rp {{ number_format($item->subtotal, 0, ',', '.') }}</span>
+                        <span class="font-bold text-gray-850 dark:text-gray-200">Rp {{ number_format($item->subtotal, 0, ',', '.') }}</span>
                     </div>
                     @endforeach
                 </div>
 
-                <!-- Summary Row -->
-                <div class="border-t border-gray-150/40 dark:border-gray-700/50 pt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <div class="text-center sm:text-left flex items-center gap-6">
-                        <div>
-                            <p class="text-[9px] text-gray-400 uppercase font-bold tracking-wider">Total Belanja</p>
-                            <p class="text-base font-black text-amber-800 dark:text-amber-400">Rp {{ number_format($order->total, 0, ',', '.') }}</p>
-                        </div>
-                        <div class="bg-amber-50 dark:bg-amber-950/30 px-3 py-1 rounded-xl border border-amber-200/20 text-center">
-                            <p class="text-[9px] text-amber-700 dark:text-amber-500 uppercase font-bold tracking-wider">Poin Diperoleh</p>
-                            <p class="text-xs font-black text-amber-850 dark:text-amber-400">+{{ (int) floor($order->total / 10000) }} Poin</p>
-                        </div>
+                <div class="border-t border-amber-50 dark:border-gray-700/50 pt-3 flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div>
+                        <p class="text-[8px] text-gray-400 font-bold uppercase">Total Belanja</p>
+                        <p class="text-sm font-black text-amber-800 dark:text-amber-400">Rp {{ number_format($order->total, 0, ',', '.') }}</p>
                     </div>
-                    
                     <div class="flex items-center gap-2 w-full sm:w-auto">
-                        <!-- Contact store -->
-                        <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $storeWhatsapp) }}?text=Halo%20Mamitha%20Bakery,%20saya%20ingin%20tanya%2520mengenai%20order%20{{ $order->order_number }}" target="_blank" class="flex-1 sm:flex-none px-3.5 py-2 bg-green-500 hover:bg-green-600 text-white font-extrabold text-[10px] rounded-xl text-center transition flex items-center justify-center gap-1 active:scale-95">
-                            💬 Hubungi Toko
+                        <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $storeWhatsapp) }}?text=Halo%20Mamitha%20Bakery,%20saya%20ingin%20tanya%20mengenai%20order%20{{ $order->order_number }}" target="_blank" class="flex-1 text-center px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white font-extrabold text-[10px] rounded-lg transition active:scale-95 select-none">
+                            💬 Hubungi
                         </a>
-                        
-                        <!-- Lacak detail -->
-                        <a href="{{ route('order.success', $order->id) }}" class="flex-1 sm:flex-none px-3.5 py-2 bg-gray-900 dark:bg-gray-100 hover:bg-amber-700 dark:hover:bg-amber-500 text-white dark:text-gray-900 font-extrabold text-[10px] rounded-xl text-center transition flex items-center justify-center gap-1 active:scale-95">
+                        <a href="{{ route('order.success', $order->id) }}" class="flex-1 text-center px-3 py-1.5 bg-gray-900 dark:bg-gray-100 hover:bg-amber-600 dark:hover:bg-amber-500 text-white dark:text-gray-900 font-extrabold text-[10px] rounded-lg transition active:scale-95 select-none">
                             📍 Lacak Status &rarr;
                         </a>
                     </div>
                 </div>
             </div>
             @empty
-            <div class="bg-white dark:bg-gray-800 rounded-3xl border border-amber-100/50 dark:border-gray-700/50 p-12 text-center space-y-3 shadow-sm">
-                <span class="text-4xl block">🥐</span>
-                <h4 class="font-bold text-gray-800 dark:text-gray-150 font-serif">Belum Ada Transaksi</h4>
-                <p class="text-xs text-gray-500 dark:text-gray-400 max-w-xs mx-auto leading-relaxed">Silakan lakukan pesanan roti hangat pertama Anda untuk mulai mengumpulkan poin dan meningkatkan Rank member!</p>
-                <a href="{{ route('order.create') }}" class="inline-block px-5 py-2.5 bg-gradient-to-r from-amber-600 to-orange-600 text-white text-xs font-black rounded-xl transition shadow active:scale-95">Mulai Pesan Roti</a>
+            <div class="bg-white dark:bg-gray-800 rounded-3xl border border-amber-100/50 dark:border-gray-700/50 p-8 text-center space-y-2 shadow-sm">
+                <span class="text-3xl block">🥐</span>
+                <h4 class="font-bold text-gray-800 dark:text-gray-250">Belum Ada Transaksi</h4>
+                <p class="text-[11px] text-gray-500 dark:text-gray-400 max-w-xs mx-auto leading-normal">Silakan lakukan pesanan pertama Anda untuk mulai mengumpulkan poin member!</p>
             </div>
             @endforelse
         </div>
 
     </div>
 </div>
+
+{{-- MODALS SECTION --}}
+
+
+
+<!-- Modal 2: Payment Methods -->
+<div id="modal-payment-methods" class="modal-wrapper fixed inset-0 bg-gray-900/60 dark:bg-black/85 flex items-center justify-center p-4 z-[99999] opacity-0 pointer-events-none transition-all duration-300">
+    <div class="modal-card bg-white dark:bg-gray-800 rounded-[32px] w-full max-w-md p-6 border border-amber-50 dark:border-gray-700 shadow-2xl transform scale-90 transition-all duration-300">
+        <div class="flex justify-between items-center border-b border-amber-50 dark:border-gray-750 pb-4 mb-4">
+            <h3 class="text-xl font-bold text-gray-850 dark:text-white font-serif">Payment Methods</h3>
+            <button onclick="closeModal('modal-payment-methods')" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 focus:outline-none cursor-pointer text-sm font-bold">Close</button>
+        </div>
+        <div class="space-y-3">
+            <div class="flex items-center justify-between p-3.5 bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-750 select-none">
+                <div class="flex items-center gap-3">
+                    <span class="text-xl">💳</span>
+                    <div>
+                        <p class="text-xs font-black text-gray-800 dark:text-gray-200">Kartu Kredit Utama</p>
+                        <p class="text-[9px] text-gray-400 font-mono">**** **** **** 5678</p>
+                    </div>
+                </div>
+                <span class="text-[10px] text-orange-600 font-bold bg-orange-50 dark:bg-orange-950/20 px-2 py-0.5 rounded-full select-none">Aktif</span>
+            </div>
+            
+            <div class="flex items-center justify-between p-3.5 bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-750 select-none">
+                <div class="flex items-center gap-3">
+                    <span class="text-xl">📱</span>
+                    <div>
+                        <p class="text-xs font-black text-gray-800 dark:text-gray-200">DANA E-Wallet</p>
+                        <p class="text-[9px] text-gray-400 font-mono">0812-****-5670</p>
+                    </div>
+                </div>
+                <span class="text-[10px] text-gray-400 font-bold">Tersambung</span>
+            </div>
+
+            <div class="flex items-center justify-between p-3.5 bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-750 select-none">
+                <div class="flex items-center gap-3">
+                    <span class="text-xl">💵</span>
+                    <div>
+                        <p class="text-xs font-black text-gray-800 dark:text-gray-200">Cash on Delivery (COD)</p>
+                        <p class="text-[9px] text-gray-400">Bayar langsung di tempat</p>
+                    </div>
+                </div>
+                <span class="text-[10px] text-gray-400 font-bold">Selalu Aktif</span>
+            </div>
+
+            <button onclick="alert('Fitur tambah metode pembayaran akan segera hadir!'); triggerHaptic();" class="w-full py-3 bg-transparent border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-orange-500 text-gray-500 hover:text-orange-500 font-bold text-xs rounded-xl transition cursor-pointer text-center select-none">
+                + Tambah Metode Pembayaran
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal 3: Saved Addresses -->
+<div id="modal-saved-addresses" class="modal-wrapper fixed inset-0 bg-gray-900/60 dark:bg-black/85 flex items-center justify-center p-4 z-[99999] opacity-0 pointer-events-none transition-all duration-300">
+    <div class="modal-card bg-white dark:bg-gray-800 rounded-[32px] w-full max-w-md p-6 border border-amber-50 dark:border-gray-700 shadow-2xl transform scale-90 transition-all duration-300">
+        <div class="flex justify-between items-center border-b border-amber-50 dark:border-gray-750 pb-4 mb-4">
+            <h3 class="text-xl font-bold text-gray-850 dark:text-white font-serif">Saved Addresses</h3>
+            <button onclick="closeModal('modal-saved-addresses')" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 focus:outline-none cursor-pointer text-sm font-bold">Close</button>
+        </div>
+        <div class="space-y-4">
+            <div class="p-4 bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-750 relative select-none">
+                <div class="flex justify-between items-start">
+                    <span class="text-[10px] font-black uppercase text-orange-600 tracking-wider">🏠 Rumah (Alamat Utama)</span>
+                    <button onclick="editAddressOnPage()" class="text-[10px] text-gray-400 hover:text-orange-600 font-bold transition">Ubah</button>
+                </div>
+                <p class="text-xs font-bold text-gray-800 dark:text-gray-200 mt-2">{{ $customer->name }} ({{ $customer->phone ?: '-' }})</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">{{ $customer->address ?: 'Belum mengatur alamat default.' }}</p>
+            </div>
+            
+            <button onclick="editAddressOnPage()" class="w-full py-3 bg-[#ff6310] hover:bg-orange-700 text-white font-extrabold text-xs rounded-xl transition shadow active:scale-95 cursor-pointer text-center select-none">
+                Kelola Alamat Pengiriman
+            </button>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
 <script>
-    function setAppTheme(theme) {
-        if (theme === 'dark') {
-            document.documentElement.classList.add('dark');
-            localStorage.setItem('theme', 'dark');
-            
-            // Update UI selected state for Midnight
-            document.getElementById('theme-midnight').classList.add('border-amber-500', 'bg-amber-50/5');
-            document.getElementById('theme-midnight').classList.remove('border-gray-200', 'dark:border-gray-700');
-            document.querySelector('#theme-midnight .theme-radio').classList.add('border-amber-500');
-            document.querySelector('#theme-midnight .theme-radio').classList.remove('border-gray-350');
-            document.querySelector('#theme-midnight .theme-radio-inner').classList.remove('hidden');
-            
-            // Reset Daylight UI
-            document.getElementById('theme-daylight').classList.remove('border-amber-500', 'bg-amber-50/5');
-            document.getElementById('theme-daylight').classList.add('border-gray-200', 'dark:border-gray-700');
-            document.querySelector('#theme-daylight .theme-radio').classList.remove('border-amber-500');
-            document.querySelector('#theme-daylight .theme-radio').classList.add('border-gray-350');
-            document.querySelector('#theme-daylight .theme-radio-inner').classList.add('hidden');
-        } else {
-            document.documentElement.classList.remove('dark');
-            localStorage.setItem('theme', 'light');
-            
-            // Update UI selected state for Daylight
-            document.getElementById('theme-daylight').classList.add('border-amber-500', 'bg-amber-50/5');
-            document.getElementById('theme-daylight').classList.remove('border-gray-200', 'dark:border-gray-700');
-            document.querySelector('#theme-daylight .theme-radio').classList.add('border-amber-500');
-            document.querySelector('#theme-daylight .theme-radio').classList.remove('border-gray-350');
-            document.querySelector('#theme-daylight .theme-radio-inner').classList.remove('hidden');
-            
-            // Reset Midnight UI
-            document.getElementById('theme-midnight').classList.remove('border-amber-500', 'bg-amber-50/5');
-            document.getElementById('theme-midnight').classList.add('border-gray-200', 'dark:border-gray-700');
-            document.querySelector('#theme-midnight .theme-radio').classList.remove('border-amber-500');
-            document.querySelector('#theme-midnight .theme-radio').classList.add('border-gray-350');
-            document.querySelector('#theme-midnight .theme-radio-inner').classList.add('hidden');
+    // Trigger vibration haptic feedback if enabled
+    function triggerHaptic() {
+        const hapticEnabled = localStorage.getItem('pref_haptic_feedback') !== 'false';
+        if (hapticEnabled && navigator.vibrate) {
+            navigator.vibrate([15]);
         }
     }
 
+    // Scroll to and focus address input directly on the settings page
+    function editAddressOnPage() {
+        closeModal('modal-saved-addresses');
+        setTimeout(() => {
+            const addressField = document.querySelector('textarea[name="address"]');
+            if (addressField) {
+                addressField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                addressField.focus();
+            }
+        }, 300);
+    }
+
+    // Toggle Section visibility (e.g. My Orders or Membership status)
+    function toggleSection(sectionId) {
+        const section = document.getElementById(sectionId);
+        if (!section) return;
+        
+        section.classList.toggle('hidden');
+        triggerHaptic();
+
+        // Rotate arrow icon if present
+        if (sectionId === 'member-status-content') {
+            const arrow = document.getElementById('arrow-member-status');
+            if (arrow) arrow.classList.toggle('rotate-180');
+        }
+    }
+
+    // Modal Control functions
+    function openModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (!modal) return;
+        
+        triggerHaptic();
+        modal.classList.remove('opacity-0', 'pointer-events-none');
+        modal.querySelector('.modal-card').classList.remove('scale-90');
+        modal.querySelector('.modal-card').classList.add('scale-100');
+    }
+
+    function closeModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (!modal) return;
+        
+        triggerHaptic();
+        modal.classList.add('opacity-0', 'pointer-events-none');
+        modal.querySelector('.modal-card').classList.remove('scale-100');
+        modal.querySelector('.modal-card').classList.add('scale-90');
+    }
+
+    // Toggle Preference Switch states (Push Notif, Face ID, Haptic)
     function togglePreference(key) {
         const btn = document.getElementById(`pref-${key}`);
         const dot = btn.querySelector('.switch-dot');
-        const isActive = btn.classList.contains('bg-orange-600');
+        const isActive = btn.classList.contains('bg-[#ff6310]');
+        
+        triggerHaptic();
         
         if (isActive) {
-            btn.classList.remove('bg-orange-600');
+            btn.classList.remove('bg-[#ff6310]');
             btn.classList.add('bg-gray-200', 'dark:bg-gray-700');
             dot.classList.remove('translate-x-6');
             localStorage.setItem(`pref_${key}`, 'false');
         } else {
-            btn.classList.add('bg-orange-600');
+            btn.classList.add('bg-[#ff6310]');
             btn.classList.remove('bg-gray-200', 'dark:bg-gray-700');
             dot.classList.add('translate-x-6');
             localStorage.setItem(`pref_${key}`, 'true');
         }
     }
 
-    // Initialize theme and preference toggles state on load
-    window.addEventListener('load', () => {
-        const currentTheme = localStorage.getItem('theme') || 
-            (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-        setAppTheme(currentTheme);
+    // Update styling matching current active theme (Light/Dark cards)
+    function syncThemeCardUI(isDark) {
+        const daylightCard = document.getElementById('theme-daylight-card');
+        const midnightCard = document.getElementById('theme-midnight-card');
+        
+        if (isDark) {
+            // Select Midnight
+            midnightCard?.classList.add('border-[#ff6310]', 'bg-amber-50/5');
+            midnightCard?.classList.remove('border-gray-100', 'dark:border-gray-700');
+            const midnightRadio = midnightCard?.querySelector('.theme-radio');
+            if (midnightRadio) midnightRadio.className = 'theme-radio w-5 h-5 rounded-full border-2 border-[#ff6310] flex items-center justify-center transition';
+            midnightCard?.querySelector('.theme-radio-inner')?.classList.remove('hidden');
+            
+            // Deselect Daylight
+            daylightCard?.classList.remove('border-[#ff6310]', 'bg-amber-50/5');
+            daylightCard?.classList.add('border-gray-100', 'dark:border-gray-700');
+            const daylightRadio = daylightCard?.querySelector('.theme-radio');
+            if (daylightRadio) daylightRadio.className = 'theme-radio w-5 h-5 rounded-full border-2 border-gray-200 dark:border-gray-700 flex items-center justify-center transition';
+            daylightCard?.querySelector('.theme-radio-inner')?.classList.add('hidden');
+        } else {
+            // Select Daylight
+            daylightCard?.classList.add('border-[#ff6310]', 'bg-amber-50/5');
+            daylightCard?.classList.remove('border-gray-100', 'dark:border-gray-700');
+            const daylightRadio = daylightCard?.querySelector('.theme-radio');
+            if (daylightRadio) daylightRadio.className = 'theme-radio w-5 h-5 rounded-full border-2 border-[#ff6310] flex items-center justify-center transition';
+            daylightCard?.querySelector('.theme-radio-inner')?.classList.remove('hidden');
+            
+            // Deselect Midnight
+            midnightCard?.classList.remove('border-[#ff6310]', 'bg-amber-50/5');
+            midnightCard?.classList.add('border-gray-100', 'dark:border-gray-700');
+            const midnightRadio = midnightCard?.querySelector('.theme-radio');
+            if (midnightRadio) midnightRadio.className = 'theme-radio w-5 h-5 rounded-full border-2 border-gray-200 dark:border-gray-700 flex items-center justify-center transition';
+            midnightCard?.querySelector('.theme-radio-inner')?.classList.add('hidden');
+        }
+    }
 
-        // Init Preferences toggles to true by default (matching screenshot)
-        ['push_notif', 'face_id'].forEach(key => {
+    // Listen to theme changes from the parent layout to keep these cards synced
+    const originalApplyTheme = window.applyTheme;
+    window.applyTheme = function(isDark) {
+        originalApplyTheme(isDark);
+        syncThemeCardUI(isDark);
+    };
+
+    // Initialize UI states on page load
+    window.addEventListener('load', () => {
+        // 1. Theme sync
+        const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+        syncThemeCardUI(currentTheme === 'dark');
+
+        // 2. Preferences switches sync
+        ['push_notif', 'face_id', 'haptic_feedback'].forEach(key => {
             const btn = document.getElementById(`pref-${key}`);
             if (!btn) return;
             const dot = btn.querySelector('.switch-dot');
             const val = localStorage.getItem(`pref_${key}`) !== 'false';
             
             if (val) {
-                btn.classList.add('bg-orange-600');
+                btn.classList.add('bg-[#ff6310]');
                 btn.classList.remove('bg-gray-200', 'dark:bg-gray-700');
                 dot.classList.add('translate-x-6');
             } else {
-                btn.classList.remove('bg-orange-600');
+                btn.classList.remove('bg-[#ff6310]');
                 btn.classList.add('bg-gray-200', 'dark:bg-gray-700');
                 dot.classList.remove('translate-x-6');
             }

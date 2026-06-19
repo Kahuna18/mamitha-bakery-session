@@ -60,9 +60,14 @@
 
 @php
     $showModal = false;
-    $modalType = 'none'; // 'levelup', 'points', 'guest'
+    $modalType = 'none'; // 'new_member', 'levelup', 'points', 'guest'
     
-    if (session()->has('level_up')) {
+    if (session()->has('newly_joined_member')) {
+        $showModal = true;
+        $modalType = 'new_member';
+        $rankName = $order->customer->rank_name;
+        $rankBadge = $order->customer->rank_badge;
+    } elseif (session()->has('level_up')) {
         $showModal = true;
         $modalType = 'levelup';
         $levelUpData = session('level_up'); // ['old' => '...', 'new' => '...', 'badge' => '...']
@@ -80,7 +85,7 @@
     }
 @endphp
 
-@@if($showModal)
+@if($showModal)
 <!-- Level Up / Rank Unlocked Modal Overlay (Premium TikTok/Flutter Style) -->
 <div id="success-levelup-modal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-500 ease-out opacity-0 pointer-events-none">
     <div id="success-card-sheet" class="bg-white dark:bg-gray-900 rounded-[32px] p-6 max-w-sm w-full mx-4 shadow-2xl border border-gray-100 dark:border-gray-800/80 text-center relative overflow-hidden transform scale-90 opacity-0 transition-all duration-500 ease-out">
@@ -102,10 +107,10 @@
             <!-- Drag Handle Indicator -->
             <div class="w-12 h-1 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mb-6"></div>
 
-            @if($modalType === 'levelup' || $modalType === 'points')
+            @if($modalType === 'levelup' || $modalType === 'points' || $modalType === 'new_member')
                 @php
-                    $rankName = $modalType === 'levelup' ? $levelUpData['new'] : $order->customer->rank_name;
-                    $rankBadge = $modalType === 'levelup' ? $levelUpData['badge'] : $order->customer->rank_badge;
+                    $rankName = ($modalType === 'levelup') ? $levelUpData['new'] : $order->customer->rank_name;
+                    $rankBadge = ($modalType === 'levelup') ? $levelUpData['badge'] : $order->customer->rank_badge;
                     $customerPoints = $order->customer->points;
 
                     // Determine percentile, rewards, and theme gradient based on rank name
@@ -157,21 +162,25 @@
                 <!-- Text details -->
                 <div class="space-y-1 mb-6">
                     <span class="text-[10px] font-black text-amber-600 dark:text-amber-500 uppercase tracking-[0.25em] block animate-pulse">
-                        @if($modalType === 'levelup')
+                        @if($modalType === 'new_member')
+                            Selamat Bergabung!
+                        @elseif($modalType === 'levelup')
                             Rank Unlocked
                         @else
                             Member Status
                         @endif
                     </span>
                     <h2 class="text-2xl font-black text-gray-955 dark:text-white leading-tight">
-                        @if($modalType === 'levelup')
-                            You're {{ $rankName }}
+                        @if($modalType === 'new_member')
+                            Welcome Member!
                         @else
                             You're {{ $rankName }}
                         @endif
                     </h2>
                     <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">
-                        @if($modalType === 'levelup')
+                        @if($modalType === 'new_member')
+                            Sekarang Anda adalah Member Resmi Mamitha
+                        @elseif($modalType === 'levelup')
                             {{ $customerPoints }} points - top {{ $percentile }} of members
                         @else
                             +{{ $pointsEarned }} points &bull; {{ $customerPoints }} points - top {{ $percentile }}
@@ -188,7 +197,7 @@
                         </svg>
                     </div>
                     <div>
-                        <span class="text-[9px] font-black text-gray-450 dark:text-gray-500 uppercase tracking-wider block">Reward unlocked</span>
+                        <span class="text-[9px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider block">Benefit Member</span>
                         <h4 class="text-xs font-extrabold text-gray-900 dark:text-white leading-tight mt-0.5">
                             {{ $rewardTitle }}
                         </h4>
@@ -200,7 +209,7 @@
 
                 <!-- View my rewards Action Button -->
                 <a href="{{ route('member.profile') }}" class="block w-full py-4 bg-[#D84315] hover:bg-[#C62828] text-white font-extrabold text-sm rounded-2xl shadow-xl transition-all duration-300 transform active:scale-95 text-center">
-                    View my rewards
+                    Lihat Profil Member
                 </a>
 
             @else
@@ -502,7 +511,7 @@
                 <span>💬</span> Konfirmasi via WhatsApp
             </a>
             @endif
-            <a href="{{ route('home') }}" class="flex-1 py-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-amber-50 dark:hover:bg-gray-750 text-gray-700 dark:text-gray-300 font-extrabold text-center rounded-2xl shadow-sm transition transform active:scale-95 flex items-center justify-center">
+            <a href="{{ route('home') }}" class="flex-1 py-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-amber-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-extrabold text-center rounded-2xl shadow-sm transition transform active:scale-95 flex items-center justify-center">
                 Kembali ke Beranda
             </a>
         </div>
