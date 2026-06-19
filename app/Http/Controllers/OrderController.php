@@ -54,11 +54,24 @@ class OrderController extends Controller
             'longitude' => 'nullable|numeric',
         ]);
 
-        $customer = Customer::create([
-            'name' => $validated['name'],
-            'phone' => $validated['phone'],
-            'address' => $validated['type'] === 'delivery' ? $validated['address'] : null,
-        ]);
+        $customer = Customer::where('phone', $validated['phone'])->first();
+
+        if ($customer) {
+            $customer->update([
+                'name' => $validated['name'],
+                'address' => $validated['type'] === 'delivery' ? ($validated['address'] ?? null) : ($customer->address ?? null),
+                'is_member' => $customer->is_member || $request->has('is_member') || auth()->check(),
+                'user_id' => auth()->check() ? auth()->id() : ($customer->user_id ?? null),
+            ]);
+        } else {
+            $customer = Customer::create([
+                'name' => $validated['name'],
+                'phone' => $validated['phone'],
+                'address' => $validated['type'] === 'delivery' ? ($validated['address'] ?? null) : null,
+                'is_member' => $request->has('is_member') || auth()->check(),
+                'user_id' => auth()->check() ? auth()->id() : null,
+            ]);
+        }
 
         $total = 0;
         $orderItems = [];
@@ -100,6 +113,21 @@ class OrderController extends Controller
             ];
         }
 
+        // Apply discount and shipping fee to get the actual total paid
+        $deliveryFeeEnabled = Setting::getValue('delivery_fee_enabled', 'true') === 'true';
+        $deliveryFeeAmount = (int) Setting::getValue('delivery_fee_amount', 10000);
+        $discountEnabled = Setting::getValue('discount_enabled', 'true') === 'true';
+        $discountPercentage = (int) Setting::getValue('discount_percentage', 10);
+
+        if ($discountEnabled) {
+            $discount = round($total * $discountPercentage / 100);
+            $total -= $discount;
+        }
+
+        if ($validated['type'] === 'delivery' && $deliveryFeeEnabled) {
+            $total += $deliveryFeeAmount;
+        }
+
         $order = Order::create([
             'order_number' => Order::generateOrderNumber(),
             'customer_id' => $customer->id,
@@ -107,15 +135,35 @@ class OrderController extends Controller
             'pickup_date' => $validated['pickup_date'],
             'type' => $validated['type'],
             'status' => 'pending',
-            'notes' => $validated['notes'],
+            'notes' => $validated['notes'] ?? null,
             'total' => $total,
-            'address' => $validated['type'] === 'delivery' ? $validated['address'] : null,
+            'address' => $validated['type'] === 'delivery' ? ($validated['address'] ?? null) : null,
             'latitude' => $validated['latitude'] ?? null,
             'longitude' => $validated['longitude'] ?? null,
             'google_maps_link' => ($validated['latitude'] ?? null) && ($validated['longitude'] ?? null)
                 ? "https://www.google.com/maps?q={$validated['latitude']},{$validated['longitude']}"
                 : null,
         ]);
+
+        // Member points accumulation & level up detection
+        if ($customer->is_member) {
+            $pointsEarned = (int) floor($total / 10000);
+            if ($pointsEarned > 0) {
+                $oldRank = $customer->rank_name;
+                $customer->increment('points', $pointsEarned);
+                $newRank = $customer->fresh()->rank_name;
+
+                session()->flash('points_earned', $pointsEarned);
+
+                if ($newRank !== $oldRank) {
+                    session()->flash('level_up', [
+                        'old' => $oldRank,
+                        'new' => $newRank,
+                        'badge' => $customer->fresh()->rank_badge
+                    ]);
+                }
+            }
+        }
 
         foreach ($orderItems as $item) {
             $order->items()->create($item);
@@ -177,6 +225,9 @@ class OrderController extends Controller
         $message = "Halo Mamitha Bakery! Saya ingin konfirmasi pesanan:\n\n";
         $message .= "No. Pesanan: {$order->order_number}\n";
         $message .= "Nama: {$order->customer->name}\n";
+        if ($order->customer->is_member) {
+            $message .= "Status Member: Ya (Daftar Baru)\n";
+        }
         $message .= "Total: Rp " . number_format($order->total, 0, ',', '.') . "\n\n";
 
         foreach ($order->items as $item) {
@@ -194,5 +245,21 @@ class OrderController extends Controller
         $message .= "\nTerima kasih.";
 
         return "https://wa.me/{$phone}?text=" . urlencode($message);
+    }
+
+    public function history()
+    {
+        $userId = auth()->id();
+        
+        $customerIds = Customer::where('user_id', $userId)->pluck('id');
+        
+        $orders = Order::with(['items.product', 'customer'])
+            ->whereIn('customer_id', $customerIds)
+            ->latest()
+            ->get();
+            
+        $storeWhatsapp = Setting::getValue('store_whatsapp');
+            
+        return view('order.history', compact('orders', 'storeWhatsapp'));
     }
 }

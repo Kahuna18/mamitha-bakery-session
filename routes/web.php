@@ -3,6 +3,7 @@
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\MemberProfileController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboard;
 use App\Http\Controllers\Admin\OrderController as AdminOrder;
 use App\Http\Controllers\Admin\ProductController as AdminProduct;
@@ -30,6 +31,8 @@ Route::post('/pesan', [OrderController::class, 'store'])->name('order.store');
 Route::get('/pesan/sukses/{id}', [OrderController::class, 'success'])->name('order.success');
 Route::get('/status', [OrderController::class, 'statusForm'])->name('order.status');
 Route::post('/status', [OrderController::class, 'checkStatus'])->name('order.check-status');
+Route::get('/riwayat', [OrderController::class, 'history'])->middleware('auth')->name('order.history');
+Route::get('/profil', [MemberProfileController::class, 'index'])->middleware('auth')->name('member.profile');
 
 // Admin Routes
 Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {

@@ -62,4 +62,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(KitchenTask::class);
     }
+
+    public function customer()
+    {
+        return $this->hasOne(Customer::class);
+    }
 }

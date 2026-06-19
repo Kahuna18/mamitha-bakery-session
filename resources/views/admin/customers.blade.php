@@ -26,6 +26,7 @@
         <thead>
             <tr class="bg-gray-50 text-left">
                 <th class="px-4 py-3 font-semibold text-gray-600">Nama</th>
+                <th class="px-4 py-3 font-semibold text-gray-600">Member</th>
                 <th class="px-4 py-3 font-semibold text-gray-600">WhatsApp</th>
                 <th class="px-4 py-3 font-semibold text-gray-600">Alamat</th>
                 <th class="px-4 py-3 font-semibold text-gray-600">Total Order</th>
@@ -37,6 +38,13 @@
             @forelse($customers as $customer)
             <tr class="hover:bg-gray-50">
                 <td class="px-4 py-3 font-medium">{{ $customer->name }}</td>
+                <td class="px-4 py-3">
+                    @if($customer->is_member)
+                        <span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">⭐ Gold</span>
+                    @else
+                        <span class="text-xs text-gray-400 font-medium">-</span>
+                    @endif
+                </td>
                 <td class="px-4 py-3">{{ $customer->phone }}</td>
                 <td class="px-4 py-3 text-gray-500 max-w-xs truncate">{{ $customer->address ?? '-' }}</td>
                 <td class="px-4 py-3 font-medium">{{ $customer->orders_count }}</td>

@@ -25,7 +25,9 @@ class AuthenticatedSessionController extends Controller
         // Always redirect based on role (avoid redirect()->intended() which can have stale URLs)
         $dashboard = $request->user()->isAdmin()
             ? route('admin.dashboard', absolute: false)
-            : route('kitchen.dashboard', absolute: false);
+            : ($request->user()->isKitchen()
+                ? route('kitchen.dashboard', absolute: false)
+                : route('order.create', absolute: false));
 
         return redirect($dashboard);
     }

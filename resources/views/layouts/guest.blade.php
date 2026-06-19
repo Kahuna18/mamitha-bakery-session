@@ -9,6 +9,13 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
     <style>
         body { font-family: 'Inter', sans-serif; }
         h1, h2, h3, .font-serif { font-family: 'Playfair Display', serif; }
@@ -19,7 +26,7 @@
         <div class="text-center mb-8">
             <img src="{{ asset('images/logo.jpeg') }}" class="h-20 w-20 mx-auto rounded-2xl object-cover shadow-md mb-3" alt="Logo">
             <h1 class="text-3xl font-bold text-amber-900">Mamitha Bakery</h1>
-            <p class="text-amber-700 mt-1">Management System</p>
+            <p id="layout-subtitle" class="text-amber-700 mt-1">{{ $subtitle ?? 'Warm Fresh Bakery' }}</p>
         </div>
         <div class="bg-white rounded-2xl shadow-lg border border-amber-100 p-8">
             {{ $slot }}

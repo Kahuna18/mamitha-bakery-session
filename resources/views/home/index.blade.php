@@ -96,6 +96,76 @@
     </div>
 </section>
 
+{{-- BANNER GABUNG MEMBER --}}
+<section class="py-10 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="relative overflow-hidden bg-gradient-to-br from-amber-800 via-amber-900 to-orange-950 rounded-[32px] p-8 md:p-12 shadow-xl border border-amber-700/20 hover:scale-[1.01] transition-all duration-300 group">
+            <!-- Decorative blur shapes -->
+            <div class="absolute -top-12 -left-12 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none transition-transform duration-700 group-hover:translate-x-6"></div>
+            <div class="absolute -bottom-12 -right-12 w-64 h-64 bg-orange-500/10 rounded-full blur-3xl pointer-events-none transition-transform duration-700 group-hover:-translate-x-6"></div>
+
+            <div class="relative z-10 grid md:grid-cols-5 gap-8 items-center">
+                <!-- Text Column -->
+                <div class="md:col-span-3 text-center md:text-left space-y-4">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-500/20 border border-amber-400/30 rounded-full text-xs font-black text-amber-300 uppercase tracking-widest animate-pulse">
+                        👑 Exclusive Benefit
+                    </span>
+                    <h2 class="text-3xl md:text-4xl font-serif font-black text-white leading-tight">
+                        Gabung Member Mamitha & Nikmati Fasilitasnya!
+                    </h2>
+                    <p class="text-amber-100/80 text-sm max-w-xl leading-relaxed">
+                        Rasakan pengalaman memesan roti hangat terbaik dengan berbagai privilege eksklusif. Bergabunglah dengan ribuan pencinta roti Mamitha hari ini!
+                    </p>
+                    <div class="pt-2 flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
+                        <a href="{{ route('register') }}" class="px-6 py-3.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-extrabold text-xs rounded-2xl shadow-lg transition transform active:scale-95 text-center flex items-center justify-center gap-2 hover:shadow-orange-500/20">
+                            👤 Daftar Member Sekarang
+                        </a>
+                        <a href="{{ route('login') }}?role=member" class="px-6 py-3.5 bg-white/10 hover:bg-white/15 text-white border border-white/20 font-extrabold text-xs rounded-2xl transition text-center flex items-center justify-center active:scale-95">
+                            Sudah punya akun? Login
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Benefit Tags Column -->
+                <div class="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <!-- Benefit 1 -->
+                    <div class="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-start gap-3 hover:bg-white/10 transition-colors duration-200">
+                        <span class="text-2xl select-none">🏷️</span>
+                        <div>
+                            <h4 class="font-extrabold text-white text-xs uppercase tracking-wide">Diskon 10%</h4>
+                            <p class="text-[10px] text-amber-100/60 mt-0.5 leading-relaxed">Diskon otomatis setiap kali melakukan pesanan</p>
+                        </div>
+                    </div>
+                    <!-- Benefit 2 -->
+                    <div class="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-start gap-3 hover:bg-white/10 transition-colors duration-200">
+                        <span class="text-2xl select-none">⚡</span>
+                        <div>
+                            <h4 class="font-extrabold text-white text-xs uppercase tracking-wide">Baking Cepat</h4>
+                            <p class="text-[10px] text-amber-100/60 mt-0.5 leading-relaxed">Pesanan masuk antrean panggangan utama</p>
+                        </div>
+                    </div>
+                    <!-- Benefit 3 -->
+                    <div class="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-start gap-3 hover:bg-white/10 transition-colors duration-200">
+                        <span class="text-2xl select-none">🎁</span>
+                        <div>
+                            <h4 class="font-extrabold text-white text-xs uppercase tracking-wide">Poin Reward</h4>
+                            <p class="text-[10px] text-amber-100/60 mt-0.5 leading-relaxed">Kumpulkan poin & tukarkan dengan roti gratis</p>
+                        </div>
+                    </div>
+                    <!-- Benefit 4 -->
+                    <div class="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-start gap-3 hover:bg-white/10 transition-colors duration-200">
+                        <span class="text-2xl select-none">🎂</span>
+                        <div>
+                            <h4 class="font-extrabold text-white text-xs uppercase tracking-wide">Birthday Gift</h4>
+                            <p class="text-[10px] text-amber-100/60 mt-0.5 leading-relaxed">Kejutan manis & voucher spesial di hari ultahmu</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
 {{-- CARA PESAN --}}
 <section class="py-16 bg-amber-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

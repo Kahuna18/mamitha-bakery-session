@@ -14,6 +14,40 @@
     .dark #tracking-map .leaflet-tile {
         filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3);
     }
+
+    /* Level Up Modal Custom CSS */
+    @keyframes spin-slow {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .animate-spin-slow {
+        animation: spin-slow 10s linear infinite;
+    }
+
+    @keyframes bounce-slow {
+        0%, 100% { transform: translateY(0) scale(1); }
+        50% { transform: translateY(-8px) scale(1.15); }
+    }
+    .animate-bounce-slow {
+        animation: bounce-slow 3s ease-in-out infinite;
+    }
+
+    @keyframes pulse-btn {
+        0%, 100% { box-shadow: 0 10px 20px -5px rgba(217, 119, 6, 0.45); transform: scale(1); }
+        50% { box-shadow: 0 15px 25px 0px rgba(217, 119, 6, 0.65); transform: scale(1.025); }
+    }
+    .animate-pulse-btn {
+        animation: pulse-btn 2s infinite ease-in-out;
+    }
+
+    .scale-up-badge {
+        animation: scale-up-badge-anim 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        animation-delay: 0.3s;
+        transform: scale(0);
+    }
+    @keyframes scale-up-badge-anim {
+        to { transform: scale(1); }
+    }
 </style>
 @endpush
 
@@ -23,6 +57,213 @@
     $storeLng = \App\Models\Setting::getValue('store_longitude', '110.2529556');
     $hasRoute = $order->type === 'delivery' && $order->latitude && $order->longitude;
 @endphp
+
+@php
+    $showModal = false;
+    $modalType = 'none'; // 'levelup', 'points', 'guest'
+    
+    if (session()->has('level_up')) {
+        $showModal = true;
+        $modalType = 'levelup';
+        $levelUpData = session('level_up'); // ['old' => '...', 'new' => '...', 'badge' => '...']
+        $rankName = $levelUpData['new'];
+        $rankBadge = $levelUpData['badge'];
+    } elseif (session()->has('points_earned') && $order->customer->is_member) {
+        $showModal = true;
+        $modalType = 'points';
+        $pointsEarned = session('points_earned');
+        $rankName = $order->customer->rank_name;
+        $rankBadge = $order->customer->rank_badge;
+    } elseif ($whatsappUrl && !$order->customer->is_member) {
+        $showModal = true;
+        $modalType = 'guest';
+    }
+@endphp
+
+@if($showModal)
+<!-- Level Up / Rank Unlocked Modal Overlay (TikTok Style) -->
+<div id="success-levelup-modal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md transition-opacity duration-500 ease-out opacity-0 pointer-events-none">
+    <div id="success-card-sheet" class="bg-white dark:bg-gray-900 rounded-[36px] p-8 max-w-sm w-full mx-4 shadow-2xl border border-amber-100/50 dark:border-gray-800/80 text-center relative overflow-hidden transform scale-75 opacity-0 transition-all duration-500 ease-out">
+        <!-- Canvas for particle star burst -->
+        <canvas id="star-canvas" class="absolute inset-0 pointer-events-none z-0"></canvas>
+        
+        <!-- Rotating light rays backdrop -->
+        <div class="absolute -top-12 -left-12 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none z-0"></div>
+        <div class="absolute -bottom-12 -right-12 w-64 h-64 bg-orange-500/10 rounded-full blur-3xl pointer-events-none z-0"></div>
+
+        <div class="relative z-10 space-y-6">
+            @if($modalType === 'levelup')
+                <!-- Header Text -->
+                <span class="text-[10px] font-black text-amber-600 dark:text-amber-500 uppercase tracking-[0.3em] block animate-pulse">
+                    Rank Unlocked
+                </span>
+
+                <!-- Main Title -->
+                <h2 class="text-3xl font-black text-gray-955 dark:text-white font-serif tracking-tight leading-none">
+                    Rank Naik!
+                </h2>
+
+                <!-- Theme class resolution -->
+                @php
+                    $themeClass = 'from-amber-400 via-amber-250 to-yellow-500';
+                    if ($rankName === 'Platinum') $themeClass = 'from-cyan-400 via-teal-300 to-blue-500';
+                    elseif ($rankName === 'Gold') $themeClass = 'from-amber-400 via-amber-250 to-yellow-500';
+                    elseif ($rankName === 'Silver') $themeClass = 'from-slate-400 via-gray-250 to-slate-500';
+                    elseif ($rankName === 'Bronze') $themeClass = 'from-orange-500 via-orange-350 to-amber-600';
+                @endphp
+
+                <!-- Rank Badge Icon with rotating glow -->
+                <div class="relative w-40 h-40 mx-auto flex items-center justify-center">
+                    <!-- Outer spinning blur ring -->
+                    <div class="absolute inset-0 bg-gradient-to-tr {{ $themeClass }} rounded-full blur-xl opacity-35 animate-spin-slow"></div>
+                    
+                    <!-- Inner Rank Badge Circle -->
+                    <div class="relative w-28 h-28 bg-gradient-to-tr {{ $themeClass }} rounded-full shadow-xl flex items-center justify-center border-4 border-white dark:border-gray-800 scale-up-badge">
+                        <span class="text-5xl select-none filter drop-shadow">{{ $rankBadge }}</span>
+                    </div>
+
+                    <!-- Floating Star Ornaments -->
+                    <span class="absolute top-2 left-6 text-amber-400 text-lg animate-bounce-slow" style="animation-delay: 0.1s;">⭐</span>
+                    <span class="absolute top-8 right-4 text-yellow-300 text-sm animate-bounce-slow" style="animation-delay: 0.4s;">⭐</span>
+                    <span class="absolute bottom-4 left-4 text-amber-500 text-lg animate-bounce-slow" style="animation-delay: 0.7s;">✨</span>
+                </div>
+
+                <!-- Description -->
+                <div class="space-y-1.5">
+                    <p class="text-sm font-black text-gray-800 dark:text-gray-200">Pesanan {{ $order->order_number }} Sukses!</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed max-w-xs mx-auto">
+                        Selamat! Rank member Anda naik dari <span class="font-extrabold text-amber-850 dark:text-amber-400">{{ $levelUpData['old'] }}</span> menjadi <span class="font-extrabold text-amber-850 dark:text-amber-400">{{ $rankName }}</span>!
+                    </p>
+                </div>
+
+                <!-- Reward Unlocked Card (Tiktok Style) -->
+                <div class="bg-amber-50/50 dark:bg-amber-950/10 rounded-2xl p-4 border border-amber-100/40 dark:border-amber-900/20 text-left flex items-start gap-3">
+                    <span class="text-2xl mt-0.5 select-none">🎁</span>
+                    <div>
+                        <h4 class="text-xs font-black text-amber-800 dark:text-amber-400 uppercase tracking-wide">
+                            Benefit Rank {{ $rankName }}
+                        </h4>
+                        <p class="text-[11px] text-gray-650 dark:text-gray-350 mt-0.5 leading-relaxed">
+                            @if($rankName === 'Platinum')
+                                Anda mendapatkan prioritas utama antrean panggangan cepat, free delivery khusus, & gift voucher bulanan!
+                            @elseif($rankName === 'Gold')
+                                Prioritas panggangan cepat & voucher potongan 10% untuk pesanan berikutnya!
+                            @elseif($rankName === 'Silver')
+                                Bonus poin extra +10% untuk setiap transaksi berikutnya!
+                            @else
+                                Kumpulkan terus poin belanja Anda untuk naik ke rank berikutnya!
+                            @endif
+                        </p>
+                    </div>
+                </div>
+
+            @elseif($modalType === 'points')
+                <!-- Header Text -->
+                <span class="text-[10px] font-black text-amber-600 dark:text-amber-500 uppercase tracking-[0.3em] block animate-pulse">
+                    Poin Diperoleh
+                </span>
+
+                <!-- Main Title -->
+                <h2 class="text-3xl font-black text-gray-950 dark:text-white font-serif tracking-tight leading-none">
+                    +{{ $pointsEarned }} Poin!
+                </h2>
+
+                <!-- Theme class resolution -->
+                @php
+                    $themeClass = 'from-amber-400 via-amber-250 to-yellow-500';
+                    if ($rankName === 'Platinum') $themeClass = 'from-cyan-400 via-teal-300 to-blue-500';
+                    elseif ($rankName === 'Gold') $themeClass = 'from-amber-400 via-amber-250 to-yellow-500';
+                    elseif ($rankName === 'Silver') $themeClass = 'from-slate-400 via-gray-250 to-slate-500';
+                    elseif ($rankName === 'Bronze') $themeClass = 'from-orange-500 via-orange-350 to-amber-600';
+                @endphp
+
+                <!-- Rank Badge Icon -->
+                <div class="relative w-40 h-40 mx-auto flex items-center justify-center">
+                    <div class="absolute inset-0 bg-gradient-to-tr {{ $themeClass }} rounded-full blur-xl opacity-20 animate-spin-slow"></div>
+                    <div class="relative w-28 h-28 bg-gradient-to-tr {{ $themeClass }} rounded-full shadow-xl flex items-center justify-center border-4 border-white dark:border-gray-800 scale-up-badge">
+                        <span class="text-5xl select-none filter drop-shadow">{{ $rankBadge }}</span>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div class="space-y-1.5">
+                    <p class="text-sm font-black text-gray-800 dark:text-gray-200">Pesanan {{ $order->order_number }} Sukses!</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed max-w-xs mx-auto">
+                        Berhasil mendapatkan <span class="font-extrabold text-amber-800 dark:text-amber-400">{{ $pointsEarned }} poin</span>! Total poin Anda sekarang adalah <span class="font-extrabold text-amber-800 dark:text-amber-400">{{ $order->customer->points }} poin</span>.
+                    </p>
+                </div>
+
+                <!-- Progress to Next Rank -->
+                @if($order->customer->rank_name !== 'Platinum')
+                <div class="bg-amber-50/50 dark:bg-amber-950/10 rounded-2xl p-4 border border-amber-100/40 dark:border-amber-900/20 text-left space-y-2">
+                    <div class="flex justify-between items-center text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">
+                        <span>Progress {{ $order->customer->next_rank_name }}</span>
+                        <span>{{ $order->customer->points }} / {{ $order->customer->next_rank_points }} Poin</span>
+                    </div>
+                    <div class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                        <div class="h-full bg-gradient-to-r {{ $themeClass }} rounded-full" style="width: {{ $order->customer->rank_progress_percentage }}%"></div>
+                    </div>
+                    <p class="text-[10px] text-gray-500 dark:text-gray-400 leading-tight">
+                        Kumpulkan <span class="font-bold text-amber-700 dark:text-amber-400">{{ $order->customer->points_for_next_rank }} Poin</span> lagi untuk naik ke rank <span class="font-bold">{{ $order->customer->next_rank_name }}</span>!
+                    </p>
+                </div>
+                @else
+                <div class="bg-amber-50/50 dark:bg-amber-950/10 rounded-2xl p-4 border border-amber-100/40 dark:border-amber-900/20 text-center">
+                    <p class="text-xs text-cyan-600 dark:text-cyan-400 font-extrabold">👑 Level Maksimal Tercapai!</p>
+                    <p class="text-[10px] text-gray-500 dark:text-gray-400 mt-1">Anda berada di rank Platinum (Kasta tertinggi). Terima kasih atas kesetiaan Anda!</p>
+                </div>
+                @endif
+
+            @else
+                <!-- Guest Welcome Modal -->
+                <!-- Header Text -->
+                <span class="text-[10px] font-black text-amber-600 dark:text-amber-500 uppercase tracking-[0.3em] block animate-pulse">
+                    Order Confirmed
+                </span>
+
+                <!-- Main Title -->
+                <h2 class="text-3xl font-black text-gray-950 dark:text-white font-serif tracking-tight leading-none">
+                    Roti Siap Dipanggang!
+                </h2>
+
+                <!-- Croissant Badge Icon -->
+                <div class="relative w-40 h-40 mx-auto flex items-center justify-center">
+                    <div class="absolute inset-0 bg-gradient-to-tr from-amber-500 to-orange-500 rounded-full blur-xl opacity-35 animate-spin-slow"></div>
+                    <div class="relative w-28 h-28 bg-gradient-to-tr from-amber-400 via-amber-250 to-yellow-500 rounded-full shadow-xl flex items-center justify-center border-4 border-white dark:border-gray-800 scale-up-badge">
+                        <span class="text-5xl select-none filter drop-shadow">🥐</span>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div class="space-y-1.5">
+                    <p class="text-sm font-black text-gray-800 dark:text-gray-200">Pesanan {{ $order->order_number }} Sukses!</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed max-w-xs mx-auto">
+                        Terima kasih! Roti kesukaan Anda sedang dipersiapkan dan segera masuk antrean panggang hangat di dapur Mamitha.
+                    </p>
+                </div>
+
+                <!-- Member Promotion Invitation Card -->
+                <div class="bg-amber-50/50 dark:bg-amber-950/10 rounded-2xl p-4 border border-amber-100/40 dark:border-amber-900/20 text-left flex items-start gap-3">
+                    <span class="text-2xl mt-0.5 select-none">✨</span>
+                    <div>
+                        <h4 class="text-xs font-black text-amber-800 dark:text-amber-400 uppercase tracking-wide">
+                            Gabung Member Mamitha
+                        </h4>
+                        <p class="text-[11px] text-gray-650 dark:text-gray-350 mt-0.5 leading-relaxed">
+                            Dapatkan <span class="font-extrabold text-amber-800 dark:text-amber-400">diskon 10% otomatis</span> untuk setiap pesanan berikutnya dan kumpulkan poin belanja Anda untuk naik rank!
+                        </p>
+                    </div>
+                </div>
+            @endif
+
+            <!-- Pulsing Action Button -->
+            <button type="button" onclick="dismissLevelUpModal()" class="w-full py-4 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-extrabold text-sm rounded-2xl shadow-xl transition-all duration-300 transform active:scale-95 hover:shadow-2xl hover:shadow-orange-500/20 animate-pulse-btn">
+                Lacak Pesanan Saya &rarr;
+            </button>
+        </div>
+    </div>
+</div>
+@endif
 
 <div class="min-h-screen bg-cream-50 dark:bg-gray-900 py-12 px-4 transition-colors duration-200">
     <div class="max-w-2xl mx-auto space-y-6">
@@ -413,6 +654,150 @@
                 maximumAge: 0
             }
         );
+    }
+
+    // =========================================================================
+    // Level Up Modal Particle & Animation Control
+    // =========================================================================
+    function runParticleBurst() {
+        const canvas = document.getElementById('star-canvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        
+        // Resize canvas to match its bounding container
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = rect.height;
+        
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2 - 40; // offset up slightly to match center of badge
+        
+        const particles = [];
+        const colors = ['#f59e0b', '#fbbf24', '#fef08a', '#ffffff', '#ea580c'];
+        
+        // Star drawing helper
+        function drawStar(ctx, cx, cy, spikes, outerRadius, innerRadius, color, alpha) {
+            let rot = Math.PI / 2 * 3;
+            let x = cx;
+            let y = cy;
+            let step = Math.PI / spikes;
+
+            ctx.save();
+            ctx.globalAlpha = alpha;
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - outerRadius)
+            for (let i = 0; i < spikes; i++) {
+                x = cx + Math.cos(rot) * outerRadius;
+                y = cy + Math.sin(rot) * outerRadius;
+                ctx.lineTo(x, y)
+                rot += step
+
+                x = cx + Math.cos(rot) * innerRadius;
+                y = cy + Math.sin(rot) * innerRadius;
+                ctx.lineTo(x, y)
+                rot += step
+            }
+            ctx.lineTo(cx, cy - outerRadius)
+            ctx.closePath();
+            ctx.fillStyle = color;
+            ctx.fill();
+            ctx.restore();
+        }
+
+        // Initialize particles (stars and circles)
+        for (let i = 0; i < 45; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = 2.5 + Math.random() * 5.5;
+            particles.push({
+                x: centerX,
+                y: centerY,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed - (1 + Math.random() * 2), // bias upwards
+                radius: 4 + Math.random() * 6,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                alpha: 1,
+                decay: 0.012 + Math.random() * 0.018,
+                spikes: Math.random() > 0.4 ? 5 : 4,
+                isStar: Math.random() > 0.3
+            });
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            let activeParticles = 0;
+
+            particles.forEach(p => {
+                if (p.alpha <= 0) return;
+                activeParticles++;
+                
+                // Update position
+                p.x += p.vx;
+                p.y += p.vy;
+                
+                // Gravity and drag
+                p.vy += 0.04; // gravity
+                p.vx *= 0.97; // drag
+                p.vy *= 0.97;
+                
+                // Decay transparency
+                p.alpha -= p.decay;
+                if (p.alpha < 0) p.alpha = 0;
+                
+                if (p.isStar) {
+                    drawStar(ctx, p.x, p.y, p.spikes, p.radius, p.radius / 2, p.color, p.alpha);
+                } else {
+                    ctx.save();
+                    ctx.globalAlpha = p.alpha;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.radius / 2, 0, Math.PI * 2);
+                    ctx.fillStyle = p.color;
+                    ctx.fill();
+                    ctx.restore();
+                }
+            });
+
+            if (activeParticles > 0) {
+                requestAnimationFrame(animate);
+            }
+        }
+
+        animate();
+    }
+
+    window.addEventListener('load', () => {
+        // Show Level Up modal
+        const modal = document.getElementById('success-levelup-modal');
+        const sheet = document.getElementById('success-card-sheet');
+        if (modal && sheet) {
+            setTimeout(() => {
+                modal.classList.remove('opacity-0', 'pointer-events-none');
+                modal.classList.add('opacity-100');
+                sheet.classList.remove('scale-75', 'opacity-0');
+                sheet.classList.add('scale-100', 'opacity-100');
+                
+                // Trigger particle burst
+                runParticleBurst();
+            }, 300);
+        }
+    });
+
+    function dismissLevelUpModal() {
+        const modal = document.getElementById('success-levelup-modal');
+        const sheet = document.getElementById('success-card-sheet');
+        if (modal && sheet) {
+            sheet.style.transition = 'transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.3s ease';
+            sheet.classList.remove('scale-100', 'opacity-100');
+            sheet.classList.add('translate-y-12', 'opacity-0');
+            
+            modal.style.transition = 'opacity 0.4s ease';
+            modal.classList.remove('opacity-100');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            
+            // Allow interactions underneath once animation finishes
+            setTimeout(() => {
+                modal.remove();
+            }, 450);
+        }
     }
 </script>
 @endpush

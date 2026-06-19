@@ -10,6 +10,13 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
     <style>
         body { font-family: 'Inter', sans-serif; }
         h1, h2, h3, h4, .font-serif { font-family: 'Playfair Display', serif; }
@@ -32,13 +39,66 @@
                     @auth
                         @if(auth()->user()->role === 'admin')
                             <a href="{{ route('admin.dashboard') }}" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:text-amber-700 hover:bg-amber-50 transition">Dashboard Admin</a>
-                        @else
+                            <form method="POST" action="{{ route('logout') }}" class="inline">
+                                @csrf
+                                <button type="submit" class="px-4 py-2 rounded-lg text-sm font-medium text-red-605 hover:text-red-750 hover:bg-red-50 transition">Keluar</button>
+                            </form>
+                        @elseif(auth()->user()->role === 'kitchen')
                             <a href="{{ route('kitchen.dashboard') }}" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:text-amber-700 hover:bg-amber-50 transition">Dashboard Kitchen</a>
+                            <form method="POST" action="{{ route('logout') }}" class="inline">
+                                @csrf
+                                <button type="submit" class="px-4 py-2 rounded-lg text-sm font-medium text-red-605 hover:text-red-750 hover:bg-red-50 transition">Keluar</button>
+                            </form>
+                        @else
+                            <!-- Member Profile Dropdown (Alpine.js) -->
+                            <div x-data="{ open: false }" @click.away="open = false" class="relative inline-block text-left">
+                                <button @click="open = !open" type="button" class="inline-flex items-center px-4 py-2 border border-amber-100 rounded-2xl text-sm font-medium text-gray-700 bg-amber-50/20 hover:bg-amber-50 hover:text-amber-800 transition duration-150 cursor-pointer active:scale-95">
+                                    @php
+                                        $customerRecord = auth()->user()->customer;
+                                        $rankBadge = $customerRecord ? $customerRecord->rank_badge : '🥉';
+                                        $rankName = $customerRecord ? $customerRecord->rank_name : 'Bronze';
+                                    @endphp
+                                    <span class="mr-1.5 select-none text-base">{{ $rankBadge }}</span>
+                                    <span>{{ auth()->user()->name }}</span>
+                                    <svg class="w-4 h-4 ml-1.5 text-gray-500 transition-transform duration-200" :class="{'rotate-180': open}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
+                                    </svg>
+                                </button>
+
+                                <div x-show="open" 
+                                     x-transition:enter="transition ease-out duration-100"
+                                     x-transition:enter-start="transform opacity-0 scale-95"
+                                     x-transition:enter-end="transform opacity-100 scale-100"
+                                     x-transition:leave="transition ease-in duration-75"
+                                     x-transition:leave-start="transform opacity-100 scale-100"
+                                     x-transition:leave-end="transform opacity-0 scale-95"
+                                     class="absolute right-0 mt-2 w-48 rounded-2xl bg-white border border-amber-100/60 shadow-xl py-1.5 z-50 ring-1 ring-black/5"
+                                     style="display: none;">
+                                     
+                                    <div class="px-4 py-2 border-b border-amber-50">
+                                        <p class="text-[9px] uppercase tracking-wider text-gray-400 font-bold">Peringkat Member</p>
+                                        <p class="text-xs font-black text-amber-800 mt-0.5">{{ $rankName }} Member</p>
+                                    </div>
+
+                                    <a href="{{ route('member.profile') }}" class="flex items-center px-4 py-2 text-xs font-bold text-gray-700 hover:bg-amber-50 hover:text-amber-800 transition">
+                                        👤 Profil Member Saya
+                                    </a>
+                                    
+                                    <a href="{{ route('order.history') }}" class="flex items-center px-4 py-2 text-xs font-bold text-gray-700 hover:bg-amber-50 hover:text-amber-800 transition">
+                                        📋 Riwayat Pesanan
+                                    </a>
+
+                                    <div class="border-t border-amber-50 my-1"></div>
+
+                                    <form method="POST" action="{{ route('logout') }}">
+                                        @csrf
+                                        <button type="submit" class="w-full flex items-center px-4 py-2 text-xs font-bold text-red-600 hover:bg-red-50 hover:text-red-750 transition text-left cursor-pointer">
+                                            🚪 Keluar
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
                         @endif
-                        <form method="POST" action="{{ route('logout') }}" class="inline">
-                            @csrf
-                            <button type="submit" class="px-4 py-2 rounded-lg text-sm font-medium text-red-650 hover:text-red-750 hover:bg-red-50 transition">Keluar</button>
-                        </form>
                     @else
                         <a href="{{ route('login') }}" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:text-amber-700 hover:bg-amber-50 transition">Masuk</a>
                     @endauth
@@ -59,8 +119,11 @@
                 @auth
                     @if(auth()->user()->role === 'admin')
                         <a href="{{ route('admin.dashboard') }}" class="block px-4 py-2 rounded-lg text-gray-700 hover:bg-amber-50">Dashboard Admin</a>
-                    @else
+                    @elseif(auth()->user()->role === 'kitchen')
                         <a href="{{ route('kitchen.dashboard') }}" class="block px-4 py-2 rounded-lg text-gray-700 hover:bg-amber-50">Dashboard Kitchen</a>
+                    @else
+                        <a href="{{ route('member.profile') }}" class="block px-4 py-2 rounded-lg text-gray-700 hover:bg-amber-50">👤 Profil Member</a>
+                        <a href="{{ route('order.history') }}" class="block px-4 py-2 rounded-lg text-gray-700 hover:bg-amber-50">📋 Riwayat Pesanan</a>
                     @endif
                     <form method="POST" action="{{ route('logout') }}" class="block">
                         @csrf
