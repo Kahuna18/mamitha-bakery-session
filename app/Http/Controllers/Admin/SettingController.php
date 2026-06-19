@@ -25,6 +25,8 @@ class SettingController extends Controller
             'store_email' => 'nullable|email',
             'open_time' => 'required|string',
             'close_time' => 'required|string',
+            'open_time_sunday' => 'required|string',
+            'close_time_sunday' => 'required|string',
             'daily_order_limit' => 'integer|min:0',
             'is_closed' => 'boolean',
             'delivery_fee_enabled' => 'boolean',

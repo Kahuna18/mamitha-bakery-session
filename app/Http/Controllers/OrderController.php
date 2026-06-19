@@ -54,12 +54,39 @@ class OrderController extends Controller
             'longitude' => 'nullable|numeric',
         ]);
 
-        $customer = Customer::where('phone', $validated['phone'])->first();
+        $customer = null;
+        if (auth()->check()) {
+            $customer = auth()->user()->customer;
+        }
+
+        $guestCustomer = Customer::where('phone', $validated['phone'])->first();
+
+        // If the logged-in user already has a customer record AND there is an existing guest customer record with the same phone
+        if ($customer && $guestCustomer && $customer->id !== $guestCustomer->id) {
+            if (is_null($guestCustomer->user_id)) {
+                // Merge guest customer's points and orders into the logged-in customer's profile
+                $customer->update([
+                    'points' => max($customer->points, $guestCustomer->points),
+                ]);
+                
+                // Re-link orders
+                \App\Models\Order::where('customer_id', $guestCustomer->id)->update(['customer_id' => $customer->id]);
+                
+                // Delete guest customer
+                $guestCustomer->delete();
+            }
+        }
+
+        if (!$customer) {
+            $customer = $guestCustomer; // reuse the guest customer if found
+        }
+
         $wasMember = $customer ? $customer->is_member : false;
 
         if ($customer) {
             $customer->update([
                 'name' => $validated['name'],
+                'phone' => $validated['phone'],
                 'address' => $validated['type'] === 'delivery' ? ($validated['address'] ?? null) : ($customer->address ?? null),
                 'is_member' => $customer->is_member || $request->has('is_member') || auth()->check(),
                 'user_id' => auth()->check() ? auth()->id() : ($customer->user_id ?? null),

@@ -55,7 +55,7 @@
                         <div>
                             <h3 class="font-semibold text-gray-800 dark:text-white">Jam Operasional</h3>
                             <p class="text-gray-600 dark:text-gray-400 text-sm font-semibold">Senin - Sabtu: {{ $openTime }} - {{ $closeTime }}</p>
-                            <p class="text-gray-600 dark:text-gray-400 text-sm">Minggu: 08:00 - 18:00</p>
+                            <p class="text-gray-600 dark:text-gray-400 text-sm">Minggu: {{ \App\Models\Setting::getValue('open_time_sunday', '08:00') }} - {{ \App\Models\Setting::getValue('close_time_sunday', '18:00') }}</p>
                         </div>
                     </div>
                 </div>

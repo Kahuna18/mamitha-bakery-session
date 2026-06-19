@@ -38,6 +38,12 @@ Route::post('/profil', [MemberProfileController::class, 'update'])->middleware('
 // Admin Routes
 Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', [AdminDashboard::class, 'index'])->name('dashboard');
+    Route::post('/update-member-discount', [AdminDashboard::class, 'updateMemberDiscount'])->name('update-member-discount');
+    Route::post('/customers/{customer}/update-points', [AdminDashboard::class, 'updateCustomerPoints'])->name('update-customer-points');
+    Route::post('/customers/{customer}/reset-points', [AdminDashboard::class, 'resetMemberPoints'])->name('reset-member-points');
+    Route::post('/customers/{customer}/toggle-member', [AdminDashboard::class, 'toggleCustomerMember'])->name('toggle-customer-member');
+    Route::delete('/customers/{customer}/delete-member', [AdminDashboard::class, 'deleteMember'])->name('delete-member');
+    Route::post('/customers/add-member', [AdminDashboard::class, 'addMember'])->name('add-member');
     Route::get('/check-new-orders', [AdminDashboard::class, 'checkNewOrders'])->name('check-new-orders');
     Route::get('/kitchen', [KitchenDashboard::class, 'index'])->name('kitchen');
     Route::get('/reports', [AdminReport::class, 'index'])->name('reports.index');

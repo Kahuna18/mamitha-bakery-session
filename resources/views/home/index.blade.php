@@ -267,8 +267,8 @@
                     <svg class="w-7 h-7 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 </div>
                 <h3 class="font-semibold text-gray-800 dark:text-gray-200 mb-2">Jam Buka</h3>
-                <p class="text-gray-600 dark:text-gray-300 text-sm">Senin - Sabtu: 07:00 - 20:00</p>
-                <p class="text-gray-600 dark:text-gray-300 text-sm">Minggu: 08:00 - 18:00</p>
+                <p class="text-gray-600 dark:text-gray-300 text-sm">Senin - Sabtu: {{ \App\Models\Setting::getValue('open_time', '07:00') }} - {{ \App\Models\Setting::getValue('close_time', '20:00') }}</p>
+                <p class="text-gray-600 dark:text-gray-300 text-sm">Minggu: {{ \App\Models\Setting::getValue('open_time_sunday', '08:00') }} - {{ \App\Models\Setting::getValue('close_time_sunday', '18:00') }}</p>
             </div>
         </div>
     </div>

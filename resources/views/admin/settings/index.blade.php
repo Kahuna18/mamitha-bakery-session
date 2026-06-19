@@ -972,15 +972,25 @@
             <div class="expand-panel" id="hoursPanel">
                 <div class="form-row">
                     <div class="form-group">
-                        <label class="form-label">Jam Buka</label>
+                        <label class="form-label">Jam Buka (Senin - Sabtu)</label>
                         <input type="time" name="open_time" value="{{ $settings['open_time'] ?? '07:00' }}" class="form-input">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Jam Tutup</label>
+                        <label class="form-label">Jam Tutup (Senin - Sabtu)</label>
                         <input type="time" name="close_time" value="{{ $settings['close_time'] ?? '20:00' }}" class="form-input">
                     </div>
                 </div>
-                <div class="form-group">
+                <div class="form-row border-t border-gray-100 dark:border-gray-700/50 pt-3">
+                    <div class="form-group">
+                        <label class="form-label">Jam Buka (Minggu)</label>
+                        <input type="time" name="open_time_sunday" value="{{ $settings['open_time_sunday'] ?? '08:00' }}" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Jam Tutup (Minggu)</label>
+                        <input type="time" name="close_time_sunday" value="{{ $settings['close_time_sunday'] ?? '18:00' }}" class="form-input">
+                    </div>
+                </div>
+                <div class="form-group pt-2">
                     <label class="form-label">Batas Order Harian</label>
                     <input type="number" name="daily_order_limit" value="{{ $settings['daily_order_limit'] ?? '0' }}" min="0" class="form-input" placeholder="0">
                     <div class="form-hint">0 = tidak ada batasan order harian</div>

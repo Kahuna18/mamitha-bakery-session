@@ -163,4 +163,153 @@ class MemberRankTest extends TestCase
         $this->assertEquals(101, $customer->points);
         $this->assertEquals('Silver', $customer->rank_name);
     }
+
+    public function test_profile_merges_when_updating_phone_to_existing_guest()
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        // Guest customer record with points and orders
+        $guestCustomer = Customer::create([
+            'name' => 'Guest User',
+            'phone' => '08123456789',
+            'points' => 50,
+            'is_member' => false,
+        ]);
+
+        // Temporary customer record generated when user registers and goes to profile index
+        $tempCustomer = Customer::create([
+            'name' => $user->name,
+            'phone' => '',
+            'is_member' => true,
+            'user_id' => $user->id,
+            'points' => 0,
+        ]);
+
+        // Update profile phone to the guest's phone number
+        $response = $this->post(route('member.profile.update'), [
+            'name' => 'Merged User',
+            'phone' => '08123456789',
+            'address' => 'New Address',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        // Assert that the temporary empty profile was deleted
+        $this->assertDatabaseMissing('customers', [
+            'id' => $tempCustomer->id,
+        ]);
+
+        // Assert that the guest customer profile is now linked to user and has merged data
+        $guestCustomer->refresh();
+        $this->assertEquals($user->id, $guestCustomer->user_id);
+        $this->assertTrue((bool)$guestCustomer->is_member);
+        $this->assertEquals(50, $guestCustomer->points);
+        $this->assertEquals('Merged User', $guestCustomer->name);
+        $this->assertEquals('New Address', $guestCustomer->address);
+    }
+
+    public function test_admin_can_edit_member_points()
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $member = Customer::create([
+            'name' => 'Test Member',
+            'phone' => '08123456780',
+            'is_member' => true,
+            'points' => 10,
+        ]);
+
+        $response = $this->post(route('admin.update-customer-points', $member), [
+            'points' => 350,
+        ]);
+
+        $response->assertRedirect();
+        
+        $member->refresh();
+        $this->assertEquals(350, $member->points);
+        $this->assertEquals('Gold', $member->rank_name);
+    }
+
+    public function test_admin_can_reset_member_points()
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $member = Customer::create([
+            'name' => 'Test Member To Reset',
+            'phone' => '08123456781',
+            'is_member' => true,
+            'points' => 150,
+        ]);
+
+        $response = $this->post(route('admin.reset-member-points', $member));
+
+        $response->assertRedirect();
+        
+        $member->refresh();
+        $this->assertEquals(0, $member->points);
+        $this->assertEquals('Bronze', $member->rank_name);
+    }
+
+    public function test_admin_can_delete_member_without_orders()
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $member = Customer::create([
+            'name' => 'Test Member To Delete',
+            'phone' => '08123456782',
+            'is_member' => true,
+            'points' => 10,
+        ]);
+
+        $response = $this->delete(route('admin.delete-member', $member));
+
+        $response->assertRedirect();
+        
+        $this->assertDatabaseMissing('customers', [
+            'id' => $member->id,
+        ]);
+    }
+
+    public function test_admin_deletes_member_with_orders_gracefully_deactivates()
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $member = Customer::create([
+            'name' => 'Test Member With Orders',
+            'phone' => '08123456783',
+            'is_member' => true,
+            'points' => 200,
+        ]);
+
+        // Create an order for this customer
+        \App\Models\Order::create([
+            'customer_id' => $member->id,
+            'order_number' => 'ORD-12345',
+            'status' => 'pending',
+            'total' => 50000,
+            'pickup_date' => now()->addDay()->toDateString(),
+            'type' => 'pickup',
+            'order_date' => now()->toDateString(),
+        ]);
+
+        $response = $this->delete(route('admin.delete-member', $member));
+
+        $response->assertRedirect();
+        
+        // Assert customer was NOT deleted
+        $this->assertDatabaseHas('customers', [
+            'id' => $member->id,
+        ]);
+
+        // Assert member status is disabled and points reset to 0
+        $member->refresh();
+        $this->assertFalse((bool)$member->is_member);
+        $this->assertEquals(0, $member->points);
+    }
 }
