@@ -51,13 +51,16 @@ class CustomerController extends Controller
     public function resetAllMembers()
     {
         \Illuminate\Support\Facades\DB::transaction(function() {
-            // Delete all customers (cascade deletes orders, order_items, kitchen_tasks)
+            // 1. Delete all users with 'customer' role (releasing all member emails)
+            \App\Models\User::where('role', 'customer')->delete();
+
+            // 2. Delete all customers (cascade deletes orders, order_items, kitchen_tasks)
             Customer::query()->delete();
 
-            // Clear orders and other tables just in case cascade delete was disabled/missed
+            // 3. Clear orders just in case cascade delete was disabled/missed
             \Illuminate\Support\Facades\DB::table('orders')->delete();
 
-            // Reset auto-increment counters for primary tables
+            // 4. Reset auto-increment counters for primary tables
             $driver = \Illuminate\Support\Facades\DB::getDriverName();
             if ($driver === 'sqlite') {
                 \Illuminate\Support\Facades\DB::statement("DELETE FROM sqlite_sequence WHERE name='customers'");
@@ -68,6 +71,6 @@ class CustomerController extends Controller
             }
         });
 
-        return redirect()->route('admin.dashboard', ['tab' => 'member'])->with('success', 'Semua data member dan pelanggan berhasil direset. Nomor member baru akan mulai dari 00001.');
+        return redirect()->route('admin.dashboard', ['tab' => 'member'])->with('success', 'Semua data member, pelanggan, dan akun email terdaftar berhasil direset. Nomor member baru akan mulai dari 00001.');
     }
 }

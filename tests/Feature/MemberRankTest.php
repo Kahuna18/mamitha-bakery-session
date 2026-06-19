@@ -318,11 +318,26 @@ class MemberRankTest extends TestCase
         $admin = User::factory()->create(['role' => 'admin']);
         $this->actingAs($admin);
 
+        $user1 = User::create([
+            'name' => 'Member One',
+            'email' => 'member1@example.com',
+            'password' => bcrypt('password'),
+            'role' => 'customer',
+        ]);
+
         $member1 = Customer::create([
             'name' => 'Member One',
             'phone' => '08123456784',
             'is_member' => true,
             'points' => 50,
+            'user_id' => $user1->id,
+        ]);
+
+        $user2 = User::create([
+            'name' => 'Member Two',
+            'email' => 'member2@example.com',
+            'password' => bcrypt('password'),
+            'role' => 'customer',
         ]);
 
         $member2 = Customer::create([
@@ -330,6 +345,7 @@ class MemberRankTest extends TestCase
             'phone' => '08123456785',
             'is_member' => true,
             'points' => 120,
+            'user_id' => $user2->id,
         ]);
 
         // Send reset request
@@ -340,6 +356,13 @@ class MemberRankTest extends TestCase
 
         // Check customers database is empty
         $this->assertEquals(0, Customer::count());
+
+        // Check customer users are deleted
+        $this->assertDatabaseMissing('users', ['id' => $user1->id]);
+        $this->assertDatabaseMissing('users', ['id' => $user2->id]);
+        
+        // Assert admin user is still present
+        $this->assertDatabaseHas('users', ['id' => $admin->id]);
 
         // Create new customer and check if auto-increment is reset (should start from 1)
         $newMember = Customer::create([
