@@ -54,13 +54,14 @@
                         <button onclick="toggleThemeGlobally(event)" class="mr-2 p-2 rounded-2xl border border-amber-100 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:bg-amber-50 dark:hover:bg-gray-800 transition duration-150 cursor-pointer select-none active:scale-95 flex items-center justify-center w-9 h-9" title="Ubah Tema">
                             <span id="theme-toggle-btn-icon" class="text-sm">🌙</span>
                         </button>
-                        @if(auth()->user()->role === 'admin')
+                        @if(auth()->user()->isAdmin())
                             <a href="{{ route('admin.dashboard') }}" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-gray-800 transition">Dashboard Admin</a>
+                            <a href="{{ route('kitchen.dashboard') }}" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-gray-800 transition">Dashboard Kitchen</a>
                             <form method="POST" action="{{ route('logout') }}" class="inline">
                                 @csrf
                                 <button type="submit" class="px-4 py-2 rounded-lg text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/20 transition">Keluar</button>
                             </form>
-                        @elseif(auth()->user()->role === 'kitchen')
+                        @elseif(auth()->user()->isKitchen())
                             <a href="{{ route('kitchen.dashboard') }}" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-gray-800 transition">Dashboard Kitchen</a>
                             <form method="POST" action="{{ route('logout') }}" class="inline">
                                 @csrf
@@ -142,9 +143,10 @@
                 <a href="{{ route('about') }}" class="block px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-gray-800">Tentang Kami</a>
                 <a href="{{ route('contact') }}" class="block px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-gray-800">Kontak</a>
                 @auth
-                    @if(auth()->user()->role === 'admin')
+                    @if(auth()->user()->isAdmin())
                         <a href="{{ route('admin.dashboard') }}" class="block px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-gray-800">Dashboard Admin</a>
-                    @elseif(auth()->user()->role === 'kitchen')
+                        <a href="{{ route('kitchen.dashboard') }}" class="block px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-gray-800">Dashboard Kitchen</a>
+                    @elseif(auth()->user()->isKitchen())
                         <a href="{{ route('kitchen.dashboard') }}" class="block px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-gray-800">Dashboard Kitchen</a>
                     @else
                         <a href="{{ route('member.profile') }}" class="block px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-gray-800">👤 Profil Member</a>

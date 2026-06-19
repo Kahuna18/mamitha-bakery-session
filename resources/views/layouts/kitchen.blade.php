@@ -31,10 +31,10 @@
                     </button>
 
                     <span class="text-sm text-amber-200 hidden md:inline">{{ auth()->user()->name }}</span>
-                    @if(auth()->user()->role === 'admin')
+                    @if(auth()->user()->isAdmin())
                         <a href="{{ route('admin.dashboard') }}" class="px-3 py-1.5 bg-amber-800 hover:bg-amber-700 text-sm rounded-lg transition">Dashboard Admin</a>
                         <a href="{{ route('kitchen.dashboard') }}" class="px-3 py-1.5 bg-amber-700 hover:bg-amber-600 text-sm rounded-lg transition">Dashboard Kitchen</a>
-                    @else
+                    @elseif(auth()->user()->isKitchen())
                         <a href="{{ route('kitchen.dashboard') }}" class="px-3 py-1.5 bg-amber-800 hover:bg-amber-700 text-sm rounded-lg transition">Dashboard</a>
                     @endif
                     <form method="POST" action="{{ route('logout') }}" class="inline">

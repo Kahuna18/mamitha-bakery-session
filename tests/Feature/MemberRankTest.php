@@ -374,4 +374,14 @@ class MemberRankTest extends TestCase
 
         $this->assertEquals(1, $newMember->id);
     }
+
+    public function test_customer_cannot_access_kitchen_dashboard()
+    {
+        $user = User::factory()->create(['role' => 'customer']);
+        $this->actingAs($user);
+
+        $response = $this->get(route('kitchen.dashboard'));
+
+        $response->assertStatus(403);
+    }
 }
