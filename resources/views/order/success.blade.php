@@ -80,10 +80,17 @@
     }
 @endphp
 
-@if($showModal)
-<!-- Level Up / Rank Unlocked Modal Overlay (TikTok Style) -->
-<div id="success-levelup-modal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md transition-opacity duration-500 ease-out opacity-0 pointer-events-none">
-    <div id="success-card-sheet" class="bg-white dark:bg-gray-900 rounded-[36px] p-8 max-w-sm w-full mx-4 shadow-2xl border border-amber-100/50 dark:border-gray-800/80 text-center relative overflow-hidden transform scale-75 opacity-0 transition-all duration-500 ease-out">
+@@if($showModal)
+<!-- Level Up / Rank Unlocked Modal Overlay (Premium TikTok/Flutter Style) -->
+<div id="success-levelup-modal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-500 ease-out opacity-0 pointer-events-none">
+    <div id="success-card-sheet" class="bg-white dark:bg-gray-900 rounded-[32px] p-6 max-w-sm w-full mx-4 shadow-2xl border border-gray-100 dark:border-gray-800/80 text-center relative overflow-hidden transform scale-90 opacity-0 transition-all duration-500 ease-out">
+        <!-- Close Button (Absolute) -->
+        <button type="button" onclick="dismissLevelUpModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-250 transition duration-150 p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 z-50">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </button>
+
         <!-- Canvas for particle star burst -->
         <canvas id="star-canvas" class="absolute inset-0 pointer-events-none z-0"></canvas>
         
@@ -91,175 +98,159 @@
         <div class="absolute -top-12 -left-12 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none z-0"></div>
         <div class="absolute -bottom-12 -right-12 w-64 h-64 bg-orange-500/10 rounded-full blur-3xl pointer-events-none z-0"></div>
 
-        <div class="relative z-10 space-y-6">
-            @if($modalType === 'levelup')
-                <!-- Header Text -->
-                <span class="text-[10px] font-black text-amber-600 dark:text-amber-500 uppercase tracking-[0.3em] block animate-pulse">
-                    Rank Unlocked
-                </span>
+        <div class="relative z-10">
+            <!-- Drag Handle Indicator -->
+            <div class="w-12 h-1 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mb-6"></div>
 
-                <!-- Main Title -->
-                <h2 class="text-3xl font-black text-gray-955 dark:text-white font-serif tracking-tight leading-none">
-                    Rank Naik!
-                </h2>
-
-                <!-- Theme class resolution -->
+            @if($modalType === 'levelup' || $modalType === 'points')
                 @php
-                    $themeClass = 'from-amber-400 via-amber-250 to-yellow-500';
-                    if ($rankName === 'Platinum') $themeClass = 'from-cyan-400 via-teal-300 to-blue-500';
-                    elseif ($rankName === 'Gold') $themeClass = 'from-amber-400 via-amber-250 to-yellow-500';
-                    elseif ($rankName === 'Silver') $themeClass = 'from-slate-400 via-gray-250 to-slate-500';
-                    elseif ($rankName === 'Bronze') $themeClass = 'from-orange-500 via-orange-350 to-amber-600';
+                    $rankName = $modalType === 'levelup' ? $levelUpData['new'] : $order->customer->rank_name;
+                    $rankBadge = $modalType === 'levelup' ? $levelUpData['badge'] : $order->customer->rank_badge;
+                    $customerPoints = $order->customer->points;
+
+                    // Determine percentile, rewards, and theme gradient based on rank name
+                    if ($rankName === 'Platinum') {
+                        $percentile = '2%';
+                        $rewardTitle = 'Priority kitchen + free delivery + monthly voucher';
+                        $rewardDesc = 'Your orders jump the queue, free delivery on all items, plus monthly treats.';
+                        $themeGradient = 'from-cyan-400 via-teal-500 to-blue-600';
+                        $glowColor = 'bg-cyan-500/20';
+                    } elseif ($rankName === 'Gold') {
+                        $percentile = '8%';
+                        $rewardTitle = 'Priority kitchen + free delivery';
+                        $rewardDesc = 'Your orders jump the queue, every day, no fee.';
+                        $themeGradient = 'from-[#FFF59D] via-[#FBC02D] to-[#F57F17]';
+                        $glowColor = 'bg-amber-500/20';
+                    } elseif ($rankName === 'Silver') {
+                        $percentile = '25%';
+                        $rewardTitle = '10% bonus points + free shipping';
+                        $rewardDesc = 'Earn rewards faster and zero delivery fees on all warm breads.';
+                        $themeGradient = 'from-slate-350 via-slate-500 to-slate-650';
+                        $glowColor = 'bg-slate-500/15';
+                    } else { // Bronze
+                        $percentile = '60%';
+                        $rewardTitle = '10% off member discount';
+                        $rewardDesc = 'Get an automatic 10% discount on all your warm bakes.';
+                        $themeGradient = 'from-[#A1887F] via-[#BCAAA4] to-[#5D4037]';
+                        $glowColor = 'bg-[#5D4037]/15';
+                    }
                 @endphp
 
-                <!-- Rank Badge Icon with rotating glow -->
-                <div class="relative w-40 h-40 mx-auto flex items-center justify-center">
-                    <!-- Outer spinning blur ring -->
-                    <div class="absolute inset-0 bg-gradient-to-tr {{ $themeClass }} rounded-full blur-xl opacity-35 animate-spin-slow"></div>
-                    
-                    <!-- Inner Rank Badge Circle -->
-                    <div class="relative w-28 h-28 bg-gradient-to-tr {{ $themeClass }} rounded-full shadow-xl flex items-center justify-center border-4 border-white dark:border-gray-800 scale-up-badge">
-                        <span class="text-5xl select-none filter drop-shadow">{{ $rankBadge }}</span>
+                <!-- Rank Badge Icon with glowing shadow -->
+                <div class="relative w-32 h-32 mx-auto flex items-center justify-center mb-5">
+                    <!-- Glow halo -->
+                    <div class="absolute inset-0 {{ $glowColor }} rounded-full blur-xl animate-pulse"></div>
+                    <!-- Outer ring -->
+                    <div class="w-24 h-24 rounded-full bg-gradient-to-b {{ $themeGradient }} p-0.5 shadow-lg flex items-center justify-center">
+                        <!-- Inner circle with 3D gradient -->
+                        <div class="w-full h-full rounded-full bg-gradient-to-b {{ $themeGradient }} flex items-center justify-center relative shadow-[inset_0_3px_6px_rgba(255,255,255,0.45),0_6px_12px_rgba(0,0,0,0.2)] border-2 border-white/20">
+                            <!-- Ribbon medal silhouette -->
+                            <svg class="w-11 h-11 text-white filter drop-shadow-[0_2px_3px_rgba(0,0,0,0.25)]" fill="currentColor" viewBox="0 0 24 24">
+                                <circle cx="12" cy="8" r="5" />
+                                <path d="M8 12.5v7l4-2 4 2v-7" />
+                                <path d="M12 5.5l.6 1.4 1.5.2-1.1 1 .3 1.5-1.3-.7-1.3.7.3-1.5-1.1-1 1.5-.2z" fill="#FFF" />
+                            </svg>
+                        </div>
                     </div>
-
-                    <!-- Floating Star Ornaments -->
-                    <span class="absolute top-2 left-6 text-amber-400 text-lg animate-bounce-slow" style="animation-delay: 0.1s;">⭐</span>
-                    <span class="absolute top-8 right-4 text-yellow-300 text-sm animate-bounce-slow" style="animation-delay: 0.4s;">⭐</span>
-                    <span class="absolute bottom-4 left-4 text-amber-500 text-lg animate-bounce-slow" style="animation-delay: 0.7s;">✨</span>
                 </div>
 
-                <!-- Description -->
-                <div class="space-y-1.5">
-                    <p class="text-sm font-black text-gray-800 dark:text-gray-200">Pesanan {{ $order->order_number }} Sukses!</p>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed max-w-xs mx-auto">
-                        Selamat! Rank member Anda naik dari <span class="font-extrabold text-amber-850 dark:text-amber-400">{{ $levelUpData['old'] }}</span> menjadi <span class="font-extrabold text-amber-850 dark:text-amber-400">{{ $rankName }}</span>!
+                <!-- Text details -->
+                <div class="space-y-1 mb-6">
+                    <span class="text-[10px] font-black text-amber-600 dark:text-amber-500 uppercase tracking-[0.25em] block animate-pulse">
+                        @if($modalType === 'levelup')
+                            Rank Unlocked
+                        @else
+                            Member Status
+                        @endif
+                    </span>
+                    <h2 class="text-2xl font-black text-gray-955 dark:text-white leading-tight">
+                        @if($modalType === 'levelup')
+                            You're {{ $rankName }}
+                        @else
+                            You're {{ $rankName }}
+                        @endif
+                    </h2>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                        @if($modalType === 'levelup')
+                            {{ $customerPoints }} points - top {{ $percentile }} of members
+                        @else
+                            +{{ $pointsEarned }} points &bull; {{ $customerPoints }} points - top {{ $percentile }}
+                        @endif
                     </p>
                 </div>
 
-                <!-- Reward Unlocked Card (Tiktok Style) -->
-                <div class="bg-amber-50/50 dark:bg-amber-950/10 rounded-2xl p-4 border border-amber-100/40 dark:border-amber-900/20 text-left flex items-start gap-3">
-                    <span class="text-2xl mt-0.5 select-none">🎁</span>
+                <!-- Reward Unlocked Card -->
+                <div class="bg-[#FCF5F0] dark:bg-gray-800/40 rounded-2xl p-4 border border-amber-100/30 dark:border-gray-700/30 text-left flex items-center gap-4 mb-6">
+                    <div class="w-12 h-12 bg-white dark:bg-gray-800 rounded-xl flex items-center justify-center border border-gray-100 dark:border-gray-700/80 shadow-sm shrink-0">
+                        <!-- 3D Box SVG -->
+                        <svg class="w-6 h-6 text-amber-700 dark:text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-14L4 7m8 4v10M4 7v10l8 4"/>
+                        </svg>
+                    </div>
                     <div>
-                        <h4 class="text-xs font-black text-amber-800 dark:text-amber-400 uppercase tracking-wide">
-                            Benefit Rank {{ $rankName }}
+                        <span class="text-[9px] font-black text-gray-450 dark:text-gray-500 uppercase tracking-wider block">Reward unlocked</span>
+                        <h4 class="text-xs font-extrabold text-gray-900 dark:text-white leading-tight mt-0.5">
+                            {{ $rewardTitle }}
                         </h4>
-                        <p class="text-[11px] text-gray-650 dark:text-gray-350 mt-0.5 leading-relaxed">
-                            @if($rankName === 'Platinum')
-                                Anda mendapatkan prioritas utama antrean panggangan cepat, free delivery khusus, & gift voucher bulanan!
-                            @elseif($rankName === 'Gold')
-                                Prioritas panggangan cepat & voucher potongan 10% untuk pesanan berikutnya!
-                            @elseif($rankName === 'Silver')
-                                Bonus poin extra +10% untuk setiap transaksi berikutnya!
-                            @else
-                                Kumpulkan terus poin belanja Anda untuk naik ke rank berikutnya!
-                            @endif
+                        <p class="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5 leading-snug">
+                            {{ $rewardDesc }}
                         </p>
                     </div>
                 </div>
 
-            @elseif($modalType === 'points')
-                <!-- Header Text -->
-                <span class="text-[10px] font-black text-amber-600 dark:text-amber-500 uppercase tracking-[0.3em] block animate-pulse">
-                    Poin Diperoleh
-                </span>
-
-                <!-- Main Title -->
-                <h2 class="text-3xl font-black text-gray-950 dark:text-white font-serif tracking-tight leading-none">
-                    +{{ $pointsEarned }} Poin!
-                </h2>
-
-                <!-- Theme class resolution -->
-                @php
-                    $themeClass = 'from-amber-400 via-amber-250 to-yellow-500';
-                    if ($rankName === 'Platinum') $themeClass = 'from-cyan-400 via-teal-300 to-blue-500';
-                    elseif ($rankName === 'Gold') $themeClass = 'from-amber-400 via-amber-250 to-yellow-500';
-                    elseif ($rankName === 'Silver') $themeClass = 'from-slate-400 via-gray-250 to-slate-500';
-                    elseif ($rankName === 'Bronze') $themeClass = 'from-orange-500 via-orange-350 to-amber-600';
-                @endphp
-
-                <!-- Rank Badge Icon -->
-                <div class="relative w-40 h-40 mx-auto flex items-center justify-center">
-                    <div class="absolute inset-0 bg-gradient-to-tr {{ $themeClass }} rounded-full blur-xl opacity-20 animate-spin-slow"></div>
-                    <div class="relative w-28 h-28 bg-gradient-to-tr {{ $themeClass }} rounded-full shadow-xl flex items-center justify-center border-4 border-white dark:border-gray-800 scale-up-badge">
-                        <span class="text-5xl select-none filter drop-shadow">{{ $rankBadge }}</span>
-                    </div>
-                </div>
-
-                <!-- Description -->
-                <div class="space-y-1.5">
-                    <p class="text-sm font-black text-gray-800 dark:text-gray-200">Pesanan {{ $order->order_number }} Sukses!</p>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed max-w-xs mx-auto">
-                        Berhasil mendapatkan <span class="font-extrabold text-amber-800 dark:text-amber-400">{{ $pointsEarned }} poin</span>! Total poin Anda sekarang adalah <span class="font-extrabold text-amber-800 dark:text-amber-400">{{ $order->customer->points }} poin</span>.
-                    </p>
-                </div>
-
-                <!-- Progress to Next Rank -->
-                @if($order->customer->rank_name !== 'Platinum')
-                <div class="bg-amber-50/50 dark:bg-amber-950/10 rounded-2xl p-4 border border-amber-100/40 dark:border-amber-900/20 text-left space-y-2">
-                    <div class="flex justify-between items-center text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">
-                        <span>Progress {{ $order->customer->next_rank_name }}</span>
-                        <span>{{ $order->customer->points }} / {{ $order->customer->next_rank_points }} Poin</span>
-                    </div>
-                    <div class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                        <div class="h-full bg-gradient-to-r {{ $themeClass }} rounded-full" style="width: {{ $order->customer->rank_progress_percentage }}%"></div>
-                    </div>
-                    <p class="text-[10px] text-gray-500 dark:text-gray-400 leading-tight">
-                        Kumpulkan <span class="font-bold text-amber-700 dark:text-amber-400">{{ $order->customer->points_for_next_rank }} Poin</span> lagi untuk naik ke rank <span class="font-bold">{{ $order->customer->next_rank_name }}</span>!
-                    </p>
-                </div>
-                @else
-                <div class="bg-amber-50/50 dark:bg-amber-950/10 rounded-2xl p-4 border border-amber-100/40 dark:border-amber-900/20 text-center">
-                    <p class="text-xs text-cyan-600 dark:text-cyan-400 font-extrabold">👑 Level Maksimal Tercapai!</p>
-                    <p class="text-[10px] text-gray-500 dark:text-gray-400 mt-1">Anda berada di rank Platinum (Kasta tertinggi). Terima kasih atas kesetiaan Anda!</p>
-                </div>
-                @endif
+                <!-- View my rewards Action Button -->
+                <a href="{{ route('member.profile') }}" class="block w-full py-4 bg-[#D84315] hover:bg-[#C62828] text-white font-extrabold text-sm rounded-2xl shadow-xl transition-all duration-300 transform active:scale-95 text-center">
+                    View my rewards
+                </a>
 
             @else
                 <!-- Guest Welcome Modal -->
-                <!-- Header Text -->
-                <span class="text-[10px] font-black text-amber-600 dark:text-amber-500 uppercase tracking-[0.3em] block animate-pulse">
-                    Order Confirmed
-                </span>
-
-                <!-- Main Title -->
-                <h2 class="text-3xl font-black text-gray-950 dark:text-white font-serif tracking-tight leading-none">
-                    Roti Siap Dipanggang!
-                </h2>
-
-                <!-- Croissant Badge Icon -->
-                <div class="relative w-40 h-40 mx-auto flex items-center justify-center">
-                    <div class="absolute inset-0 bg-gradient-to-tr from-amber-500 to-orange-500 rounded-full blur-xl opacity-35 animate-spin-slow"></div>
-                    <div class="relative w-28 h-28 bg-gradient-to-tr from-amber-400 via-amber-250 to-yellow-500 rounded-full shadow-xl flex items-center justify-center border-4 border-white dark:border-gray-800 scale-up-badge">
-                        <span class="text-5xl select-none filter drop-shadow">🥐</span>
+                <div class="relative w-32 h-32 mx-auto flex items-center justify-center mb-5">
+                    <div class="absolute inset-0 bg-amber-500/20 rounded-full blur-xl animate-pulse"></div>
+                    <div class="w-24 h-24 rounded-full bg-gradient-to-b from-amber-400 via-yellow-500 to-orange-600 p-0.5 shadow-lg flex items-center justify-center">
+                        <div class="w-full h-full rounded-full bg-gradient-to-b from-amber-400 via-orange-500 to-red-650 flex items-center justify-center relative shadow-[inset_0_3px_6px_rgba(255,255,255,0.45),0_6px_12px_rgba(0,0,0,0.2)] border-2 border-white/20">
+                            <span class="text-4xl select-none filter drop-shadow">🥐</span>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Description -->
-                <div class="space-y-1.5">
-                    <p class="text-sm font-black text-gray-800 dark:text-gray-200">Pesanan {{ $order->order_number }} Sukses!</p>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed max-w-xs mx-auto">
-                        Terima kasih! Roti kesukaan Anda sedang dipersiapkan dan segera masuk antrean panggang hangat di dapur Mamitha.
+                <!-- Text details -->
+                <div class="space-y-1 mb-6">
+                    <span class="text-[10px] font-black text-amber-600 dark:text-amber-500 uppercase tracking-[0.25em] block animate-pulse">
+                        Order Confirmed
+                    </span>
+                    <h2 class="text-2xl font-black text-gray-950 dark:text-white leading-tight">
+                        Roti Siap Dipanggang!
+                    </h2>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                        Fresh from the oven - delivered warm
                     </p>
                 </div>
 
                 <!-- Member Promotion Invitation Card -->
-                <div class="bg-amber-50/50 dark:bg-amber-950/10 rounded-2xl p-4 border border-amber-100/40 dark:border-amber-900/20 text-left flex items-start gap-3">
-                    <span class="text-2xl mt-0.5 select-none">✨</span>
+                <div class="bg-[#FCF5F0] dark:bg-gray-800/40 rounded-2xl p-4 border border-amber-100/30 dark:border-gray-700/30 text-left flex items-center gap-4 mb-6">
+                    <div class="w-12 h-12 bg-white dark:bg-gray-800 rounded-xl flex items-center justify-center border border-gray-100 dark:border-gray-700/80 shadow-sm shrink-0">
+                        <span class="text-2xl select-none">✨</span>
+                    </div>
                     <div>
-                        <h4 class="text-xs font-black text-amber-800 dark:text-amber-400 uppercase tracking-wide">
-                            Gabung Member Mamitha
+                        <span class="text-[9px] font-black text-amber-700 dark:text-amber-500 uppercase tracking-wider block">Gabung Member</span>
+                        <h4 class="text-xs font-extrabold text-gray-900 dark:text-white leading-tight mt-0.5">
+                            Diskon 10% Otomatis
                         </h4>
-                        <p class="text-[11px] text-gray-650 dark:text-gray-350 mt-0.5 leading-relaxed">
-                            Dapatkan <span class="font-extrabold text-amber-800 dark:text-amber-400">diskon 10% otomatis</span> untuk setiap pesanan berikutnya dan kumpulkan poin belanja Anda untuk naik rank!
+                        <p class="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5 leading-snug">
+                            Kumpulkan poin belanja Anda untuk naik rank dan nikmati free delivery!
                         </p>
                     </div>
                 </div>
-            @endif
 
-            <!-- Pulsing Action Button -->
-            <button type="button" onclick="dismissLevelUpModal()" class="w-full py-4 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-extrabold text-sm rounded-2xl shadow-xl transition-all duration-300 transform active:scale-95 hover:shadow-2xl hover:shadow-orange-500/20 animate-pulse-btn">
-                Lacak Pesanan Saya &rarr;
-            </button>
+                <!-- Action Button for Guest -->
+                <a href="{{ route('register') }}" class="block w-full py-4 bg-[#D84315] hover:bg-[#C62828] text-white font-extrabold text-sm rounded-2xl shadow-xl transition-all duration-300 transform active:scale-95 text-center mb-3">
+                    Gabung Member Sekarang
+                </a>
+                <button type="button" onclick="dismissLevelUpModal()" class="text-xs font-bold text-gray-500 hover:text-gray-800 dark:hover:text-gray-300 transition duration-150">
+                    Lacak Pesanan Saya &rarr;
+                </button>
+            @endif
         </div>
     </div>
 </div>

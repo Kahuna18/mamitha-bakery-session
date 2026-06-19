@@ -271,6 +271,50 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Preferences Card (TikTok Style) -->
+                <div class="bg-white dark:bg-gray-800 rounded-3xl border border-amber-100/50 dark:border-gray-700/50 shadow-sm p-6 space-y-4">
+                    <div class="space-y-1">
+                        <span class="text-[9px] font-black text-amber-600 dark:text-amber-500 uppercase tracking-[0.2em] block">Preferensi</span>
+                        <h3 class="font-bold text-gray-850 dark:text-gray-100 font-serif text-lg">Pengaturan Tambahan</h3>
+                    </div>
+                    
+                    <div class="divide-y divide-amber-50 dark:divide-gray-700/50">
+                        <!-- Push Notifications Preference -->
+                        <div class="py-3.5 flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/30 flex items-center justify-center text-sm shadow-inner select-none">
+                                    🔔
+                                </div>
+                                <div>
+                                    <h4 class="text-xs font-black text-gray-800 dark:text-gray-255">Push Notifications</h4>
+                                    <p class="text-[9px] text-gray-400 dark:text-gray-500">Terima info diskon roti hangat terbaru.</p>
+                                </div>
+                            </div>
+                            <!-- Switch Button -->
+                            <button type="button" onclick="togglePreference('push_notif')" id="pref-push_notif" class="w-12 h-6 rounded-full bg-gray-200 dark:bg-gray-700 relative p-1 transition-colors duration-200 focus:outline-none select-none cursor-pointer">
+                                <div class="switch-dot w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-200"></div>
+                            </button>
+                        </div>
+
+                        <!-- Face ID Preference -->
+                        <div class="py-3.5 flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/30 flex items-center justify-center text-sm shadow-inner select-none">
+                                    📸
+                                </div>
+                                <div>
+                                    <h4 class="text-xs font-black text-gray-800 dark:text-gray-255">Unlock with Face ID</h4>
+                                    <p class="text-[9px] text-gray-400 dark:text-gray-500">Masuk cepat menggunakan deteksi wajah.</p>
+                                </div>
+                            </div>
+                            <!-- Switch Button -->
+                            <button type="button" onclick="togglePreference('face_id')" id="pref-face_id" class="w-12 h-6 rounded-full bg-gray-200 dark:bg-gray-700 relative p-1 transition-colors duration-200 focus:outline-none select-none cursor-pointer">
+                                <div class="switch-dot w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-200"></div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -419,11 +463,47 @@
         }
     }
 
-    // Initialize theme selection UI state on load
+    function togglePreference(key) {
+        const btn = document.getElementById(`pref-${key}`);
+        const dot = btn.querySelector('.switch-dot');
+        const isActive = btn.classList.contains('bg-orange-600');
+        
+        if (isActive) {
+            btn.classList.remove('bg-orange-600');
+            btn.classList.add('bg-gray-200', 'dark:bg-gray-700');
+            dot.classList.remove('translate-x-6');
+            localStorage.setItem(`pref_${key}`, 'false');
+        } else {
+            btn.classList.add('bg-orange-600');
+            btn.classList.remove('bg-gray-200', 'dark:bg-gray-700');
+            dot.classList.add('translate-x-6');
+            localStorage.setItem(`pref_${key}`, 'true');
+        }
+    }
+
+    // Initialize theme and preference toggles state on load
     window.addEventListener('load', () => {
         const currentTheme = localStorage.getItem('theme') || 
             (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
         setAppTheme(currentTheme);
+
+        // Init Preferences toggles to true by default (matching screenshot)
+        ['push_notif', 'face_id'].forEach(key => {
+            const btn = document.getElementById(`pref-${key}`);
+            if (!btn) return;
+            const dot = btn.querySelector('.switch-dot');
+            const val = localStorage.getItem(`pref_${key}`) !== 'false';
+            
+            if (val) {
+                btn.classList.add('bg-orange-600');
+                btn.classList.remove('bg-gray-200', 'dark:bg-gray-700');
+                dot.classList.add('translate-x-6');
+            } else {
+                btn.classList.remove('bg-orange-600');
+                btn.classList.add('bg-gray-200', 'dark:bg-gray-700');
+                dot.classList.remove('translate-x-6');
+            }
+        });
     });
 </script>
 @endpush

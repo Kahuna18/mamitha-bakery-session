@@ -18,7 +18,9 @@ class RedirectIfAuthenticated
                 $user = Auth::user();
                 $route = $user && $user->isAdmin()
                     ? route('admin.dashboard', absolute: false)
-                    : route('kitchen.dashboard', absolute: false);
+                    : ($user && $user->isKitchen()
+                        ? route('kitchen.dashboard', absolute: false)
+                        : route('order.create', absolute: false));
 
                 return redirect($route);
             }
