@@ -75,6 +75,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::get('/customers/{customer}', [AdminCustomer::class, 'show'])->name('customers.show');
     Route::delete('/customers/{customer}', [AdminCustomer::class, 'destroy'])->name('customers.destroy');
     Route::post('/customers/reset', [AdminCustomer::class, 'resetAll'])->name('customers.reset');
+    Route::post('/customers/reset-members', [AdminCustomer::class, 'resetAllMembers'])->name('customers.reset-members');
 
     // Settings
     Route::get('/settings', [AdminSetting::class, 'index'])->name('settings.index');

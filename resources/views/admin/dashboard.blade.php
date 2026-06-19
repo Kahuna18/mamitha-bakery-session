@@ -54,9 +54,17 @@
                     <h2 class="text-lg font-bold text-gray-800 dark:text-white font-serif">Data Anggota Member</h2>
                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Total member terdaftar: {{ count($members) }} pelanggan</p>
                 </div>
-                <button onclick="openAddMemberModal()" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-black rounded-lg shadow-sm transition active:scale-95 cursor-pointer">
-                    + Tambah Member Baru
-                </button>
+                <div class="flex items-center gap-2 flex-wrap">
+                    <form action="{{ route('admin.customers.reset-members') }}" method="POST" onsubmit="return confirm('PENTING: Tindakan ini akan menghapus SELURUH data pelanggan/member beserta riwayat transaksi mereka untuk mereset nomor urut member kembali ke 1. Apakah Anda yakin?')">
+                        @csrf
+                        <button type="submit" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-black rounded-lg shadow-sm transition active:scale-95 cursor-pointer flex items-center gap-1">
+                            🗑️ Reset Seluruh Member
+                        </button>
+                    </form>
+                    <button onclick="openAddMemberModal()" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-black rounded-lg shadow-sm transition active:scale-95 cursor-pointer">
+                        + Tambah Member Baru
+                    </button>
+                </div>
             </div>
 
             <!-- Responsive Desktop Table -->

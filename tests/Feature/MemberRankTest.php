@@ -312,4 +312,43 @@ class MemberRankTest extends TestCase
         $this->assertFalse((bool)$member->is_member);
         $this->assertEquals(0, $member->points);
     }
+
+    public function test_admin_can_reset_all_members_and_auto_increment()
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $member1 = Customer::create([
+            'name' => 'Member One',
+            'phone' => '08123456784',
+            'is_member' => true,
+            'points' => 50,
+        ]);
+
+        $member2 = Customer::create([
+            'name' => 'Member Two',
+            'phone' => '08123456785',
+            'is_member' => true,
+            'points' => 120,
+        ]);
+
+        // Send reset request
+        $response = $this->post(route('admin.customers.reset-members'));
+
+        $response->assertRedirect(route('admin.dashboard', ['tab' => 'member']));
+        $response->assertSessionHas('success');
+
+        // Check customers database is empty
+        $this->assertEquals(0, Customer::count());
+
+        // Create new customer and check if auto-increment is reset (should start from 1)
+        $newMember = Customer::create([
+            'name' => 'New Member After Reset',
+            'phone' => '08123456786',
+            'is_member' => true,
+            'points' => 0,
+        ]);
+
+        $this->assertEquals(1, $newMember->id);
+    }
 }
