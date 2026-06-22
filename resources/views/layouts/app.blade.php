@@ -54,73 +54,91 @@
                         <button onclick="toggleThemeGlobally(event)" class="mr-2 p-2 rounded-2xl border border-amber-100 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:bg-amber-50 dark:hover:bg-gray-800 transition duration-150 cursor-pointer select-none active:scale-95 flex items-center justify-center w-9 h-9" title="Ubah Tema">
                             <span id="theme-toggle-btn-icon" class="text-sm">🌙</span>
                         </button>
-                        @if(auth()->user()->isAdmin())
-                            <a href="{{ route('admin.dashboard') }}" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-gray-800 transition">Dashboard Admin</a>
-                            <a href="{{ route('kitchen.dashboard') }}" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-gray-800 transition">Dashboard Kitchen</a>
-                            <form method="POST" action="{{ route('logout') }}" class="inline">
-                                @csrf
-                                <button type="submit" class="px-4 py-2 rounded-lg text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/20 transition">Keluar</button>
-                            </form>
-                        @elseif(auth()->user()->isKitchen())
-                            <a href="{{ route('kitchen.dashboard') }}" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-gray-800 transition">Dashboard Kitchen</a>
-                            <form method="POST" action="{{ route('logout') }}" class="inline">
-                                @csrf
-                                <button type="submit" class="px-4 py-2 rounded-lg text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/20 transition">Keluar</button>
-                            </form>
-                        @else
-                            <!-- Member Profile Dropdown (Alpine.js) -->
-                            <div x-data="{ open: false }" @click.away="open = false" class="relative inline-block text-left">
-                                <button @click="open = !open" type="button" class="inline-flex items-center px-4 py-2 border border-amber-100 dark:border-gray-700 rounded-2xl text-sm font-medium text-gray-700 dark:text-gray-300 bg-amber-50/20 dark:bg-gray-850 hover:bg-amber-50 dark:hover:bg-gray-800 hover:text-amber-800 dark:hover:text-amber-400 transition duration-150 cursor-pointer active:scale-95">
-                                    @php
-                                        $customerRecord = auth()->user()->customer;
-                                        $rankBadge = $customerRecord ? $customerRecord->rank_badge : '🥉';
-                                        $rankName = $customerRecord ? $customerRecord->rank_name : 'Bronze';
-                                    @endphp
-                                    <span class="mr-1.5 select-none text-base">{{ $rankBadge }}</span>
-                                    <span>{{ auth()->user()->name }}</span>
-                                    <svg class="w-4 h-4 ml-1.5 text-gray-500 transition-transform duration-200" :class="{'rotate-180': open}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
-                                    </svg>
-                                </button>
 
-                                <div x-show="open" 
-                                     x-transition:enter="transition ease-out duration-100"
-                                     x-transition:enter-start="transform opacity-0 scale-95"
-                                     x-transition:enter-end="transform opacity-100 scale-100"
-                                     x-transition:leave="transition ease-in duration-75"
-                                     x-transition:leave-start="transform opacity-100 scale-100"
-                                     x-transition:leave-end="transform opacity-0 scale-95"
-                                     class="absolute right-0 mt-2 w-48 rounded-2xl bg-white dark:bg-gray-800 border border-amber-100/60 dark:border-gray-700 shadow-xl py-1.5 z-50 ring-1 ring-black/5"
-                                     style="display: none;">
-                                     
-                                    <div class="px-4 py-2 border-b border-amber-50 dark:border-gray-700/50">
-                                        <p class="text-[9px] uppercase tracking-wider text-gray-400 font-bold">Peringkat Member</p>
-                                        <p class="text-xs font-black text-amber-800 dark:text-amber-400 mt-0.5">{{ $rankName }} Member</p>
-                                    </div>
+                        <!-- User Profile Dropdown (Alpine.js) -->
+                        <div x-data="{ open: false }" @click.away="open = false" class="relative inline-block text-left">
+                            <button @click="open = !open" type="button" class="inline-flex items-center px-4 py-2 border border-amber-100 dark:border-gray-700 rounded-2xl text-sm font-medium text-gray-700 dark:text-gray-300 bg-amber-50/20 dark:bg-gray-850 hover:bg-amber-50 dark:hover:bg-gray-800 hover:text-amber-800 dark:hover:text-amber-400 transition duration-150 cursor-pointer active:scale-95">
+                                @php
+                                    $user = auth()->user();
+                                    $customerRecord = $user->customer;
+                                    $badge = '🥉';
+                                    $roleName = 'Member';
+                                    if ($user->isAdmin()) {
+                                        $badge = '👑';
+                                        $roleName = 'Administrator';
+                                    } elseif ($user->isKitchen()) {
+                                        $badge = '👨‍🍳';
+                                        $roleName = 'Kitchen Staff';
+                                    } else {
+                                        $badge = $customerRecord ? $customerRecord->rank_badge : '🥉';
+                                        $roleName = ($customerRecord ? $customerRecord->rank_name : 'Bronze') . ' Member';
+                                    }
+                                @endphp
+                                <span class="mr-1.5 select-none text-base">{{ $badge }}</span>
+                                <span>{{ $user->name }}</span>
+                                <svg class="w-4 h-4 ml-1.5 text-gray-500 transition-transform duration-200" :class="{'rotate-180': open}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </button>
 
+                            <div x-show="open" 
+                                 x-transition:enter="transition ease-out duration-100"
+                                 x-transition:enter-start="transform opacity-0 scale-95"
+                                 x-transition:enter-end="transform opacity-100 scale-100"
+                                 x-transition:leave="transition ease-in duration-75"
+                                 x-transition:leave-start="transform opacity-100 scale-100"
+                                 x-transition:leave-end="transform opacity-0 scale-95"
+                                 class="absolute right-0 mt-2 w-52 rounded-2xl bg-white dark:bg-gray-800 border border-amber-100/60 dark:border-gray-700 shadow-xl py-1.5 z-50 ring-1 ring-black/5"
+                                 style="display: none;">
+                                 
+                                <div class="px-4 py-2 border-b border-amber-50 dark:border-gray-700/50">
+                                    <p class="text-[9px] uppercase tracking-wider text-gray-400 font-bold">Peringkat / Peran</p>
+                                    <p class="text-xs font-black text-amber-800 dark:text-amber-400 mt-0.5">{{ $roleName }}</p>
+                                </div>
+
+                                @if($user->isAdmin())
+                                    <a href="{{ route('admin.dashboard') }}" class="flex items-center px-4 py-2 text-xs font-bold text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-gray-700 hover:text-amber-800 dark:hover:text-amber-400 transition">
+                                        📊 Dashboard Admin
+                                    </a>
+                                    <a href="{{ route('kitchen.dashboard') }}" class="flex items-center px-4 py-2 text-xs font-bold text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-gray-700 hover:text-amber-800 dark:hover:text-amber-400 transition">
+                                        👨‍🍳 Dashboard Kitchen
+                                    </a>
                                     <a href="{{ route('member.profile') }}" class="flex items-center px-4 py-2 text-xs font-bold text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-gray-700 hover:text-amber-800 dark:hover:text-amber-400 transition">
                                         👤 Profil Member Saya
                                     </a>
-                                    
                                     <a href="{{ route('order.history') }}" class="flex items-center px-4 py-2 text-xs font-bold text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-gray-700 hover:text-amber-800 dark:hover:text-amber-400 transition">
                                         📋 Riwayat Pesanan
                                     </a>
+                                @elseif($user->isKitchen())
+                                    <a href="{{ route('kitchen.dashboard') }}" class="flex items-center px-4 py-2 text-xs font-bold text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-gray-700 hover:text-amber-800 dark:hover:text-amber-400 transition">
+                                        👨‍🍳 Dashboard Kitchen
+                                    </a>
+                                @else
+                                    <a href="{{ route('member.profile') }}" class="flex items-center px-4 py-2 text-xs font-bold text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-gray-700 hover:text-amber-800 dark:hover:text-amber-400 transition">
+                                        👤 Profil Member Saya
+                                    </a>
+                                    <a href="{{ route('order.history') }}" class="flex items-center px-4 py-2 text-xs font-bold text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-gray-700 hover:text-amber-800 dark:hover:text-amber-400 transition">
+                                        📋 Riwayat Pesanan
+                                    </a>
+                                @endif
 
-                                    <div class="border-t border-amber-50 dark:border-gray-700/50 my-1"></div>
+                                <div class="border-t border-amber-50 dark:border-gray-700/50 my-1"></div>
 
-                                    <form method="POST" action="{{ route('logout') }}">
-                                        @csrf
-                                        <button type="submit" class="w-full flex items-center px-4 py-2 text-xs font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-750 dark:hover:text-red-300 transition text-left cursor-pointer">
-                                            🚪 Keluar
-                                        </button>
-                                    </form>
-                                </div>
+                                <form method="POST" action="{{ route('logout') }}">
+                                    @csrf
+                                    <button type="submit" class="w-full flex items-center px-4 py-2 text-xs font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-750 dark:hover:text-red-300 transition text-left cursor-pointer">
+                                        🚪 Keluar
+                                    </button>
+                                </form>
                             </div>
-                        @endif
+                        </div>
                     @else
                         <a href="{{ route('login') }}" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-gray-800 transition">Masuk</a>
                     @endauth
-                    <a href="{{ route('order.create') }}" class="ml-2 px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-lg shadow-sm transition text-sm">Pesan Sekarang</a>
+                    <a href="{{ route('order.create') }}" id="desktop-pesan-btn" class="ml-2 px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-lg shadow-sm transition text-sm flex items-center gap-2 relative">
+                        <span>Pesan Sekarang</span>
+                        <span id="desktop-cart-badge" class="bg-red-500 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full hidden">0</span>
+                    </a>
                 </div>
                 <div class="flex items-center gap-2 md:hidden">
                     @auth
@@ -242,14 +260,18 @@
         </a>
 
         <!-- Order / Cart -->
-        <a href="{{ route('order.create') }}" class="flex flex-col items-center justify-center transition select-none {{ $isOrder ? 'text-amber-800 dark:text-amber-400' : 'text-gray-400 hover:text-gray-600' }}">
+        <a href="{{ route('order.create') }}" id="nav-pesan-btn" class="flex flex-col items-center justify-center transition select-none {{ $isOrder ? 'text-amber-800 dark:text-amber-400' : 'text-gray-400 hover:text-gray-600' }}">
             @if($isOrder)
-                <div class="bg-amber-100/60 dark:bg-amber-950/35 rounded-2xl px-4 py-1.5 flex items-center gap-1.5 text-xs text-amber-900 dark:text-amber-400 font-extrabold">
+                <div class="bg-amber-100/60 dark:bg-amber-950/35 rounded-2xl px-4 py-1.5 flex items-center gap-1.5 text-xs text-amber-900 dark:text-amber-400 font-extrabold relative">
                     <span class="text-sm">🛍️</span>
                     <span class="text-[9px] uppercase tracking-wider">Pesan</span>
+                    <span id="nav-cart-badge" class="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full hidden">0</span>
                 </div>
             @else
-                <span class="text-lg">🛍️</span>
+                <div class="relative flex flex-col items-center">
+                    <span class="text-lg">🛍️</span>
+                    <span id="nav-cart-badge" class="absolute -top-1.5 -right-2 bg-red-500 text-white text-[8px] font-bold px-1 py-0.5 rounded-full hidden">0</span>
+                </div>
             @endif
         </a>
 
@@ -267,7 +289,7 @@
     </div>
 
     @if(!request()->routeIs('member.profile'))
-    <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', \App\Models\Setting::getValue('store_whatsapp', '6281234567890')) }}" target="_blank" class="fixed bottom-24 md:bottom-6 right-6 bg-green-500 hover:bg-green-600 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center z-50 transition transform hover:scale-105">
+    <a id="whatsapp-float" href="https://wa.me/{{ preg_replace('/[^0-9]/', '', \App\Models\Setting::getValue('store_whatsapp', '6281234567890')) }}" target="_blank" class="fixed bottom-24 md:bottom-6 right-6 bg-green-500 hover:bg-green-600 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center z-50 transition-all duration-300 transform hover:scale-105">
         <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 448 512"><path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7.9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z"/></svg>
     </a>
     @endif
@@ -364,6 +386,70 @@
             const currentTheme = localStorage.getItem('theme') || 'light';
             applyTheme(currentTheme === 'dark');
         });
+
+        // Global cart badge and shortcut click handler
+        function initGlobalCartNavigation() {
+            function updateBadges() {
+                try {
+                    const storedCart = localStorage.getItem('mamitha_cart');
+                    let totalItems = 0;
+                    if (storedCart) {
+                        const cart = JSON.parse(storedCart);
+                        Object.keys(cart).forEach(key => {
+                            totalItems += cart[key].qty;
+                        });
+                    }
+                    
+                    const mobileBadge = document.getElementById('nav-cart-badge');
+                    if (mobileBadge) {
+                        if (totalItems > 0) {
+                            mobileBadge.textContent = totalItems;
+                            mobileBadge.classList.remove('hidden');
+                        } else {
+                            mobileBadge.classList.add('hidden');
+                        }
+                    }
+                    
+                    const desktopBadge = document.getElementById('desktop-cart-badge');
+                    if (desktopBadge) {
+                        if (totalItems > 0) {
+                            desktopBadge.textContent = totalItems;
+                            desktopBadge.classList.remove('hidden');
+                        } else {
+                            desktopBadge.classList.add('hidden');
+                        }
+                    }
+                } catch (e) {
+                    console.error('Error updating nav cart badge:', e);
+                }
+            }
+
+            // Update badges on load
+            updateBadges();
+
+            // Listen for storage events to update badges if changed in another tab
+            window.addEventListener('storage', function(e) {
+                if (e.key === 'mamitha_cart') {
+                    updateBadges();
+                }
+            });
+
+            // Expose update function globally so create.blade.php can call it
+            window.updateGlobalCartBadges = updateBadges;
+
+            // Handle navigation clicks to open drawer if already on order page
+            const handleCartClick = function(e) {
+                if (window.location.pathname === '/pesan' && typeof window.toggleCheckoutDrawer === 'function') {
+                    e.preventDefault();
+                    window.toggleCheckoutDrawer(true);
+                }
+            };
+
+            document.getElementById('nav-pesan-btn')?.addEventListener('click', handleCartClick);
+            document.getElementById('desktop-pesan-btn')?.addEventListener('click', handleCartClick);
+        }
+
+        document.addEventListener('DOMContentLoaded', initGlobalCartNavigation);
     </script>
     @stack('scripts')
 </body>

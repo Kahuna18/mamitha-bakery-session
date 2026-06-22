@@ -435,44 +435,97 @@
             <h3 class="text-xl font-bold text-gray-850 dark:text-white font-serif">Payment Methods</h3>
             <button onclick="closeModal('modal-payment-methods')" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 focus:outline-none cursor-pointer text-sm font-bold">Close</button>
         </div>
-        <div class="space-y-3">
+        <div class="space-y-3" id="payment-methods-list-container">
+            @forelse($customer->paymentMethods as $pm)
             <div class="flex items-center justify-between p-3.5 bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-750 select-none">
                 <div class="flex items-center gap-3">
-                    <span class="text-xl">💳</span>
+                    <span class="text-xl">
+                        @if($pm->type === 'credit_card') 💳 
+                        @elseif($pm->type === 'e_wallet') 📱
+                        @else 🏦 @endif
+                    </span>
                     <div>
-                        <p class="text-xs font-black text-gray-800 dark:text-gray-200">Kartu Kredit Utama</p>
-                        <p class="text-[9px] text-gray-400 font-mono">**** **** **** 5678</p>
+                        <p class="text-xs font-black text-gray-800 dark:text-gray-250">{{ $pm->provider }} ({{ $pm->account_name }})</p>
+                        <p class="text-[9px] text-gray-400 font-mono mt-0.5">
+                            @if($pm->type === 'credit_card')
+                                **** **** **** {{ substr($pm->account_number, -4) }}
+                            @else
+                                {{ $pm->account_number }}
+                            @endif
+                        </p>
                     </div>
                 </div>
-                <span class="text-[10px] text-orange-600 font-bold bg-orange-50 dark:bg-orange-950/20 px-2 py-0.5 rounded-full select-none">Aktif</span>
-            </div>
-            
-            <div class="flex items-center justify-between p-3.5 bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-750 select-none">
-                <div class="flex items-center gap-3">
-                    <span class="text-xl">📱</span>
-                    <div>
-                        <p class="text-xs font-black text-gray-800 dark:text-gray-200">DANA E-Wallet</p>
-                        <p class="text-[9px] text-gray-400 font-mono">0812-****-5670</p>
-                    </div>
+                <div class="flex items-center gap-2.5">
+                    @if($pm->is_default)
+                        <span class="text-[9px] text-orange-650 font-extrabold bg-orange-500/10 dark:bg-orange-950/20 px-2 py-0.5 rounded-full select-none">Default</span>
+                    @endif
+                    <!-- Edit button -->
+                    <button type="button" onclick="editPaymentMethod({{ json_encode($pm) }})" class="p-1 text-gray-450 hover:text-amber-500 dark:hover:text-amber-400 transition" title="Edit">
+                        ✏️
+                    </button>
+                    <!-- Delete form -->
+                    <button type="button" onclick="confirmDeletePaymentMethod('delete-form-{{ $pm->id }}')" class="p-1 text-red-500 hover:text-red-700 transition" title="Hapus">
+                        🗑️
+                    </button>
+                    <form id="delete-form-{{ $pm->id }}" action="{{ route('member.payment-method.destroy', $pm->id) }}" method="POST" class="hidden">
+                        @csrf
+                        @method('DELETE')
+                    </form>
                 </div>
-                <span class="text-[10px] text-gray-400 font-bold">Tersambung</span>
             </div>
+            @empty
+            <div class="text-center py-6 text-gray-400 text-xs">
+                Belum ada metode pembayaran disimpan.
+            </div>
+            @endforelse
 
-            <div class="flex items-center justify-between p-3.5 bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-750 select-none">
-                <div class="flex items-center gap-3">
-                    <span class="text-xl">💵</span>
-                    <div>
-                        <p class="text-xs font-black text-gray-800 dark:text-gray-200">Cash on Delivery (COD)</p>
-                        <p class="text-[9px] text-gray-400">Bayar langsung di tempat</p>
-                    </div>
-                </div>
-                <span class="text-[10px] text-gray-400 font-bold">Selalu Aktif</span>
-            </div>
-
-            <button onclick="alert('Fitur tambah metode pembayaran akan segera hadir!'); triggerHaptic();" class="w-full py-3 bg-transparent border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-orange-500 text-gray-500 hover:text-orange-500 font-bold text-xs rounded-xl transition cursor-pointer text-center select-none">
+            <button type="button" id="btn-show-payment-form" onclick="showAddPaymentForm()" class="w-full py-3 bg-transparent border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-orange-500 text-gray-500 hover:text-orange-500 font-bold text-xs rounded-xl transition cursor-pointer text-center select-none">
                 + Tambah Metode Pembayaran
             </button>
         </div>
+
+        <!-- Form to Add/Edit Payment Method -->
+        <form id="payment-method-form" method="POST" action="{{ route('member.payment-method.store') }}" class="hidden space-y-4 border-t border-amber-50 dark:border-gray-750 pt-4 mt-4">
+            @csrf
+            <!-- Form Method Spoofing for Update -->
+            <div id="method-field-container"></div>
+
+            <h4 id="payment-form-title" class="text-sm font-bold text-gray-800 dark:text-gray-100 font-serif">Tambah Metode Pembayaran</h4>
+            
+            <div>
+                <label class="block text-[9px] font-bold text-gray-400 mb-1.5 uppercase tracking-wider">Tipe Pembayaran</label>
+                <select name="type" id="payment-type-select" required onchange="onPaymentTypeChange()" class="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-250 dark:border-gray-700 rounded-xl text-xs focus:ring-2 focus:ring-amber-500 focus:border-amber-500 dark:text-white transition">
+                    <option value="credit_card">💳 Kartu Kredit</option>
+                    <option value="e_wallet">📱 E-Wallet (DANA, GoPay, OVO, etc.)</option>
+                    <option value="bank_transfer">🏦 Transfer Bank (BCA, Mandiri, BNI, etc.)</option>
+                </select>
+            </div>
+
+            <div>
+                <label id="payment-provider-label" class="block text-[9px] font-bold text-gray-400 mb-1.5 uppercase tracking-wider">Nama Penyedia / Nama Bank</label>
+                <select name="provider" id="payment-provider-input" required class="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-250 dark:border-gray-700 rounded-xl text-xs focus:ring-2 focus:ring-amber-500 focus:border-amber-500 dark:text-white transition">
+                </select>
+            </div>
+
+            <div>
+                <label id="payment-number-label" class="block text-[9px] font-bold text-gray-400 mb-1.5 uppercase tracking-wider">Nomor Akun / Kartu</label>
+                <input type="text" name="account_number" id="payment-number-input" required placeholder="Masukkan nomor rekening, kartu, atau HP" class="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-250 dark:border-gray-700 rounded-xl text-xs focus:ring-2 focus:ring-amber-500 focus:border-amber-500 dark:text-white transition">
+            </div>
+
+            <div>
+                <label id="payment-name-label" class="block text-[9px] font-bold text-gray-400 mb-1.5 uppercase tracking-wider">Nama Pemilik Akun / Kartu</label>
+                <input type="text" name="account_name" id="payment-name-input" value="{{ $customer->name }}" readonly required placeholder="Masukkan nama pemilik" class="w-full px-3 py-2.5 bg-gray-100 dark:bg-gray-800 border border-gray-250 dark:border-gray-700 rounded-xl text-xs focus:ring-2 focus:ring-amber-500 focus:border-amber-500 dark:text-white transition cursor-not-allowed">
+            </div>
+
+            <div class="flex gap-2 justify-end pt-2">
+                <button type="button" onclick="hidePaymentForm()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-650 text-gray-600 dark:text-gray-300 text-xs font-bold rounded-xl transition cursor-pointer select-none">
+                    Batal
+                </button>
+                <button type="submit" class="px-4 py-2 bg-[#ff6310] hover:bg-orange-700 text-white text-xs font-bold rounded-xl transition shadow cursor-pointer select-none">
+                    Simpan
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -646,6 +699,150 @@
                 dot.classList.remove('translate-x-6');
             }
         });
+
+        // 3. Auto-fill user name when typing account/phone number
+        document.getElementById('payment-number-input')?.addEventListener('input', function() {
+            const nameInput = document.getElementById('payment-name-input');
+            if (nameInput && !nameInput.value.trim()) {
+                nameInput.value = "{{ auth()->user()->name }}";
+            }
+        });
     });
+
+    // Saved Payment Methods JS Handlers
+    function showAddPaymentForm() {
+        triggerHaptic();
+        
+        const form = document.getElementById('payment-method-form');
+        if (!form) return;
+        
+        // Reset form inputs
+        form.reset();
+        document.getElementById('method-field-container').innerHTML = '';
+        form.action = "{{ route('member.payment-method.store') }}";
+        document.getElementById('payment-form-title').innerText = 'Tambah Metode Pembayaran';
+        
+        // Set the pre-populated registered name
+        document.getElementById('payment-name-input').value = "{{ $customer->name }}";
+        
+        onPaymentTypeChange();
+        
+        form.classList.remove('hidden');
+        document.getElementById('btn-show-payment-form').classList.add('hidden');
+    }
+    
+    function hidePaymentForm() {
+        triggerHaptic();
+        
+        const form = document.getElementById('payment-method-form');
+        if (!form) return;
+        
+        form.classList.add('hidden');
+        document.getElementById('btn-show-payment-form').classList.remove('hidden');
+    }
+    
+    function populateProviderOptions(type, currentValue = '') {
+        const select = document.getElementById('payment-provider-input');
+        if (!select) return;
+        
+        select.innerHTML = '';
+        
+        let options = [];
+        if (type === 'e_wallet') {
+            options = [
+                { value: 'DANA', label: '📱 DANA' },
+                { value: 'GoPay', label: '📱 GoPay' },
+                { value: 'OVO', label: '📱 OVO' },
+                { value: 'LinkAja', label: '📱 LinkAja' },
+                { value: 'ShopeePay', label: '📱 ShopeePay' }
+            ];
+        } else if (type === 'bank_transfer') {
+            options = [
+                { value: 'BCA', label: '🏦 Bank Central Asia (BCA)' },
+                { value: 'Mandiri', label: '🏦 Bank Mandiri' },
+                { value: 'BNI', label: '🏦 Bank Negara Indonesia (BNI)' },
+                { value: 'BRI', label: '🏦 Bank Rakyat Indonesia (BRI)' },
+                { value: 'BSI', label: '🏦 Bank Syariah Indonesia (BSI)' },
+                { value: 'CIMB Niaga', label: '🏦 CIMB Niaga' }
+            ];
+        } else if (type === 'credit_card') {
+            options = [
+                { value: 'Visa', label: '💳 Visa' },
+                { value: 'Mastercard', label: '💳 Mastercard' },
+                { value: 'JCB', label: '💳 JCB' },
+                { value: 'American Express', label: '💳 American Express' }
+            ];
+        }
+        
+        options.forEach(opt => {
+            const el = document.createElement('option');
+            el.value = opt.value;
+            el.text = opt.label;
+            if (opt.value === currentValue) {
+                el.selected = true;
+            }
+            select.appendChild(el);
+        });
+    }
+
+    function onPaymentTypeChange(savedProvider = '') {
+        const select = document.getElementById('payment-type-select');
+        if (!select) return;
+        
+        const type = select.value;
+        const providerLabel = document.getElementById('payment-provider-label');
+        const numberLabel = document.getElementById('payment-number-label');
+        const numberInput = document.getElementById('payment-number-input');
+        const nameLabel = document.getElementById('payment-name-label');
+        const nameInput = document.getElementById('payment-name-input');
+        
+        populateProviderOptions(type, savedProvider);
+        
+        if (type === 'credit_card') {
+            providerLabel.innerText = 'Penyedia Kartu';
+            numberLabel.innerText = 'Nomor Kartu Kredit';
+            numberInput.placeholder = 'Contoh: 4111222233334444';
+            nameLabel.innerText = 'Nama di Kartu';
+            nameInput.placeholder = 'Contoh: John Doe';
+        } else if (type === 'e_wallet') {
+            providerLabel.innerText = 'Penyedia E-Wallet';
+            numberLabel.innerText = 'Nomor HP Terdaftar';
+            numberInput.placeholder = 'Contoh: 081234567890';
+            nameLabel.innerText = 'Nama Terdaftar';
+            nameInput.placeholder = 'Contoh: John Doe';
+        } else if (type === 'bank_transfer') {
+            providerLabel.innerText = 'Nama Bank';
+            numberLabel.innerText = 'Nomor Rekening';
+            numberInput.placeholder = 'Contoh: 1234567890';
+            nameLabel.innerText = 'Nama Pemilik Rekening';
+            nameInput.placeholder = 'Contoh: John Doe';
+        }
+    }
+    
+    function editPaymentMethod(pm) {
+        triggerHaptic();
+        
+        const form = document.getElementById('payment-method-form');
+        if (!form) return;
+        
+        // Show form
+        form.classList.remove('hidden');
+        document.getElementById('btn-show-payment-form').classList.add('hidden');
+        
+        // Change action url and title
+        form.action = `/profil/metode-pembayaran/${pm.id}`;
+        document.getElementById('payment-form-title').innerText = 'Ubah Metode Pembayaran';
+        
+        // Inject PUT method hidden input
+        document.getElementById('method-field-container').innerHTML = '<input type="hidden" name="_method" value="PUT">';
+        
+        // Populate inputs
+        document.getElementById('payment-type-select').value = pm.type;
+        document.getElementById('payment-number-input').value = pm.account_number;
+        document.getElementById('payment-name-input').value = pm.account_name;
+        
+        // Trigger select change to sync labels
+        onPaymentTypeChange(pm.provider);
+    }
 </script>
 @endpush

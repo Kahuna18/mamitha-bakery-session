@@ -39,12 +39,89 @@ class DashboardController extends Controller
 
         $guests = Customer::where('is_member', false)->latest()->get();
 
+        // 1. 7 Days Sales Trend
+        $sevenDaysSales = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $date = Carbon::today()->subDays($i);
+            $formattedDate = $date->isoFormat('D MMM');
+            $revenue = Order::whereDate('created_at', $date)
+                ->where('status', '!=', 'cancelled')
+                ->sum('total');
+            $orderCount = Order::whereDate('created_at', $date)->count();
+            $sevenDaysSales[] = [
+                'label' => $formattedDate,
+                'revenue' => (float) $revenue,
+                'orders' => $orderCount
+            ];
+        }
+
+        // 2. Top 5 Selling Products
+        $topProducts = OrderItem::select('product_id', \DB::raw('SUM(quantity) as total_sold'), \DB::raw('SUM(subtotal) as total_revenue'))
+            ->groupBy('product_id')
+            ->orderByDesc('total_sold')
+            ->take(5)
+            ->with('product')
+            ->get();
+
+        // 3. 35 Days Activity Heatmap Data
+        $heatmapData = [];
+        for ($i = 34; $i >= 0; $i--) {
+            $date = Carbon::today()->subDays($i);
+            $orderCount = Order::whereDate('created_at', $date)->count();
+            $heatmapData[] = [
+                'date' => $date->format('Y-m-d'),
+                'day_name' => $date->isoFormat('dddd'),
+                'formatted_date' => $date->isoFormat('D MMMM YYYY'),
+                'count' => $orderCount
+            ];
+        }
+
+        // 4. Monthly Target Status
+        $startOfMonth = Carbon::now()->startOfMonth();
+        $endOfMonth = Carbon::now()->endOfMonth();
+        $monthlyRevenueProgress = (float) Order::whereBetween('created_at', [$startOfMonth, $endOfMonth])
+            ->where('status', '!=', 'cancelled')
+            ->sum('total');
+        $monthlyRevenueTarget = (float) \App\Models\Setting::getValue('monthly_revenue_target', 15000000.00);
+
+        // 5. Recent Product Reviews
+        $recentReviews = \App\Models\ProductReview::with('product')
+            ->latest()
+            ->take(4)
+            ->get();
+
+        if ($recentReviews->isEmpty()) {
+            // Get testimonials as fallback to avoid empty look
+            $recentReviews = \App\Models\Testimonial::latest()->take(4)->get()->map(function($item) {
+                return (object)[
+                    'name' => $item->name,
+                    'rating' => $item->rating,
+                    'comment' => $item->body,
+                    'product' => (object)['name' => 'Ulasan Toko'],
+                    'created_at' => $item->created_at
+                ];
+            });
+        }
+
         return view('admin.dashboard', compact(
             'todayOrders', 'processingOrders', 'productsSold',
             'todayRevenue', 'totalProducts', 'totalCustomers',
             'pendingOrders', 'recentOrders', 'discountEnabled',
-            'discountPercentage', 'members', 'guests'
+            'discountPercentage', 'members', 'guests',
+            'sevenDaysSales', 'topProducts', 'heatmapData',
+            'monthlyRevenueProgress', 'monthlyRevenueTarget', 'recentReviews'
         ));
+    }
+
+    public function updateRevenueTarget(\Illuminate\Http\Request $request)
+    {
+        $request->validate([
+            'monthly_revenue_target' => 'required|numeric|min:0',
+        ]);
+
+        \App\Models\Setting::setValue('monthly_revenue_target', (string) $request->monthly_revenue_target);
+
+        return redirect()->route('admin.dashboard')->with('success', 'Target omset bulanan berhasil diperbarui!');
     }
 
     public function updateCustomerPoints(\Illuminate\Http\Request $request, Customer $customer)

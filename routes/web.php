@@ -34,11 +34,15 @@ Route::post('/status', [OrderController::class, 'checkStatus'])->name('order.che
 Route::get('/riwayat', [OrderController::class, 'history'])->middleware('auth')->name('order.history');
 Route::get('/profil', [MemberProfileController::class, 'index'])->middleware('auth')->name('member.profile');
 Route::post('/profil', [MemberProfileController::class, 'update'])->middleware('auth')->name('member.profile.update');
+Route::post('/profil/metode-pembayaran', [MemberProfileController::class, 'storePaymentMethod'])->middleware('auth')->name('member.payment-method.store');
+Route::put('/profil/metode-pembayaran/{id}', [MemberProfileController::class, 'updatePaymentMethod'])->middleware('auth')->name('member.payment-method.update');
+Route::delete('/profil/metode-pembayaran/{id}', [MemberProfileController::class, 'destroyPaymentMethod'])->middleware('auth')->name('member.payment-method.destroy');
 
 // Admin Routes
 Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', [AdminDashboard::class, 'index'])->name('dashboard');
     Route::post('/update-member-discount', [AdminDashboard::class, 'updateMemberDiscount'])->name('update-member-discount');
+    Route::post('/update-revenue-target', [AdminDashboard::class, 'updateRevenueTarget'])->name('update-revenue-target');
     Route::post('/customers/{customer}/update-points', [AdminDashboard::class, 'updateCustomerPoints'])->name('update-customer-points');
     Route::post('/customers/{customer}/reset-points', [AdminDashboard::class, 'resetMemberPoints'])->name('reset-member-points');
     Route::post('/customers/{customer}/toggle-member', [AdminDashboard::class, 'toggleCustomerMember'])->name('toggle-customer-member');

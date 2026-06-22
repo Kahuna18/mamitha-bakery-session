@@ -29,31 +29,31 @@
             transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
         }
         
-        /* Global Dark Mode - light text on dark backgrounds */
+        /* Global Dark Mode - deep slate-violet palette */
         html.dark body {
-            background-color: #121218 !important;
-            color: #e2e8f0 !important;
+            background-color: #0f111a !important;
+            color: #f1f5f9 !important;
         }
         html.dark main {
-            background-color: #121218 !important;
+            background-color: #0f111a !important;
         }
         html.dark header {
-            background-color: #1e1e2e !important;
-            border-color: rgba(255, 255, 255, 0.08) !important;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+            background-color: #151824 !important;
+            border-color: rgba(255, 255, 255, 0.06) !important;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
         }
         html.dark header span.text-gray-600 {
             color: #cbd5e1 !important;
         }
         html.dark .bg-white {
-            background-color: #1e1e2e !important;
+            background-color: #171928 !important;
         }
         html.dark .bg-gray-50 {
-            background-color: #121218 !important;
+            background-color: #0f111a !important;
         }
         html.dark .text-gray-800,
         html.dark .text-gray-900 {
-            color: #f1f5f9 !important;
+            color: #f8fafc !important;
         }
         html.dark .text-gray-700 {
             color: #e2e8f0 !important;
@@ -69,37 +69,40 @@
         html.dark .border-gray-200,
         html.dark .border-gray-300,
         html.dark .border-amber-100 {
-            border-color: rgba(255, 255, 255, 0.1) !important;
+            border-color: #22243d !important;
         }
         html.dark .hover\:bg-gray-50:hover {
-            background-color: rgba(255, 255, 255, 0.05) !important;
+            background-color: rgba(255, 255, 255, 0.03) !important;
         }
         /* Dark mode tables */
         html.dark table th {
             color: #cbd5e1 !important;
+            background-color: rgba(255, 255, 255, 0.01) !important;
+            border-color: #22243d !important;
         }
         html.dark table td {
             color: #e2e8f0 !important;
+            border-color: #22243d !important;
         }
         /* Dark mode form inputs */
         html.dark input,
         html.dark textarea,
         html.dark select {
-            background-color: #2a2a3d !important;
-            color: #f1f5f9 !important;
-            border-color: rgba(255, 255, 255, 0.15) !important;
+            background-color: #1f2238 !important;
+            color: #f8fafc !important;
+            border-color: rgba(255, 255, 255, 0.1) !important;
         }
         html.dark input::placeholder,
         html.dark textarea::placeholder {
-            color: #64748b !important;
+            color: #6b7280 !important;
         }
         /* Dark mode cards & alerts */
-        html.dark .bg-green-50 { background-color: #1a2e1a !important; }
-        html.dark .bg-red-50 { background-color: #2e1a1a !important; }
-        html.dark .bg-amber-50 { background-color: #2e2a1a !important; }
-        html.dark .text-green-700 { color: #86efac !important; }
-        html.dark .text-red-700 { color: #fca5a5 !important; }
-        html.dark .text-amber-700 { color: #fcd34d !important; }
+        html.dark .bg-green-50 { background-color: rgba(16, 185, 129, 0.08) !important; border-color: rgba(16, 185, 129, 0.15) !important; }
+        html.dark .bg-red-50 { background-color: rgba(239, 68, 68, 0.08) !important; border-color: rgba(239, 68, 68, 0.15) !important; }
+        html.dark .bg-amber-50 { background-color: rgba(245, 158, 11, 0.08) !important; border-color: rgba(245, 158, 11, 0.15) !important; }
+        html.dark .text-green-700 { color: #34d399 !important; }
+        html.dark .text-red-700 { color: #f87171 !important; }
+        html.dark .text-amber-700 { color: #fbbf24 !important; }
         /* Dark mode headings */
         html.dark h1, html.dark h2, html.dark h3 {
             color: #f8fafc !important;
@@ -108,14 +111,77 @@
         html.dark a.text-amber-600 {
             color: #fbbf24 !important;
         }
-        /* Sidebar dark mode */
+        
+        /* Sidebar concept override in dark mode */
         html.dark aside#sidebar,
         html.dark #mobile-sidebar aside {
             background-color: #16120e !important;
-            border-right: 1px solid rgba(255, 255, 255, 0.05) !important;
+            border-right: 1px solid rgba(255, 255, 255, 0.04) !important;
         }
         html.dark aside .border-amber-800 {
-            border-color: rgba(255, 255, 255, 0.05) !important;
+            border-color: rgba(255, 255, 255, 0.04) !important;
+        }
+        html.dark aside nav a {
+            color: #fbbf24 !important;
+        }
+        html.dark aside nav a.bg-amber-800 {
+            background-color: #92400e !important;
+            color: #ffffff !important;
+            border-left: 3.5px solid #f59e0b !important;
+            font-weight: 600 !important;
+        }
+        html.dark aside nav a:hover:not(.bg-amber-800) {
+            background-color: rgba(245, 158, 11, 0.08) !important;
+            color: #ffffff !important;
+        }
+        html.dark aside nav a svg {
+            color: inherit !important;
+        }
+
+        /* Glowing accents */
+        .glow-card {
+            border: 1px solid rgba(59, 130, 246, 0.15);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glow-card:hover {
+            box-shadow: 0 0 25px rgba(59, 130, 246, 0.12);
+        }
+        html.dark .glow-card {
+            border: 1px solid rgba(59, 130, 246, 0.25) !important;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.1) !important;
+        }
+        html.dark .glow-card:hover {
+            border-color: rgba(59, 130, 246, 0.4) !important;
+            box-shadow: 0 0 30px rgba(59, 130, 246, 0.2) !important;
+        }
+        .glow-line-chart {
+            filter: drop-shadow(0px 8px 16px rgba(59, 130, 246, 0.3));
+        }
+        .glow-progress {
+            box-shadow: 0 0 12px rgba(59, 130, 246, 0.5);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        html.dark ::-webkit-scrollbar-thumb {
+            background: #374151;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        html.dark ::-webkit-scrollbar-thumb:hover {
+            background: #4b5563;
         }
     </style>
 </head>
@@ -199,11 +265,20 @@
                     </div>
                     <div class="flex items-center space-x-2 sm:space-x-3">
                         <div id="printer-status" class="hidden sm:block"></div>
-                        <button onclick="ThermalPrinter.openSettings()" class="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-medium rounded-lg transition flex items-center gap-1.5" title="Pengaturan Printer">
+                        <button onclick="ThermalPrinter.openSettings()" class="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/20 dark:text-amber-300 text-amber-700 text-xs font-medium rounded-lg transition flex items-center gap-1.5" title="Pengaturan Printer">
                             🖨️ Printer
                         </button>
-                        <span class="text-sm text-gray-600 hidden md:inline">{{ auth()->user()->name }}</span>
-                        <span class="px-2 py-1 bg-amber-100 text-amber-800 text-xs font-medium rounded-full hidden md:inline-flex">{{ ucfirst(auth()->user()->role) }}</span>
+                        
+                        <!-- Theme Toggle Button -->
+                        <button id="theme-toggle-btn" class="p-1.5 rounded-lg text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition active:scale-90 flex items-center justify-center cursor-pointer" title="Ubah Tema">
+                            <!-- Moon Icon (Light Mode Active) -->
+                            <svg id="theme-toggle-moon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                            <!-- Sun Icon (Dark Mode Active) -->
+                            <svg id="theme-toggle-sun" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M14 12a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                        </button>
+
+                        <span class="text-sm text-gray-600 dark:text-gray-300 hidden md:inline font-medium">{{ auth()->user()->name }}</span>
+                        <span class="px-2.5 py-1 bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 text-xs font-semibold rounded-full hidden md:inline-flex">{{ ucfirst(auth()->user()->role) }}</span>
                     </div>
                 </div>
             </header>
@@ -416,5 +491,42 @@
         }, { once: true });
     </script>
     @stack('scripts')
+    
+    <!-- Theme Toggle Switch Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const btn = document.getElementById('theme-toggle-btn');
+            const moonIcon = document.getElementById('theme-toggle-moon');
+            const sunIcon = document.getElementById('theme-toggle-sun');
+            
+            function updateToggleIcons() {
+                const isDark = document.documentElement.classList.contains('dark');
+                if (isDark) {
+                    sunIcon.classList.remove('hidden');
+                    moonIcon.classList.add('hidden');
+                } else {
+                    moonIcon.classList.remove('hidden');
+                    sunIcon.classList.add('hidden');
+                }
+            }
+            
+            // Set initial state
+            updateToggleIcons();
+            
+            btn?.addEventListener('click', () => {
+                const isDark = document.documentElement.classList.contains('dark');
+                if (isDark) {
+                    document.documentElement.classList.remove('dark');
+                    document.documentElement.setAttribute('data-theme', 'light');
+                    localStorage.setItem('admin-theme', 'light');
+                } else {
+                    document.documentElement.classList.add('dark');
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('admin-theme', 'dark');
+                }
+                updateToggleIcons();
+            });
+        });
+    </script>
 </body>
 </html>

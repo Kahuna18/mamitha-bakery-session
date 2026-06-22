@@ -32,6 +32,7 @@
 
     <form method="POST" action="{{ route('login') }}" class="space-y-4">
         @csrf
+        <input type="hidden" name="login_role" id="login-role-input" value="member">
 
         <div>
             <label for="email" class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wider">Email</label>
@@ -97,6 +98,12 @@
 
             // Save role selection in localstorage
             localStorage.setItem('auth_role', role);
+
+            // Update role hidden input
+            const loginRoleInput = document.getElementById('login-role-input');
+            if (loginRoleInput) {
+                loginRoleInput.value = role;
+            }
 
             // Update URL query parameter without page reload
             const url = new URL(window.location);

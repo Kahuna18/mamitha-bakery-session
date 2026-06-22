@@ -35,6 +35,8 @@ class MemberProfileController extends Controller
 
         $storeWhatsapp = Setting::getValue('store_whatsapp');
 
+        $customer->load('paymentMethods');
+
         return view('member.profile', compact('customer', 'orders', 'storeWhatsapp'));
     }
 
@@ -118,7 +120,97 @@ class MemberProfileController extends Controller
             'name' => $request->name,
         ]);
         
+        // Ensure all customer payment methods match the new registered name
+        $finalCustomer = $user->fresh()->customer;
+        if ($finalCustomer) {
+            $finalCustomer->paymentMethods()->update(['account_name' => $request->name]);
+        }
+        
         return back()->with('success', 'Profil berhasil diperbarui!');
+    }
+
+    public function storePaymentMethod(Request $request)
+    {
+        $user = auth()->user();
+        $customer = $user->customer;
+        
+        if (!$customer) {
+            return back()->withErrors(['message' => 'Profil pelanggan tidak ditemukan.']);
+        }
+        
+        $request->validate([
+            'type' => 'required|string|in:credit_card,e_wallet,bank_transfer',
+            'provider' => 'required|string|max:50',
+            'account_number' => 'required|string|max:50',
+            'account_name' => 'required|string|max:100',
+        ]);
+        
+        // Check if this is the first payment method, make it default
+        $isFirst = $customer->paymentMethods()->count() === 0;
+        
+        $customer->paymentMethods()->create([
+            'type' => $request->type,
+            'provider' => $request->provider,
+            'account_number' => $request->account_number,
+            'account_name' => $customer->name, // Enforce registered name matching
+            'is_default' => $isFirst,
+        ]);
+        
+        return back()->with('success', 'Metode pembayaran berhasil ditambahkan!');
+    }
+
+    public function updatePaymentMethod(Request $request, $id)
+    {
+        $user = auth()->user();
+        $customer = $user->customer;
+        
+        if (!$customer) {
+            return back()->withErrors(['message' => 'Profil pelanggan tidak ditemukan.']);
+        }
+        
+        $paymentMethod = $customer->paymentMethods()->findOrFail($id);
+        
+        $request->validate([
+            'type' => 'required|string|in:credit_card,e_wallet,bank_transfer',
+            'provider' => 'required|string|max:50',
+            'account_number' => 'required|string|max:50',
+            'account_name' => 'required|string|max:100',
+        ]);
+        
+        $paymentMethod->update([
+            'type' => $request->type,
+            'provider' => $request->provider,
+            'account_number' => $request->account_number,
+            'account_name' => $customer->name, // Enforce registered name matching
+        ]);
+        
+        return back()->with('success', 'Metode pembayaran berhasil diperbarui!');
+    }
+
+    public function destroyPaymentMethod($id)
+    {
+        $user = auth()->user();
+        $customer = $user->customer;
+        
+        if (!$customer) {
+            return back()->withErrors(['message' => 'Profil pelanggan tidak ditemukan.']);
+        }
+        
+        $paymentMethod = $customer->paymentMethods()->findOrFail($id);
+        
+        $wasDefault = $paymentMethod->is_default;
+        
+        $paymentMethod->delete();
+        
+        // If the deleted method was default, set the first remaining method as default
+        if ($wasDefault) {
+            $nextDefault = $customer->paymentMethods()->first();
+            if ($nextDefault) {
+                $nextDefault->update(['is_default' => true]);
+            }
+        }
+        
+        return back()->with('success', 'Metode pembayaran berhasil dihapus!');
     }
 }
 

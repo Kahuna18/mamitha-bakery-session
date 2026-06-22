@@ -575,7 +575,7 @@
     </div>
 
     <!-- Floating Bottom Cart Bar -->
-    <div id="floating-cart" class="fixed bottom-6 inset-x-4 max-w-lg mx-auto bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 rounded-3xl shadow-2xl p-4 flex items-center justify-between z-40 transform translate-y-32 opacity-0 transition-all duration-300">
+    <div id="floating-cart" class="fixed bottom-20 md:bottom-6 inset-x-4 max-w-lg mx-auto bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 rounded-3xl shadow-2xl p-4 flex items-center justify-between z-40 transform translate-y-32 opacity-0 transition-all duration-300">
         <div class="flex items-center gap-3">
             <div class="w-12 h-12 bg-amber-600 rounded-2xl flex items-center justify-center text-xl shadow-inner">
                 🛒
@@ -734,18 +734,24 @@
                         <!-- Personal Information -->
                         <div class="space-y-4">
                             <h3 class="font-bold text-gray-700 dark:text-gray-300 text-sm tracking-wide uppercase">Data Diri</h3>
+                            @php
+                                $isRegisteredMember = auth()->check() && auth()->user()->role === 'customer';
+                                $customerPhone = auth()->check() && auth()->user()->customer ? auth()->user()->customer->phone : '';
+                            @endphp
                             <div>
                                 <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Nama Lengkap</label>
                                 <input type="text" name="name" required placeholder="Masukkan nama Anda" value="{{ auth()->user()->name ?? '' }}" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 dark:text-white transition">
                             </div>
                             <div>
                                 <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Nomor WhatsApp</label>
-                                <input type="tel" name="phone" required placeholder="Contoh: 08123456789" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 dark:text-white transition">
+                                <input type="tel" name="phone" required placeholder="Contoh: 08123456789" value="{{ $customerPhone }}" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 dark:text-white transition">
                             </div>
                             
                             <!-- Become a Member Option -->
                             <div class="bg-gradient-to-r from-amber-500/10 to-orange-500/10 dark:from-amber-950/20 dark:to-orange-950/20 rounded-2xl p-4 border border-amber-500/20 dark:border-amber-900/30 mt-3 flex items-start gap-3 select-none animate-bounce-slow" style="animation-duration: 4s;">
-                                <input type="checkbox" name="is_member" id="is_member" value="1" class="w-5 h-5 mt-0.5 rounded-lg text-amber-600 focus:ring-amber-500 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 transition cursor-pointer">
+                                <input type="checkbox" name="is_member" id="is_member" value="1" 
+                                    class="w-5 h-5 mt-0.5 rounded-lg text-amber-600 focus:ring-amber-500 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 transition {{ $isRegisteredMember ? 'cursor-not-allowed opacity-80' : 'cursor-pointer' }}"
+                                    {{ $isRegisteredMember ? 'checked onclick=return(false);' : '' }}>
                                 <label for="is_member" class="cursor-pointer">
                                     <span class="block text-xs font-black text-amber-800 dark:text-amber-400 uppercase tracking-wide">Gabung Member Mamitha</span>
                                     <span class="block text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 leading-relaxed">Daftar sekarang untuk membuka Rank Gold, prioritas baking cepat, dan voucher diskon 10%!</span>
@@ -797,7 +803,7 @@
 
                             <div>
                                 <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Alamat Lengkap Pengiriman</label>
-                                <textarea name="address" id="address-text" rows="3" placeholder="Tuliskan nama jalan, blok, nomor rumah..." class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 dark:text-white transition"></textarea>
+                                <textarea name="address" id="address-text" rows="3" placeholder="Tuliskan nama jalan, blok, nomor rumah..." class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 dark:text-white transition">{{ auth()->check() && auth()->user()->customer ? auth()->user()->customer->address : '' }}</textarea>
                             </div>
 
                             <!-- Shipping Option Card -->
@@ -829,6 +835,39 @@
                         <div class="space-y-4 mt-6">
                             <h3 class="font-bold text-gray-700 dark:text-gray-300 text-sm tracking-wide uppercase">Metode Pembayaran</h3>
                             <div class="space-y-2">
+                                @auth
+                                    @if(auth()->user()->customer && auth()->user()->customer->paymentMethods->isNotEmpty())
+                                        @foreach(auth()->user()->customer->paymentMethods as $pm)
+                                            <!-- Saved Payment Method Option -->
+                                            <label class="border-2 border-gray-100 dark:border-gray-800 rounded-2xl p-4 cursor-pointer hover:border-amber-500 dark:hover:border-amber-600 transition flex items-center justify-between has-[:checked]:border-amber-600 has-[:checked]:bg-amber-50/35">
+                                                <div class="flex items-center gap-3">
+                                                    <div class="w-10 h-10 bg-amber-50 dark:bg-amber-950/20 rounded-xl flex items-center justify-center text-lg">
+                                                        @if($pm->type === 'credit_card') 💳 
+                                                        @elseif($pm->type === 'e_wallet') 📱
+                                                        @else 🏦 @endif
+                                                    </div>
+                                                    <div>
+                                                        <p class="font-bold text-xs text-gray-800 dark:text-gray-200">
+                                                            {{ $pm->provider }} - {{ $pm->account_name }}
+                                                            @if($pm->is_default)
+                                                                <span class="ml-1 text-[9px] text-[#ff6310] font-extrabold bg-orange-500/10 px-2 py-0.5 rounded-full select-none">Default</span>
+                                                            @endif
+                                                        </p>
+                                                        <p class="text-[10px] text-gray-400">
+                                                            @if($pm->type === 'credit_card')
+                                                                **** **** **** {{ substr($pm->account_number, -4) }}
+                                                            @else
+                                                                {{ $pm->account_number }}
+                                                            @endif
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <input type="radio" name="payment_method" value="saved_{{ $pm->id }}" {{ $pm->is_default ? 'checked' : '' }} class="text-amber-600 focus:ring-amber-500">
+                                            </label>
+                                        @endforeach
+                                    @endif
+                                @endauth
+
                                 <!-- Transfer Bank -->
                                 <label class="border-2 border-gray-100 dark:border-gray-800 rounded-2xl p-4 cursor-pointer hover:border-amber-500 dark:hover:border-amber-600 transition flex items-center justify-between has-[:checked]:border-amber-600 has-[:checked]:bg-amber-50/35">
                                     <div class="flex items-center gap-3">
@@ -838,7 +877,7 @@
                                             <p class="text-[10px] text-gray-400">Verifikasi otomatis & aman</p>
                                         </div>
                                     </div>
-                                    <input type="radio" name="payment_method" value="transfer" checked class="text-amber-600 focus:ring-amber-500">
+                                    <input type="radio" name="payment_method" value="transfer" {{ (!auth()->check() || !auth()->user()->customer || auth()->user()->customer->paymentMethods->where('is_default', true)->isEmpty()) ? 'checked' : '' }} class="text-amber-600 focus:ring-amber-500">
                                 </label>
 
                                 <!-- WhatsApp Manual -->
@@ -1452,6 +1491,12 @@
         var floatingCart = document.getElementById('floating-cart');
         if (floatingCart) floatingCart.style.display = 'none';
 
+        var whatsappFloat = document.getElementById('whatsapp-float');
+        if (whatsappFloat) {
+            whatsappFloat.classList.remove('bottom-44');
+            whatsappFloat.classList.add('bottom-24');
+        }
+
         // Show modal
         var overlay = document.getElementById('variant-modal-overlay');
         var sheet = document.getElementById('variant-modal-sheet');
@@ -1475,6 +1520,13 @@
         var floatingCart = document.getElementById('floating-cart');
         if (floatingCart) {
             floatingCart.style.display = '';
+        }
+
+        // Restore WhatsApp button position if cart has items
+        var whatsappFloat = document.getElementById('whatsapp-float');
+        if (whatsappFloat && Object.keys(cart).length > 0) {
+            whatsappFloat.classList.remove('bottom-24');
+            whatsappFloat.classList.add('bottom-44');
         }
     }
 
@@ -1933,10 +1985,16 @@
             discount = Math.round(totalPrice * discountPercentage / 100);
         }
 
+        // Update global cart badges
+        if (typeof window.updateGlobalCartBadges === 'function') {
+            window.updateGlobalCartBadges();
+        }
+
         // Update Floating Cart Bar
         var floatingCart = document.getElementById('floating-cart');
         var itemCountSpan = document.getElementById('cart-item-count');
         var totalPriceSpan = document.getElementById('cart-total-price');
+        var whatsappFloat = document.getElementById('whatsapp-float');
 
         // Update tab badge count
         var tabBadge = document.getElementById('tab-cart-badge');
@@ -1947,11 +2005,19 @@
             floatingCart.classList.add('translate-y-0', 'opacity-100');
             itemCountSpan.textContent = totalItems + ' Item';
             totalPriceSpan.textContent = 'Rp ' + totalPrice.toLocaleString('id-ID');
+            if (whatsappFloat) {
+                whatsappFloat.classList.remove('bottom-24');
+                whatsappFloat.classList.add('bottom-44');
+            }
         } else {
             floatingCart.classList.remove('translate-y-0', 'opacity-100');
             floatingCart.classList.add('translate-y-32', 'opacity-0');
             // Clear cart items list when empty
-            document.getElementById('cart-items-list').innerHTML = '<p class="text-center text-gray-400 text-sm py-4">Belum ada item dipilih</p>';
+            document.getElementById('cart-items-list').innerHTML = '<p class="text-center text-gray-450 text-sm py-4">Belum ada item dipilih</p>';
+            if (whatsappFloat) {
+                whatsappFloat.classList.remove('bottom-44');
+                whatsappFloat.classList.add('bottom-24');
+            }
         }
 
         // Update Checkout Drawer Summaries

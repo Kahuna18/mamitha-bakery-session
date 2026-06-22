@@ -18,6 +18,11 @@ class Customer extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function paymentMethods()
+    {
+        return $this->hasMany(PaymentMethod::class);
+    }
+
     // =========================================================================
     // Member Rank & Point Accessors
     // =========================================================================

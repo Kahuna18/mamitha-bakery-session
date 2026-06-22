@@ -50,6 +50,23 @@ class LoginRequest extends FormRequest
             ]);
         }
 
+        $user = Auth::user();
+        $loginRole = $this->input('login_role', 'member');
+
+        if ($loginRole === 'staff' && $user->role === 'customer') {
+            Auth::logout();
+            throw ValidationException::withMessages([
+                'email' => 'Akun pelanggan tidak diizinkan masuk ke portal staff.',
+            ]);
+        }
+
+        if ($loginRole === 'member' && in_array($user->role, ['admin', 'kitchen'])) {
+            Auth::logout();
+            throw ValidationException::withMessages([
+                'email' => 'Akun staff/admin tidak diizinkan masuk ke portal pelanggan.',
+            ]);
+        }
+
         RateLimiter::clear($this->throttleKey());
     }
 
