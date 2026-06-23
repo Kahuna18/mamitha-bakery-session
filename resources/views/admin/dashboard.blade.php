@@ -2,6 +2,10 @@
 
 @section('title', 'Dashboard')
 
+@push('head')
+    <meta http-equiv="refresh" content="1">
+@endpush
+
 @section('content')
 <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>
