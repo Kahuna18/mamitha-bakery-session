@@ -40,6 +40,8 @@ class SettingController extends Controller
             'store_gmaps_link' => 'nullable|string',
             'courier_name' => 'nullable|string|max:100',
             'courier_phone' => 'nullable|string|max:20',
+            'baking_duration_minutes' => 'required|integer|min:1',
+            'delivery_duration_minutes' => 'required|integer|min:1',
         ]);
 
         $validated['is_closed'] = $request->input('is_closed') == '1' ? 'true' : 'false';

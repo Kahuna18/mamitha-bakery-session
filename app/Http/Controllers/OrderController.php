@@ -328,11 +328,17 @@ class OrderController extends Controller
             $maxReadyTime = $maxTimeStr;
         }
 
+        $bakingDuration = (int) Setting::getValue('baking_duration_minutes', 15);
+        $deliveryDuration = (int) Setting::getValue('delivery_duration_minutes', 20);
+
         return response()->json([
             'status' => $order->status,
             'type' => $order->type,
             'max_ready_time' => $maxReadyTime,
-            'updated_at' => $order->updated_at->toIso8601String()
+            'updated_at' => $order->updated_at->toIso8601String(),
+            'baking_duration_minutes' => $bakingDuration,
+            'delivery_duration_minutes' => $deliveryDuration,
+            'current_time' => now()->toIso8601String()
         ]);
     }
 

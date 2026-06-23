@@ -217,6 +217,14 @@
         background: linear-gradient(135deg, rgba(255, 99, 16, 0.04), rgba(220, 38, 38, 0.04));
         border-color: rgba(255, 99, 16, 0.15);
     }
+    @keyframes pulse-slow {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.15); opacity: 0.85; }
+    }
+    #countdown-timer-icon {
+        display: inline-block;
+        animation: pulse-slow 2s infinite ease-in-out;
+    }
 </style>
 @endpush
 
@@ -514,7 +522,7 @@
             <div class="p-6 border-b border-gray-100 dark:border-gray-700/50 flex flex-col sm:flex-row justify-between items-center gap-4 bg-gray-50/50 dark:bg-gray-800/30">
                 <div class="text-center sm:text-left">
                     <p class="text-xs text-gray-400 dark:text-gray-500 font-bold uppercase tracking-wider">Estimasi Waktu</p>
-                    <h2 class="text-2xl font-black text-amber-800 dark:text-amber-400 font-serif">
+                    <h2 class="text-2xl font-black text-amber-800 dark:text-amber-400 font-serif" id="arrival-estimate-text">
                         @if($order->status == 'done')
                             Pesanan Telah Tiba
                         @elseif($order->type == 'pickup')
@@ -523,6 +531,13 @@
                             Tiba dalam {{ $maxReadyTime }}
                         @endif
                     </h2>
+
+                    <!-- Countdown Timer Badge -->
+                    <div id="countdown-timer-container" class="hidden mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-[11px] font-extrabold tracking-wide uppercase transition-all duration-300">
+                        <span id="countdown-timer-icon" class="text-sm"></span>
+                        <span id="countdown-timer-label"></span>
+                        <span id="countdown-timer-clock" class="font-mono text-xs bg-black/5 dark:bg-white/10 px-2 py-0.5 rounded-md"></span>
+                    </div>
                 </div>
                 <div class="text-center sm:text-right">
                     <p class="text-xs text-gray-400 dark:text-gray-500 font-bold uppercase tracking-wider">Nomor Pesanan</p>
@@ -1090,6 +1105,99 @@
         }
     }
 
+    // =========================================================================
+    // Countdown Timer logic for Producing (Baking) and Ready (Delivery)
+    // =========================================================================
+    let countdownInterval = null;
+    let localTimeOffset = 0; // difference between server time and local time
+
+    function initCountdown(status, type, updatedAtStr, serverTimeStr, bakingMins, deliveryMins) {
+        if (countdownInterval) {
+            clearInterval(countdownInterval);
+            countdownInterval = null;
+        }
+
+        const container = document.getElementById('countdown-timer-container');
+        const icon = document.getElementById('countdown-timer-icon');
+        const label = document.getElementById('countdown-timer-label');
+        const clock = document.getElementById('countdown-timer-clock');
+        const estimateText = document.getElementById('arrival-estimate-text');
+
+        if (!container || !icon || !label || !clock) return;
+
+        // Parse times
+        const statusUpdatedAt = new Date(updatedAtStr).getTime();
+        const serverTime = new Date(serverTimeStr).getTime();
+        const localTime = Date.now();
+        
+        // Calculate offset (serverTime - localTime)
+        localTimeOffset = serverTime - localTime;
+
+        // Determine if we should show countdown
+        let totalDurationSeconds = 0;
+        let isCountdownActive = false;
+        let activeLabel = '';
+        let activeIcon = '';
+        let timerClasses = [];
+        let doneLabel = '';
+
+        if (status === 'producing') {
+            totalDurationSeconds = bakingMins * 60;
+            isCountdownActive = true;
+            activeLabel = 'Sedang Dipanggang';
+            activeIcon = '🔥';
+            timerClasses = ['bg-orange-500/10', 'text-orange-600', 'dark:bg-orange-950/20', 'dark:text-orange-400', 'border', 'border-orange-200/30'];
+            doneLabel = 'Selesai Dipanggang!';
+        } else if (status === 'ready' && type === 'delivery') {
+            totalDurationSeconds = deliveryMins * 60;
+            isCountdownActive = true;
+            activeLabel = 'Dalam Perjalanan';
+            activeIcon = '🛵';
+            timerClasses = ['bg-blue-500/10', 'text-blue-600', 'dark:bg-blue-950/20', 'dark:text-blue-400', 'border', 'border-blue-200/30'];
+            doneLabel = 'Kurir segera sampai!';
+        }
+
+        // Clean container classes first
+        container.className = 'mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-[11px] font-extrabold tracking-wide uppercase transition-all duration-300';
+        
+        if (!isCountdownActive) {
+            container.classList.add('hidden');
+            return;
+        }
+
+        // Apply classes
+        timerClasses.forEach(c => container.classList.add(c));
+        container.classList.remove('hidden');
+        icon.textContent = activeIcon;
+        label.textContent = activeLabel;
+
+        // Run interval
+        function updateClock() {
+            const currentLocalTime = Date.now();
+            const currentServerTimeEstimate = currentLocalTime + localTimeOffset;
+            const elapsedSeconds = Math.floor((currentServerTimeEstimate - statusUpdatedAt) / 1000);
+            const remainingSeconds = totalDurationSeconds - elapsedSeconds;
+
+            if (remainingSeconds <= 0) {
+                clock.textContent = '00:00';
+                label.textContent = doneLabel;
+                if (status === 'producing' && estimateText) {
+                    estimateText.textContent = 'Siap Diambil / Diantar';
+                } else if (status === 'ready' && type === 'delivery' && estimateText) {
+                    estimateText.textContent = 'Kurir Tiba di Lokasi';
+                }
+                clearInterval(countdownInterval);
+            } else {
+                const mins = Math.floor(remainingSeconds / 60);
+                const secs = remainingSeconds % 60;
+                clock.textContent = (mins < 10 ? '0' : '') + mins + ':' + (secs < 10 ? '0' : '') + secs;
+            }
+        }
+
+        updateClock();
+        countdownInterval = setInterval(updateClock, 1000);
+    }
+
     // Play Audio Tones via Web Audio API
     function playStatusChime() {
         try {
@@ -1149,6 +1257,16 @@
                 currentStatus = data.status;
                 updateTrackerUI(data.status);
 
+                // Update countdown dynamically
+                initCountdown(
+                    data.status,
+                    data.type,
+                    data.updated_at,
+                    data.current_time,
+                    data.baking_duration_minutes,
+                    data.delivery_duration_minutes
+                );
+
                 // If status transitions to Ready or Done, we reload/update map or other view details
                 if (data.status === 'ready' || data.status === 'done') {
                     // Slight timeout to let animations complete
@@ -1164,6 +1282,16 @@
     window.addEventListener('load', () => {
         updateTrackerUI(currentStatus);
         
+        // Initial countdown trigger
+        initCountdown(
+            '{{ $order->status }}',
+            '{{ $order->type }}',
+            '{{ $order->updated_at->toIso8601String() }}',
+            '{{ now()->toIso8601String() }}',
+            {{ (int) \App\Models\Setting::getValue('baking_duration_minutes', 15) }},
+            {{ (int) \App\Models\Setting::getValue('delivery_duration_minutes', 20) }}
+        );
+
         if (isLoggedIn) {
             // Poll every 5 seconds
             setInterval(pollOrderStatus, 5000);

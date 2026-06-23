@@ -1054,6 +1054,30 @@
                 </div>
             </div>
 
+            {{-- Pengaturan Waktu Proses & Pengiriman --}}
+            <div class="menu-item" onclick="toggleExpand('durationPanel', this)">
+                <div class="menu-icon">⏳</div>
+                <div class="menu-item-info">
+                    <div class="menu-item-title">Waktu Proses & Pengiriman</div>
+                    <div class="menu-item-subtitle">Durasi baking dan estimasi pengiriman</div>
+                </div>
+                <svg class="menu-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+            </div>
+            <div class="expand-panel" id="durationPanel">
+                <div class="form-group">
+                    <label class="form-label">Durasi Proses Baking (Menit)</label>
+                    <input type="number" name="baking_duration_minutes" value="{{ $settings['baking_duration_minutes'] ?? '15' }}" min="1" class="form-input" placeholder="15">
+                    <div class="form-hint">Lama waktu (dalam menit) untuk countdown proses memanggang/baking (status "Dipanggang").</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Estimasi Waktu Pengiriman / Delivery (Menit)</label>
+                    <input type="number" name="delivery_duration_minutes" value="{{ $settings['delivery_duration_minutes'] ?? '20' }}" min="1" class="form-input" placeholder="20">
+                    <div class="form-hint">Estimasi waktu perjalanan kurir (dalam menit) untuk countdown saat status order "Siap" (hanya berlaku jika tipe order = Delivery).</div>
+                </div>
+            </div>
+
             {{-- Tentang Toko --}}
             <div class="menu-item" onclick="toggleExpand('aboutPanel', this)">
                 <div class="menu-icon">📝</div>
