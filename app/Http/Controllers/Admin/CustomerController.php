@@ -50,26 +50,23 @@ class CustomerController extends Controller
 
     public function resetAllMembers()
     {
-        \Illuminate\Support\Facades\DB::transaction(function() {
-            // 1. Delete all users with 'customer' role (releasing all member emails)
+        \Illuminate\Support\Facades\DB::transaction(function () {
             \App\Models\User::where('role', 'customer')->delete();
-
-            // 2. Delete all customers (cascade deletes orders, order_items, kitchen_tasks)
             Customer::query()->delete();
-
-            // 3. Clear orders just in case cascade delete was disabled/missed
             \Illuminate\Support\Facades\DB::table('orders')->delete();
-
-            // 4. Reset auto-increment counters for primary tables
-            $driver = \Illuminate\Support\Facades\DB::getDriverName();
-            if ($driver === 'sqlite') {
-                \Illuminate\Support\Facades\DB::statement("DELETE FROM sqlite_sequence WHERE name='customers'");
-                \Illuminate\Support\Facades\DB::statement("DELETE FROM sqlite_sequence WHERE name='orders'");
-            } else if ($driver === 'mysql') {
-                \Illuminate\Support\Facades\DB::statement("ALTER TABLE customers AUTO_INCREMENT = 1");
-                \Illuminate\Support\Facades\DB::statement("ALTER TABLE orders AUTO_INCREMENT = 1");
-            }
         });
+
+        $driver = \Illuminate\Support\Facades\DB::getDriverName();
+        if ($driver === 'sqlite') {
+            \Illuminate\Support\Facades\DB::statement("DELETE FROM sqlite_sequence WHERE name='customers'");
+            \Illuminate\Support\Facades\DB::statement("DELETE FROM sqlite_sequence WHERE name='orders'");
+        } else if ($driver === 'mysql') {
+            \Illuminate\Support\Facades\DB::statement("ALTER TABLE customers AUTO_INCREMENT = 1");
+            \Illuminate\Support\Facades\DB::statement("ALTER TABLE orders AUTO_INCREMENT = 1");
+        } else if ($driver === 'pgsql') {
+            \Illuminate\Support\Facades\DB::statement("ALTER SEQUENCE customers_id_seq RESTART WITH 1");
+            \Illuminate\Support\Facades\DB::statement("ALTER SEQUENCE orders_id_seq RESTART WITH 1");
+        }
 
         return redirect()->route('admin.dashboard', ['tab' => 'member'])->with('success', 'Semua data member, pelanggan, dan akun email terdaftar berhasil direset. Nomor member baru akan mulai dari 00001.');
     }
