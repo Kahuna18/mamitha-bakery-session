@@ -2,10 +2,6 @@
 
 @section('title', 'Dashboard Kitchen')
 
-@push('head')
-    <meta http-equiv="refresh" content="1">
-@endpush
-
 @section('content')
 <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
     <div>
