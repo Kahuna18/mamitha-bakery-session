@@ -29,7 +29,25 @@ class OrderController extends Controller
             }
         }
 
-        if ($request->filled('status')) {
+        if ($request->filled('tab')) {
+            $tab = $request->tab;
+            if ($tab === 'pending_payment') {
+                $query->where('status', 'pending')
+                      ->where('payment_status', 'unpaid')
+                      ->where(function($q) {
+                          $q->where('payment_method', 'like', '%Transfer Bank%')
+                            ->orWhere('payment_method', 'like', '%Online Payment%')
+                            ->orWhere('payment_method', 'like', '%Midtrans%')
+                            ->orWhere('payment_method', 'like', '%- %');
+                      });
+            } elseif ($tab === 'kitchen') {
+                $query->whereIn('status', ['confirmed', 'producing', 'ready']);
+            } elseif ($tab === 'completed') {
+                $query->where('status', 'done');
+            } elseif ($tab === 'cancelled') {
+                $query->where('status', 'cancelled');
+            }
+        } elseif ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
@@ -64,7 +82,25 @@ class OrderController extends Controller
 
         $order->update(['status' => $request->status]);
 
-        if ($order->kitchenTask) {
+        // Automatically mark manual transfer/QRIS as paid if confirmed or producing/ready/done
+        if (in_array($request->status, ['confirmed', 'producing', 'ready', 'done']) && $order->payment_status === 'unpaid') {
+            $order->update(['payment_status' => 'paid']);
+        }
+
+        if (!$order->kitchenTask) {
+            if (in_array($request->status, ['confirmed', 'producing', 'ready', 'done'])) {
+                $taskStatus = match ($request->status) {
+                    'producing' => 'producing',
+                    'ready', 'done' => 'done',
+                    default => 'pending',
+                };
+                $order->kitchenTask()->create([
+                    'status' => $taskStatus,
+                    'started_at' => $request->status === 'producing' ? now() : (($request->status === 'ready' || $request->status === 'done') ? now() : null),
+                    'completed_at' => in_array($request->status, ['ready', 'done']) ? now() : null,
+                ]);
+            }
+        } else {
             $taskStatus = match ($request->status) {
                 'producing' => 'producing',
                 'ready', 'done' => 'done',

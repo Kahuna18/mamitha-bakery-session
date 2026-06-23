@@ -841,6 +841,18 @@
                         <div class="space-y-4 mt-6">
                             <h3 class="font-bold text-gray-700 dark:text-gray-300 text-sm tracking-wide uppercase">Metode Pembayaran</h3>
                             <div class="space-y-2">
+                                <!-- Online Payment / Midtrans -->
+                                <label class="border-2 border-gray-100 dark:border-gray-800 rounded-2xl p-4 cursor-pointer hover:border-amber-500 dark:hover:border-amber-600 transition flex items-center justify-between has-[:checked]:border-amber-600 has-[:checked]:bg-amber-50/10">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 bg-blue-50 dark:bg-blue-950/20 rounded-xl flex items-center justify-center text-lg">💳</div>
+                                        <div>
+                                            <p class="font-bold text-xs text-gray-800 dark:text-gray-200">Online Payment / Midtrans</p>
+                                            <p class="text-[10px] text-gray-400">Bayar instan via GoPay, ShopeePay, QRIS, atau Virtual Account</p>
+                                        </div>
+                                    </div>
+                                    <input type="radio" name="payment_method" value="midtrans" {{ (!auth()->check() || !auth()->user()->customer || auth()->user()->customer->paymentMethods->where('is_default', true)->isEmpty()) ? 'checked' : '' }} class="text-amber-600 focus:ring-amber-500">
+                                </label>
+
                                 <!-- Transfer Bank / QRIS Container -->
                                 <div class="border-2 border-gray-100 dark:border-gray-800 rounded-2xl overflow-hidden transition duration-200 has-[:checked]:border-amber-600 has-[:checked]:bg-amber-50/10">
                                     <label class="p-4 cursor-pointer hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition flex items-center justify-between">
@@ -851,7 +863,7 @@
                                                 <p class="text-[10px] text-gray-400">Verifikasi otomatis & aman</p>
                                             </div>
                                         </div>
-                                        <input type="radio" name="payment_method" value="transfer" {{ (!auth()->check() || !auth()->user()->customer || auth()->user()->customer->paymentMethods->where('is_default', true)->isEmpty()) ? 'checked' : '' }} class="text-amber-600 focus:ring-amber-500">
+                                        <input type="radio" name="payment_method" value="transfer" class="text-amber-600 focus:ring-amber-500">
                                     </label>
                                     
                                     @auth

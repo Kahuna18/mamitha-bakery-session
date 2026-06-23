@@ -29,6 +29,8 @@ Route::get('/kontak', [HomeController::class, 'contact'])->name('contact');
 Route::get('/pesan', [OrderController::class, 'create'])->name('order.create');
 Route::post('/pesan', [OrderController::class, 'store'])->name('order.store');
 Route::get('/pesan/sukses/{id}', [OrderController::class, 'success'])->name('order.success');
+Route::post('/midtrans/notification', [OrderController::class, 'handleNotification'])->name('midtrans.notification');
+Route::post('/pesan/confirm-payment', [OrderController::class, 'confirmPayment'])->name('order.confirm-payment');
 Route::get('/pesan/status-json/{id}', [OrderController::class, 'statusJson'])->name('order.status-json');
 Route::get('/status', [OrderController::class, 'statusForm'])->name('order.status');
 Route::post('/status', [OrderController::class, 'checkStatus'])->name('order.check-status');

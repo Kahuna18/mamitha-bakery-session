@@ -9,6 +9,9 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Setting;
 use Illuminate\Http\Request;
+use Midtrans\Config;
+use Midtrans\Snap;
+use Midtrans\Notification;
 
 class OrderController extends Controller
 {
@@ -83,27 +86,32 @@ class OrderController extends Controller
         }
 
         $wasMember = $customer ? $customer->is_member : false;
+        $isLoggedIn = auth()->check();
 
         if ($customer) {
             $customer->update([
                 'name' => $validated['name'],
                 'phone' => $validated['phone'],
                 'address' => $validated['type'] === 'delivery' ? ($validated['address'] ?? null) : ($customer->address ?? null),
-                'is_member' => $customer->is_member || $request->has('is_member') || auth()->check(),
-                'user_id' => auth()->check() ? auth()->id() : ($customer->user_id ?? null),
+                'is_member' => $customer->is_member || $isLoggedIn,
+                'user_id' => $isLoggedIn ? auth()->id() : ($customer->user_id ?? null),
             ]);
         } else {
             $customer = Customer::create([
                 'name' => $validated['name'],
                 'phone' => $validated['phone'],
                 'address' => $validated['type'] === 'delivery' ? ($validated['address'] ?? null) : null,
-                'is_member' => $request->has('is_member') || auth()->check(),
-                'user_id' => auth()->check() ? auth()->id() : null,
+                'is_member' => $isLoggedIn,
+                'user_id' => $isLoggedIn ? auth()->id() : null,
             ]);
         }
 
-        if (!$wasMember && $customer->is_member) {
+        if ($isLoggedIn && !$wasMember && $customer->is_member) {
             session()->flash('newly_joined_member', true);
+        }
+
+        if (!$isLoggedIn && $request->has('is_member')) {
+            session()->flash('wants_to_join_member', true);
         }
 
         $total = 0;
@@ -163,8 +171,11 @@ class OrderController extends Controller
 
         $paymentMethodName = 'Transfer Bank / QRIS';
         $paymentMethodVal = $validated['payment_method'] ?? 'transfer';
+        $savedPm = null;
         if ($paymentMethodVal === 'transfer') {
             $paymentMethodName = 'Transfer Bank / QRIS';
+        } elseif ($paymentMethodVal === 'midtrans') {
+            $paymentMethodName = 'Online Payment / Midtrans';
         } elseif ($paymentMethodVal === 'whatsapp') {
             $paymentMethodName = 'WhatsApp Confirmation';
         } elseif ($paymentMethodVal === 'cod') {
@@ -198,7 +209,8 @@ class OrderController extends Controller
         ]);
 
         // Member points accumulation & level up detection
-        if ($customer->is_member) {
+        // Only registered member customers (who have a user account) get points and rank from purchases.
+        if ($customer->is_member && $customer->user_id !== null) {
             $pointsEarned = (int) floor($total / 10000);
             if ($pointsEarned > 0) {
                 $oldRank = $customer->rank_name;
@@ -229,9 +241,120 @@ class OrderController extends Controller
             }
         }
 
-        $order->kitchenTask()->create([
-            'status' => 'pending',
-        ]);
+        // Generate Midtrans Snap Token if payment method is midtrans or a saved payment method
+        if ($paymentMethodVal === 'midtrans' || $savedPm !== null) {
+            try {
+                $this->initMidtrans();
+                
+                $midtransItems = [];
+                foreach ($orderItems as $item) {
+                    $product = Product::find($item['product_id']);
+                    $variant = !empty($item['variant_id']) ? ProductVariant::find($item['variant_id']) : null;
+                    
+                    $name = $product->name;
+                    if ($variant) {
+                        $name .= ' (' . $variant->name . ')';
+                    }
+                    
+                    if (strlen($name) > 50) {
+                        $name = substr($name, 0, 47) . '...';
+                    }
+                    
+                    $midtransItems[] = [
+                        'id' => 'prod-' . $item['product_id'] . ($item['variant_id'] ? '-v' . $item['variant_id'] : ''),
+                        'price' => (int) $item['price'],
+                        'quantity' => (int) $item['quantity'],
+                        'name' => $name,
+                    ];
+                }
+                
+                if ($validated['type'] === 'delivery' && $deliveryFeeEnabled) {
+                    $midtransItems[] = [
+                        'id' => 'delivery-fee',
+                        'price' => (int) $deliveryFeeAmount,
+                        'quantity' => 1,
+                        'name' => 'Ongkos Kirim / Delivery Fee',
+                    ];
+                }
+                
+                if ($discountEnabled) {
+                    $subtotalAmount = 0;
+                    foreach ($orderItems as $item) {
+                        $subtotalAmount += $item['price'] * $item['quantity'];
+                    }
+                    $discountAmt = round($subtotalAmount * $discountPercentage / 100);
+                    if ($discountAmt > 0) {
+                        $midtransItems[] = [
+                            'id' => 'discount',
+                            'price' => -((int) $discountAmt),
+                            'quantity' => 1,
+                            'name' => 'Diskon Promo (' . $discountPercentage . '%)',
+                        ];
+                    }
+                }
+
+                // Setup pre-selected enabled payment channels based on registered type
+                $enabledPayments = [];
+                if ($savedPm) {
+                    if ($savedPm->type === 'credit_card') {
+                        $enabledPayments = ['credit_card'];
+                    } elseif ($savedPm->type === 'e_wallet') {
+                        $enabledPayments = ['gopay', 'shopeepay'];
+                    } elseif ($savedPm->type === 'bank_transfer') {
+                        // Limit to supported virtual accounts
+                        $enabledPayments = ['bca_va', 'bni_va', 'bri_va', 'mandiri_va', 'permata_va'];
+                    }
+                }
+
+                $params = [
+                    'transaction_details' => [
+                        'order_id' => $order->order_number . '-' . time(),
+                        'gross_amount' => (int) $total,
+                    ],
+                    'item_details' => $midtransItems,
+                    'customer_details' => [
+                        'first_name' => $validated['name'],
+                        'phone' => $validated['phone'],
+                        'billing_address' => [
+                            'first_name' => $validated['name'],
+                            'phone' => $validated['phone'],
+                            'address' => $validated['type'] === 'delivery' ? ($validated['address'] ?? '') : 'Ambil di Toko',
+                        ],
+                        'shipping_address' => [
+                            'first_name' => $validated['name'],
+                            'phone' => $validated['phone'],
+                            'address' => $validated['type'] === 'delivery' ? ($validated['address'] ?? '') : 'Ambil di Toko',
+                        ],
+                    ],
+                ];
+
+                if (!empty($enabledPayments)) {
+                    $params['enabled_payments'] = $enabledPayments;
+                }
+
+                // If utilizing credit card, configure card tokenization settings
+                if ($savedPm && $savedPm->type === 'credit_card') {
+                    $params['credit_card'] = [
+                        'secure' => true,
+                        'save_card' => true
+                    ];
+                    $params['user_id'] = 'customer-' . $order->customer_id;
+                }
+
+                $snapToken = \Midtrans\Snap::getSnapToken($params);
+                $order->update(['snap_token' => $snapToken]);
+            } catch (\Exception $e) {
+                \Log::error('Midtrans Snap Error for order ' . $order->order_number . ': ' . $e->getMessage());
+            }
+        }
+
+        // Create kitchen task immediately for non-Midtrans and non-transfer orders.
+        // Midtrans and Transfer Bank / QRIS orders will only create kitchen task when payment succeeds/is confirmed.
+        if ($paymentMethodVal !== 'midtrans' && $paymentMethodVal !== 'transfer' && $savedPm === null) {
+            $order->kitchenTask()->create([
+                'status' => 'pending',
+            ]);
+        }
 
         $whatsappUrl = $this->generateWhatsappUrl($order);
 
@@ -356,5 +479,146 @@ class OrderController extends Controller
         $storeWhatsapp = Setting::getValue('store_whatsapp');
             
         return view('order.history', compact('orders', 'storeWhatsapp'));
+    }
+
+    private function initMidtrans()
+    {
+        \Midtrans\Config::$serverKey = config('services.midtrans.server_key');
+        \Midtrans\Config::$isProduction = config('services.midtrans.is_production');
+        \Midtrans\Config::$isSanitized = config('services.midtrans.is_sanitized');
+        \Midtrans\Config::$is3ds = config('services.midtrans.is_3ds');
+    }
+
+    public function handleNotification(Request $request)
+    {
+        try {
+            $this->initMidtrans();
+            $notification = new \Midtrans\Notification();
+
+            $transactionStatus = $notification->transaction_status;
+            $paymentType = $notification->payment_type;
+            $orderIdWithTimestamp = $notification->order_id;
+            $fraudStatus = $notification->fraud_status;
+
+            // Extract the actual order number from order_id (e.g. MTH-20260623-001-171829392 => MTH-20260623-001)
+            $parts = explode('-', $orderIdWithTimestamp);
+            if (count($parts) >= 3) {
+                $orderNumber = $parts[0] . '-' . $parts[1] . '-' . $parts[2];
+            } else {
+                $orderNumber = $orderIdWithTimestamp;
+            }
+
+            $order = Order::where('order_number', $orderNumber)->first();
+
+            if (!$order) {
+                return response()->json(['message' => 'Order not found'], 404);
+            }
+
+            if ($transactionStatus == 'capture') {
+                if ($fraudStatus == 'challenge') {
+                    $order->update([
+                        'payment_status' => 'unpaid',
+                        'status' => 'pending'
+                    ]);
+                } else if ($fraudStatus == 'accept') {
+                    $order->update([
+                        'payment_status' => 'paid',
+                        'status' => 'confirmed'
+                    ]);
+                    if (!$order->kitchenTask) {
+                        $order->kitchenTask()->create(['status' => 'pending']);
+                    }
+                }
+            } else if ($transactionStatus == 'settlement') {
+                $order->update([
+                    'payment_status' => 'paid',
+                    'status' => 'confirmed'
+                ]);
+                if (!$order->kitchenTask) {
+                    $order->kitchenTask()->create(['status' => 'pending']);
+                }
+            } else if ($transactionStatus == 'pending') {
+                $order->update([
+                    'payment_status' => 'unpaid'
+                ]);
+            } else if (in_array($transactionStatus, ['deny', 'expire', 'cancel'])) {
+                if ($order->status !== 'cancelled') {
+                    $order->update([
+                        'payment_status' => 'unpaid',
+                        'status' => 'cancelled'
+                    ]);
+
+                    // Restore stock
+                    foreach ($order->items as $item) {
+                        Product::where('id', $item->product_id)->increment('stock', $item->quantity);
+                        if ($item->variant_id) {
+                            ProductVariant::where('id', $item->variant_id)->increment('stock', $item->quantity);
+                        }
+                    }
+                }
+            }
+
+            return response()->json(['message' => 'Webhook handled successfully']);
+        } catch (\Exception $e) {
+            \Log::error('Midtrans Webhook Error: ' . $e->getMessage());
+            return response()->json(['message' => 'Webhook error', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function confirmPayment(Request $request)
+    {
+        $request->validate([
+            'order_id' => 'required|string',
+        ]);
+
+        try {
+            $this->initMidtrans();
+            
+            // Query status directly from Midtrans API to verify payment status
+            $status = \Midtrans\Transaction::status($request->order_id);
+            
+            $transactionStatus = $status->transaction_status;
+            $fraudStatus = $status->fraud_status;
+            
+            // Extract actual order number from order_id
+            $parts = explode('-', $request->order_id);
+            if (count($parts) >= 3) {
+                $orderNumber = $parts[0] . '-' . $parts[1] . '-' . $parts[2];
+            } else {
+                $orderNumber = $request->order_id;
+            }
+            
+            $order = Order::where('order_number', $orderNumber)->first();
+            
+            if (!$order) {
+                return response()->json(['success' => false, 'message' => 'Order not found'], 404);
+            }
+            
+            $isPaid = false;
+            if ($transactionStatus == 'settlement' || ($transactionStatus == 'capture' && $fraudStatus == 'accept')) {
+                $isPaid = true;
+            }
+            
+            if ($isPaid) {
+                $order->update([
+                    'payment_status' => 'paid',
+                    'status' => 'confirmed'
+                ]);
+                
+                // Automatically deliver to kitchen
+                if (!$order->kitchenTask) {
+                    $order->kitchenTask()->create([
+                        'status' => 'pending',
+                    ]);
+                }
+                
+                return response()->json(['success' => true, 'message' => 'Payment confirmed and sent to kitchen.']);
+            }
+            
+            return response()->json(['success' => false, 'message' => 'Payment status is: ' . $transactionStatus]);
+        } catch (\Exception $e) {
+            \Log::error('Payment confirmation error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
+        }
     }
 }

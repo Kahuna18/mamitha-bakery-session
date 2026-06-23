@@ -10,6 +10,53 @@
     </div>
 </div>
 
+<!-- Tab Bar Navigation -->
+<div class="flex border-b border-gray-200 dark:border-gray-700/50 mb-6 overflow-x-auto scrollbar-none gap-2">
+    @php
+        $activeTab = request('tab', 'all');
+        $tabCounts = [
+            'pending_payment' => \App\Models\Order::where('status', 'pending')
+                ->where('payment_status', 'unpaid')
+                ->where(function($q) {
+                    $q->where('payment_method', 'like', '%Transfer Bank%')
+                      ->orWhere('payment_method', 'like', '%Online Payment%')
+                      ->orWhere('payment_method', 'like', '%Midtrans%')
+                      ->orWhere('payment_method', 'like', '%- %');
+                })->count()
+        ];
+    @endphp
+    
+    <a href="{{ route('admin.orders.index', array_merge(request()->except('page'), ['tab' => 'all'])) }}" 
+       class="pb-3 px-4 text-sm font-semibold border-b-2 transition-all whitespace-nowrap {{ $activeTab === 'all' ? 'border-amber-600 text-amber-700 dark:text-amber-400 dark:border-amber-500 font-bold' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200' }}">
+        Semua Pesanan
+    </a>
+    
+    <a href="{{ route('admin.orders.index', array_merge(request()->except('page'), ['tab' => 'pending_payment'])) }}" 
+       class="pb-3 px-4 text-sm font-semibold border-b-2 transition-all whitespace-nowrap relative flex items-center gap-1.5 {{ $activeTab === 'pending_payment' ? 'border-amber-600 text-amber-700 dark:text-amber-400 dark:border-amber-500 font-bold' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200' }}">
+        Pending Pembayaran
+        @if($tabCounts['pending_payment'] > 0)
+            <span class="inline-flex items-center justify-center px-2 py-0.5 text-[10px] font-black leading-none text-white bg-red-600 dark:bg-red-500 rounded-full animate-pulse shadow-sm">
+                {{ $tabCounts['pending_payment'] }}
+            </span>
+        @endif
+    </a>
+    
+    <a href="{{ route('admin.orders.index', array_merge(request()->except('page'), ['tab' => 'kitchen'])) }}" 
+       class="pb-3 px-4 text-sm font-semibold border-b-2 transition-all whitespace-nowrap {{ $activeTab === 'kitchen' ? 'border-amber-600 text-amber-700 dark:text-amber-400 dark:border-amber-500 font-bold' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200' }}">
+        Dapur & Produksi
+    </a>
+    
+    <a href="{{ route('admin.orders.index', array_merge(request()->except('page'), ['tab' => 'completed'])) }}" 
+       class="pb-3 px-4 text-sm font-semibold border-b-2 transition-all whitespace-nowrap {{ $activeTab === 'completed' ? 'border-amber-600 text-amber-700 dark:text-amber-400 dark:border-amber-500 font-bold' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200' }}">
+        Selesai
+    </a>
+    
+    <a href="{{ route('admin.orders.index', array_merge(request()->except('page'), ['tab' => 'cancelled'])) }}" 
+       class="pb-3 px-4 text-sm font-semibold border-b-2 transition-all whitespace-nowrap {{ $activeTab === 'cancelled' ? 'border-amber-600 text-amber-700 dark:text-amber-400 dark:border-amber-500 font-bold' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200' }}">
+        Dibatalkan
+    </a>
+</div>
+
 <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
     <form method="GET" class="flex flex-col md:flex-row gap-3">
         <input type="text" name="search" placeholder="Cari nomor order/nama..." value="{{ request('search') }}" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm">
@@ -54,7 +101,7 @@
                         <div class="flex items-center gap-1.5 flex-wrap">
                             <p class="font-medium text-gray-900 dark:text-gray-100">{{ $order->customer->name }}</p>
                             @if($order->type == 'delivery')
-                                <span class="inline-block px-1.5 py-0.5 text-[10px] font-semibold bg-orange-100 text-orange-850 dark:bg-orange-950/40 dark:text-orange-300 rounded">Delivery</span>
+                                <span class="inline-block px-1.5 py-0.5 text-[10px] font-semibold bg-orange-100 text-orange-800 dark:bg-orange-950/40 dark:text-orange-300 rounded">Delivery</span>
                             @else
                                 <span class="inline-block px-1.5 py-0.5 text-[10px] font-semibold bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 rounded">Pickup</span>
                             @endif

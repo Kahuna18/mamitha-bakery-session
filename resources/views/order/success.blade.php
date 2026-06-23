@@ -232,7 +232,8 @@
 @php
     $storeLat = \App\Models\Setting::getValue('store_latitude', '-7.7609582');
     $storeLng = \App\Models\Setting::getValue('store_longitude', '110.2529556');
-    $hasRoute = $order->type === 'delivery' && $order->latitude && $order->longitude;
+    $isPendingPayment = $order->payment_status === 'unpaid' && !in_array($order->payment_method, ['Cash On Delivery / COD', 'WhatsApp Confirmation']);
+    $hasRoute = !$isPendingPayment && $order->type === 'delivery' && $order->latitude && $order->longitude;
 
     $maxReadyTime = '15-20 min';
     if ($order->items->isNotEmpty()) {
@@ -420,18 +421,29 @@
                         </div>
                     </div>
                 </div>
-
                 <!-- Text details -->
                 <div class="space-y-1 mb-6">
-                    <span class="text-[10px] font-black text-amber-600 dark:text-amber-500 uppercase tracking-[0.25em] block animate-pulse">
-                        Order Confirmed
-                    </span>
-                    <h2 class="text-2xl font-black text-gray-950 dark:text-white leading-tight">
-                        Roti Siap Dipanggang!
-                    </h2>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">
-                        Fresh from the oven - delivered warm
-                    </p>
+                    @if($order->status === 'pending' && $order->payment_status === 'unpaid' && (stripos($order->payment_method, 'transfer') !== false || stripos($order->payment_method, 'midtrans') !== false))
+                        <span class="text-[10px] font-black text-red-650 dark:text-red-500 uppercase tracking-[0.25em] block animate-pulse">
+                            ⏳ Order Pending (Unpaid)
+                        </span>
+                        <h2 class="text-2xl font-black text-gray-950 dark:text-white leading-tight">
+                            Menunggu Pembayaran
+                        </h2>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                            Selesaikan pembayaran agar pesanan dapat dikirim ke dapur.
+                        </p>
+                    @else
+                        <span class="text-[10px] font-black text-amber-600 dark:text-amber-500 uppercase tracking-[0.25em] block animate-pulse">
+                            Order Confirmed
+                        </span>
+                        <h2 class="text-2xl font-black text-gray-950 dark:text-white leading-tight">
+                            Roti Siap Dipanggang!
+                        </h2>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                            Fresh from the oven - delivered warm
+                        </p>
+                    @endif
                 </div>
 
                 <!-- Member Promotion Invitation Card -->
@@ -442,10 +454,18 @@
                     <div>
                         <span class="text-[9px] font-black text-amber-700 dark:text-amber-500 uppercase tracking-wider block">Gabung Member</span>
                         <h4 class="text-xs font-extrabold text-gray-900 dark:text-white leading-tight mt-0.5">
-                            Diskon 10% Otomatis
+                            @if(session('wants_to_join_member'))
+                                Selesaikan Pendaftaran
+                            @else
+                                Diskon 10% Otomatis
+                            @endif
                         </h4>
-                        <p class="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5 leading-snug">
-                            Kumpulkan poin belanja Anda untuk naik rank dan nikmati free delivery!
+                        <p class="text-[10px] text-gray-550 dark:text-gray-400 mt-0.5 leading-snug">
+                            @if(session('wants_to_join_member'))
+                                Akun Anda belum terdaftar. Daftarkan sekarang agar poin & level dari pesanan ini langsung masuk ke profil Anda!
+                            @else
+                                Kumpulkan poin belanja Anda untuk naik rank dan nikmati free delivery!
+                            @endif
                         </p>
                     </div>
                 </div>
@@ -468,6 +488,7 @@
         
         <!-- Main Success Tracker Card -->
         <div class="bg-white dark:bg-gray-800 rounded-3xl border border-amber-100/50 dark:border-gray-700/50 shadow-xl overflow-hidden">
+            @if(!$isPendingPayment)
             @if($hasRoute)
             <!-- Leaflet Tracking Map (Header of Card) -->
             <div class="relative">
@@ -483,7 +504,11 @@
 
                 <div class="absolute top-4 left-4 z-20 bg-gray-900/90 dark:bg-gray-800/90 text-white rounded-2xl px-4 py-2 text-xs font-bold shadow-md">
                     @if($order->status == 'pending')
-                        ⏳ Menunggu Konfirmasi
+                        @if($order->payment_status === 'unpaid' && (stripos($order->payment_method, 'transfer') !== false || stripos($order->payment_method, 'midtrans') !== false))
+                            ⏳ Menunggu Pembayaran
+                        @else
+                            ⏳ Menunggu Konfirmasi
+                        @endif
                     @elseif($order->status == 'confirmed')
                         👍 Pesanan Dikonfirmasi
                     @elseif($order->status == 'producing')
@@ -502,7 +527,11 @@
             <div class="p-4 bg-gray-900 dark:bg-gray-800 flex justify-center">
                 <div class="bg-gray-800 dark:bg-gray-700 border border-gray-700 dark:border-gray-600 text-white rounded-2xl px-6 py-2.5 text-sm font-bold shadow-md">
                     @if($order->status == 'pending')
-                        ⏳ Menunggu Konfirmasi
+                        @if($order->payment_status === 'unpaid' && (stripos($order->payment_method, 'transfer') !== false || stripos($order->payment_method, 'midtrans') !== false))
+                            ⏳ Menunggu Pembayaran
+                        @else
+                            ⏳ Menunggu Konfirmasi
+                        @endif
                     @elseif($order->status == 'confirmed')
                         👍 Pesanan Dikonfirmasi
                     @elseif($order->status == 'producing')
@@ -606,8 +635,20 @@
                                 </svg>
                             </div>
                             <div class="text-center md:mt-2.5">
-                                <p class="font-bold text-xs text-gray-850 dark:text-gray-250">Diterima</p>
-                                <p class="text-[9px] text-gray-400 dark:text-gray-500 mt-0.5 hidden md:block">Order Placed</p>
+                                <p class="font-bold text-xs text-gray-800 dark:text-gray-200">
+                                    @if($order->status === 'pending' && $order->payment_status === 'unpaid' && (stripos($order->payment_method, 'transfer') !== false || stripos($order->payment_method, 'midtrans') !== false))
+                                        Menunggu Bayar
+                                    @else
+                                        Diterima
+                                    @endif
+                                </p>
+                                <p class="text-[9px] text-gray-400 dark:text-gray-500 mt-0.5 hidden md:block">
+                                    @if($order->status === 'pending' && $order->payment_status === 'unpaid' && (stripos($order->payment_method, 'transfer') !== false || stripos($order->payment_method, 'midtrans') !== false))
+                                        Pending Payment
+                                    @else
+                                        Order Placed
+                                    @endif
+                                </p>
                             </div>
                         </div>
 
@@ -622,7 +663,7 @@
                             </div>
                             <div class="text-center md:mt-2.5">
                                 <p class="font-bold text-xs text-gray-400 dark:text-gray-500">Adonan</p>
-                                <p class="text-[9px] text-gray-450 dark:text-gray-550 mt-0.5 hidden md:block">Prep Room</p>
+                                <p class="text-[9px] text-gray-400 dark:text-gray-500 mt-0.5 hidden md:block">Prep Room</p>
                             </div>
                         </div>
 
@@ -639,7 +680,7 @@
                             </div>
                             <div class="text-center md:mt-2.5">
                                 <p class="font-bold text-xs text-gray-400 dark:text-gray-500">Dipanggang</p>
-                                <p class="text-[9px] text-gray-450 dark:text-gray-550 mt-0.5 hidden md:block">Baking Oven</p>
+                                <p class="text-[9px] text-gray-400 dark:text-gray-500 mt-0.5 hidden md:block">Baking Oven</p>
                             </div>
                         </div>
 
@@ -652,7 +693,7 @@
                             </div>
                             <div class="text-center md:mt-2.5">
                                 <p class="font-bold text-xs text-gray-400 dark:text-gray-500">Siap</p>
-                                <p class="text-[9px] text-gray-450 dark:text-gray-550 mt-0.5 hidden md:block">Boxed & Check</p>
+                                <p class="text-[9px] text-gray-400 dark:text-gray-500 mt-0.5 hidden md:block">Boxed & Check</p>
                             </div>
                         </div>
 
@@ -667,7 +708,7 @@
                             </div>
                             <div class="text-center md:mt-2.5">
                                 <p class="font-bold text-xs text-gray-400 dark:text-gray-500">Selesai</p>
-                                <p class="text-[9px] text-gray-450 dark:text-gray-550 mt-0.5 hidden md:block">Delivered</p>
+                                <p class="text-[9px] text-gray-400 dark:text-gray-500 mt-0.5 hidden md:block">Delivered</p>
                             </div>
                         </div>
                     </div>
@@ -680,18 +721,196 @@
                 <div class="lock-widget">
                     <span class="text-3xl select-none">🔒</span>
                     <div class="flex-1 text-left">
-                        <h4 class="text-xs font-black text-gray-800 dark:text-gray-250 uppercase tracking-wider">Lacak Pesanan Real-Time Terkunci</h4>
-                        <p class="text-[10px] text-gray-550 dark:text-gray-400 mt-1 leading-normal font-medium">
+                        <h4 class="text-xs font-black text-gray-800 dark:text-gray-200 uppercase tracking-wider">Lacak Pesanan Real-Time Terkunci</h4>
+                        <p class="text-[10px] text-gray-500 dark:text-gray-400 mt-1 leading-normal font-medium">
                             Ingin melacak dengan **Voice Updates**, **Live GPS Map**, dan **Auto-Polling**? Masuk atau daftar akun member Mamitha (gratis) untuk membuka fitur premium ini!
                         </p>
                         <div class="flex gap-2.5 mt-3">
                             <a href="{{ route('login') }}" class="px-4 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-[9px] rounded-lg transition shadow-sm">Login</a>
-                            <a href="{{ route('register') }}" class="px-4 py-1.5 bg-gray-150 dark:bg-gray-700 hover:bg-gray-250 dark:hover:bg-gray-650 text-gray-750 dark:text-gray-200 font-extrabold text-[9px] rounded-lg transition">Daftar Member</a>
+                            <a href="{{ route('register') }}" class="px-4 py-1.5 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-extrabold text-[9px] rounded-lg transition">Daftar Member</a>
                         </div>
                     </div>
                 </div>
             </div>
             @endguest
+            @else
+            <!-- Pending Payment Premium Card / Section -->
+            <div class="relative overflow-hidden bg-white dark:bg-gray-800 rounded-3xl">
+                <!-- Header Sunset Gradient -->
+                <div class="relative bg-gradient-to-tr from-amber-500 via-orange-600 to-rose-600 p-8 text-center text-white">
+                    <!-- Subtle radial overlay -->
+                    <div class="absolute inset-0 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-white/20 via-transparent to-transparent pointer-events-none"></div>
+                    
+                    <div class="relative z-10 flex flex-col items-center">
+                        <!-- Floating Hourglass in blur glassmorphism circle -->
+                        <div class="w-20 h-20 bg-white/10 dark:bg-black/20 backdrop-blur-md rounded-3xl border border-white/25 shadow-2xl flex items-center justify-center mb-4 relative group hover:scale-105 transition-all duration-300">
+                            <!-- Glowing Aura -->
+                            <div class="absolute inset-0 rounded-3xl bg-amber-400/30 blur-lg animate-pulse"></div>
+                            <span class="text-4xl relative z-10 animate-bounce-slow" style="animation-duration: 3s;">⏳</span>
+                        </div>
+                        
+                        <span class="text-[10px] font-black uppercase tracking-[0.25em] text-amber-200 animate-pulse block mb-1">Status Pembayaran</span>
+                        <h2 class="text-2xl font-black font-serif tracking-tight text-white">Menunggu Pembayaran</h2>
+                        <p class="text-xs text-amber-50 mt-2 max-w-md mx-auto leading-relaxed">
+                            Pesanan <span class="font-mono font-bold text-amber-250 bg-black/30 px-2 py-0.5 rounded">{{ $order->order_number }}</span> telah kami terima. Silakan selesaikan pembayaran agar pesanan Anda dapat segera kami proses di dapur.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Info Preview for Locked Status -->
+                <div class="p-6 bg-gray-50/50 dark:bg-gray-900/30 border-b border-gray-100 dark:border-gray-700/50">
+                    <h4 class="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest text-center mb-4">Fitur Lacak Pesanan (Terkunci)</h4>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg mx-auto">
+                        <!-- Feature 1: Live Map -->
+                        <div class="bg-white dark:bg-gray-800 border border-gray-200/50 dark:border-gray-700/55 rounded-2xl p-3.5 flex items-center gap-3 shadow-sm opacity-60">
+                            <span class="text-2xl">🗺️</span>
+                            <div class="text-left">
+                                <p class="text-xs font-bold text-gray-800 dark:text-gray-200">Peta GPS Real-time</p>
+                                <p class="text-[10px] text-gray-500 dark:text-gray-400">Lacak lokasi kurir di peta</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Feature 2: Stepper -->
+                        <div class="bg-white dark:bg-gray-800 border border-gray-200/50 dark:border-gray-700/55 rounded-2xl p-3.5 flex items-center gap-3 shadow-sm opacity-60">
+                            <span class="text-2xl">🔥</span>
+                            <div class="text-left">
+                                <p class="text-xs font-bold text-gray-800 dark:text-gray-200">Progres Pemanggangan</p>
+                                <p class="text-[10px] text-gray-550 dark:text-gray-400">Pantau proses dari adonan ke oven</p>
+                            </div>
+                        </div>
+
+                        <!-- Feature 3: Courier Call -->
+                        <div class="bg-white dark:bg-gray-800 border border-gray-200/50 dark:border-gray-700/55 rounded-2xl p-3.5 flex items-center gap-3 shadow-sm opacity-60">
+                            <span class="text-2xl">🛵</span>
+                            <div class="text-left">
+                                <p class="text-xs font-bold text-gray-800 dark:text-gray-200">Informasi Kurir</p>
+                                <p class="text-[10px] text-gray-500 dark:text-gray-400">Hubungi langsung via WA / Telpon</p>
+                            </div>
+                        </div>
+
+                        <!-- Feature 4: Voice Chimes -->
+                        <div class="bg-white dark:bg-gray-800 border border-gray-200/50 dark:border-gray-700/55 rounded-2xl p-3.5 flex items-center gap-3 shadow-sm opacity-60">
+                            <span class="text-2xl">📢</span>
+                            <div class="text-left">
+                                <p class="text-xs font-bold text-gray-800 dark:text-gray-200">Notifikasi Suara Live</p>
+                                <p class="text-[10px] text-gray-500 dark:text-gray-400">Notifikasi chimes otomatis</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-5 flex justify-center items-center gap-2 text-[10px] font-black text-amber-700 dark:text-amber-400 bg-amber-500/10 dark:bg-amber-950/20 px-4 py-2 rounded-xl w-fit mx-auto border border-amber-500/20 dark:border-amber-400/10 shadow-sm uppercase tracking-wide">
+                        <span>🔒</span> Lacak Pesanan Terbuka Otomatis Setelah Pembayaran Sukses
+                    </div>
+                </div>
+
+                <!-- Payment Details Panel -->
+                @if(stripos($order->payment_method, 'transfer') !== false)
+                <!-- Bank Transfer Details (Luxury dark card layout) -->
+                <div class="p-6 sm:p-8 space-y-6">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-amber-50 dark:bg-amber-950/30 rounded-2xl flex items-center justify-center text-xl shrink-0 shadow-inner">
+                            🏦
+                        </div>
+                        <div class="text-left">
+                            <h3 class="font-extrabold text-gray-900 dark:text-white text-sm">Transfer Bank Manual</h3>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">Lakukan transfer ke rekening bank resmi Mamitha Bakery berikut:</p>
+                        </div>
+                    </div>
+
+                    <!-- Holographic Bank Card UI -->
+                    <div class="bg-gradient-to-br from-slate-900 via-slate-800 to-gray-900 text-white rounded-[32px] p-6 shadow-2xl relative overflow-hidden border border-white/10 max-w-sm mx-auto">
+                        <!-- Glowing aura spots -->
+                        <div class="absolute -top-24 -right-24 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                        <div class="absolute -bottom-24 -left-24 w-48 h-48 bg-rose-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                        
+                        <div class="relative z-10 space-y-5">
+                            <!-- Card Header -->
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <span class="text-[8px] font-black uppercase tracking-widest text-slate-400">Official Merchant Account</span>
+                                    <h4 class="text-base font-black tracking-tight text-white mt-0.5">Mamitha Bakery</h4>
+                                </div>
+                                <div class="w-10 h-8 bg-gradient-to-br from-yellow-300 to-amber-500 rounded-lg shadow-[inset_0_1px_3px_rgba(255,255,255,0.4)] flex items-center justify-center border border-yellow-300/10">
+                                    <span class="text-lg opacity-40">💳</span>
+                                </div>
+                            </div>
+
+                            <!-- Card Number -->
+                            <div class="text-left">
+                                <span class="text-[8px] font-black uppercase tracking-wider text-slate-400">Nomor Rekening BCA</span>
+                                <div class="flex items-center justify-between mt-1 gap-2">
+                                    <span class="font-mono text-xl font-bold tracking-[0.12em] text-white">1234 5678 90</span>
+                                    <button type="button" onclick="copyText('1234567890', 'No. Rekening BCA berhasil disalin')" class="px-3 py-1 bg-white/10 hover:bg-white/20 active:scale-95 border border-white/10 text-white text-[10px] font-extrabold rounded-xl transition cursor-pointer flex items-center gap-1 shadow-sm">
+                                        <span>📋</span> Salin
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Card Details -->
+                            <div class="border-t border-white/5 pt-4 flex justify-between items-center text-left">
+                                <div>
+                                    <span class="text-[8px] font-black uppercase tracking-wider text-slate-400">Atas Nama</span>
+                                    <p class="text-xs font-bold text-slate-200 mt-0.5">Mamitha Bakery</p>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-[8px] font-black uppercase tracking-wider text-slate-400">Total Transfer</span>
+                                    <div class="flex items-center gap-2 justify-end mt-0.5">
+                                        <span class="font-mono text-base font-black text-amber-400">Rp {{ number_format($order->total, 0, ',', '.') }}</span>
+                                        <button type="button" onclick="copyText('{{ (int) $order->total }}', 'Jumlah transfer berhasil disalin')" class="p-1.5 bg-white/10 hover:bg-white/20 active:scale-95 border border-white/10 text-white rounded-lg transition cursor-pointer shadow-sm">
+                                            📋
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Steps Box -->
+                    <div class="max-w-lg mx-auto text-xs text-gray-600 dark:text-gray-300 leading-relaxed space-y-2 text-left bg-gray-50 dark:bg-gray-900/40 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-inner">
+                        <p class="flex gap-2">
+                            <span class="font-black text-amber-600">1.</span>
+                            <span>Lakukan transfer sejumlah <b class="text-gray-800 dark:text-gray-100 font-mono">Rp {{ number_format($order->total, 0, ',', '.') }}</b> ke rekening BCA di atas.</span>
+                        </p>
+                        <p class="flex gap-2">
+                            <span class="font-black text-amber-600">2.</span>
+                            <span>Simpan bukti transaksi / foto resi transfer Anda.</span>
+                        </p>
+                        <p class="flex gap-2">
+                            <span class="font-black text-amber-600">3.</span>
+                            <span>Kirim bukti transfer ke admin dengan menekan tombol <b>Konfirmasi via WhatsApp</b> di bawah agar order dikirim ke dapur.</span>
+                        </p>
+                    </div>
+                </div>
+                @else
+                <!-- Online Payment / Midtrans Pending Panel -->
+                <div class="p-6 sm:p-8 space-y-5 max-w-lg mx-auto text-left">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-amber-50 dark:bg-amber-950/30 rounded-2xl flex items-center justify-center text-xl shrink-0 shadow-inner">
+                            💳
+                        </div>
+                        <div>
+                            <h3 class="font-extrabold text-gray-900 dark:text-white text-sm">Pembayaran Online Instan</h3>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">Selesaikan pembayaran online instan Anda:</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 dark:bg-gray-900/40 rounded-2xl p-5 border border-gray-100 dark:border-gray-800 space-y-3">
+                        <p class="text-xs text-gray-600 dark:text-gray-300 leading-relaxed font-medium">
+                            Selesaikan pembayaran Anda secara instan menggunakan tombol <b>Bayar Sekarang</b> di bawah. Kami mendukung berbagai metode pembayaran online berikut:
+                        </p>
+                        <div class="flex items-center gap-1.5 flex-wrap pt-1 text-[10px] text-gray-500 dark:text-gray-400 font-extrabold">
+                            <span class="px-2 py-0.5 bg-white dark:bg-gray-800 border border-gray-200/50 dark:border-gray-700/80 rounded">QRIS</span>
+                            <span class="px-2 py-0.5 bg-white dark:bg-gray-800 border border-gray-200/50 dark:border-gray-700/80 rounded">GoPay</span>
+                            <span class="px-2 py-0.5 bg-white dark:bg-gray-800 border border-gray-200/50 dark:border-gray-700/80 rounded">ShopeePay</span>
+                            <span class="px-2 py-0.5 bg-white dark:bg-gray-800 border border-gray-200/50 dark:border-gray-700/80 rounded">Virtual Account BCA/BNI/BRI</span>
+                            <span class="px-2 py-0.5 bg-white dark:bg-gray-800 border border-gray-200/50 dark:border-gray-700/80 rounded">Kartu Kredit</span>
+                        </div>
+                    </div>
+                </div>
+                @endif
+            </div>
+            @endif
 
         </div>
 
@@ -738,8 +957,14 @@
             </div>
         </div>
 
+
         <!-- Actions -->
         <div class="flex flex-col sm:flex-row gap-3">
+            @if($order->snap_token && $order->payment_status === 'unpaid')
+            <button id="pay-button" class="flex-grow-2 flex-1 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-extrabold text-center rounded-2xl shadow-xl transition transform active:scale-95 flex items-center justify-center gap-2 animate-pulse-btn">
+                <span>💳</span> Bayar Sekarang (Online Payment)
+            </button>
+            @endif
             @if(session('whatsapp_url') || $whatsappUrl)
             <a href="{{ session('whatsapp_url') ?? $whatsappUrl }}" target="_blank" class="flex-1 py-4 bg-green-600 hover:bg-green-700 text-white font-extrabold text-center rounded-2xl shadow-lg transition transform active:scale-95 flex items-center justify-center gap-2">
                 <span>💬</span> Konfirmasi via WhatsApp
@@ -755,9 +980,68 @@
 @endsection
 
 @push('scripts')
+@if($order->snap_token && $order->payment_status === 'unpaid')
+<script src="{{ config('services.midtrans.is_production') ? 'https://app.midtrans.com/snap/snap.js' : 'https://app.sandbox.midtrans.com/snap/snap.js' }}" data-client-key="{{ config('services.midtrans.client_key') }}"></script>
+@endif
 <!-- Leaflet.js Library -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
+    @if($order->snap_token && $order->payment_status === 'unpaid')
+    document.addEventListener("DOMContentLoaded", function() {
+        const payButton = document.getElementById('pay-button');
+        if (payButton) {
+            payButton.addEventListener('click', function () {
+                triggerSnapPayment();
+            });
+
+            // Automatically open Snap popup on load for seamless payment
+            setTimeout(function() {
+                triggerSnapPayment();
+            }, 800);
+        }
+
+        function triggerSnapPayment() {
+            window.snap.pay('{{ $order->snap_token }}', {
+                onSuccess: function(result){
+                    console.log('payment success!', result);
+                    confirmPaymentOnServer(result.order_id);
+                },
+                onPending: function(result){
+                    console.log('payment pending...', result);
+                    confirmPaymentOnServer(result.order_id);
+                },
+                onError: function(result){
+                    console.log('payment error!', result);
+                    alert('Pembayaran gagal atau terjadi kesalahan. Silakan coba lagi.');
+                },
+                onClose: function(){
+                    console.log('customer closed the popup without finishing the payment');
+                }
+            });
+        }
+
+        function confirmPaymentOnServer(orderId) {
+            fetch('{{ route('order.confirm-payment') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ order_id: orderId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Server payment confirmation:', data);
+                window.location.reload();
+            })
+            .catch(error => {
+                console.error('Error confirming payment:', error);
+                window.location.reload();
+            });
+        }
+    });
+    @endif
+
     const customerLocation = [{{ $order->latitude ?? $storeLat }}, {{ $order->longitude ?? $storeLng }}];
     const hasRoute = {{ $hasRoute ? 'true' : 'false' }};
     
@@ -1312,5 +1596,13 @@
     window.addEventListener('resize', () => {
         updateTrackerUI(currentStatus);
     });
+
+    window.copyText = function(text, successMsg) {
+        navigator.clipboard.writeText(text).then(() => {
+            alert(successMsg);
+        }).catch(err => {
+            console.error('Copy failed:', err);
+        });
+    }
 </script>
 @endpush
