@@ -113,6 +113,9 @@
                 <p><span class="text-gray-500">Tipe:</span> <span class="font-medium">{{ $order->type == 'pickup' ? 'Ambil di Toko' : 'Diantar' }}</span></p>
                 <p><span class="text-gray-500">Tgl Ambil:</span> <span class="font-medium">{{ $order->pickup_date->format('d/m/Y') }}</span></p>
                 <p><span class="text-gray-500">Tgl Order:</span> <span>{{ $order->order_date->format('d/m/Y H:i') }}</span></p>
+                @if($order->payment_method)
+                <p><span class="text-gray-500">Metode Bayar:</span> <span class="font-medium text-amber-700 font-semibold">{{ $order->payment_method }}</span></p>
+                @endif
             </div>
         </div>
 

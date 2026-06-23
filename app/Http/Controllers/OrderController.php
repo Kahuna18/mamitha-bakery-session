@@ -52,6 +52,7 @@ class OrderController extends Controller
             'items.*.note' => 'nullable|string|max:200',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
+            'payment_method' => 'nullable|string',
         ]);
 
         $customer = null;
@@ -160,6 +161,24 @@ class OrderController extends Controller
             $total += $deliveryFeeAmount;
         }
 
+        $paymentMethodName = 'Transfer Bank / QRIS';
+        $paymentMethodVal = $validated['payment_method'] ?? 'transfer';
+        if ($paymentMethodVal === 'transfer') {
+            $paymentMethodName = 'Transfer Bank / QRIS';
+        } elseif ($paymentMethodVal === 'whatsapp') {
+            $paymentMethodName = 'WhatsApp Confirmation';
+        } elseif ($paymentMethodVal === 'cod') {
+            $paymentMethodName = 'Cash On Delivery / COD';
+        } elseif (str_starts_with($paymentMethodVal, 'saved_')) {
+            $pmId = (int) str_replace('saved_', '', $paymentMethodVal);
+            if (auth()->check() && auth()->user()->customer) {
+                $savedPm = auth()->user()->customer->paymentMethods()->find($pmId);
+                if ($savedPm) {
+                    $paymentMethodName = "{$savedPm->provider} - {$savedPm->account_name} ({$savedPm->account_number})";
+                }
+            }
+        }
+
         $order = Order::create([
             'order_number' => Order::generateOrderNumber(),
             'customer_id' => $customer->id,
@@ -168,6 +187,7 @@ class OrderController extends Controller
             'type' => $validated['type'],
             'status' => 'pending',
             'notes' => $validated['notes'] ?? null,
+            'payment_method' => $paymentMethodName,
             'total' => $total,
             'address' => $validated['type'] === 'delivery' ? ($validated['address'] ?? null) : null,
             'latitude' => $validated['latitude'] ?? null,
@@ -260,7 +280,11 @@ class OrderController extends Controller
         if ($order->customer->is_member) {
             $message .= "Status Member: Ya (Daftar Baru)\n";
         }
-        $message .= "Total: Rp " . number_format($order->total, 0, ',', '.') . "\n\n";
+        $message .= "Total: Rp " . number_format($order->total, 0, ',', '.') . "\n";
+        if ($order->payment_method) {
+            $message .= "Metode Pembayaran: {$order->payment_method}\n";
+        }
+        $message .= "\n";
 
         foreach ($order->items as $item) {
             $itemName = $item->product->name;
@@ -277,6 +301,39 @@ class OrderController extends Controller
         $message .= "\nTerima kasih.";
 
         return "https://wa.me/{$phone}?text=" . urlencode($message);
+    }
+
+    public function statusJson($id)
+    {
+        $order = Order::with('items.product')->findOrFail($id);
+        
+        $maxReadyTime = '15-20 min';
+        if ($order->items->isNotEmpty()) {
+            $maxMinutes = 0;
+            $maxTimeStr = '15-20 min';
+            foreach ($order->items as $item) {
+                $timeStr = $item->product->ready_time ?? '15-20 min';
+                preg_match_all('/\d+/', $timeStr, $matches);
+                if (!empty($matches[0])) {
+                    $mins = max(array_map('intval', $matches[0]));
+                    if (stripos($timeStr, 'jam') !== false || stripos($timeStr, 'hour') !== false || stripos($timeStr, 'hr') !== false) {
+                        $mins *= 60;
+                    }
+                    if ($mins > $maxMinutes) {
+                        $maxMinutes = $mins;
+                        $maxTimeStr = $timeStr;
+                    }
+                }
+            }
+            $maxReadyTime = $maxTimeStr;
+        }
+
+        return response()->json([
+            'status' => $order->status,
+            'type' => $order->type,
+            'max_ready_time' => $maxReadyTime,
+            'updated_at' => $order->updated_at->toIso8601String()
+        ]);
     }
 
     public function history()

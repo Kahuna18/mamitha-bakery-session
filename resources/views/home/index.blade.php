@@ -46,7 +46,7 @@
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             @forelse($featuredProducts as $product)
             <div class="bg-white dark:bg-gray-800 rounded-xl border border-amber-100 dark:border-gray-700 overflow-hidden hover:shadow-md transition">
-                <div class="relative aspect-square bg-amber-50 dark:bg-gray-950 flex items-center justify-center p-6">
+                <div class="relative aspect-square bg-amber-50 dark:bg-gray-950 flex items-center justify-center p-6" style="position: relative;">
                     @if($product->image)
                         <img src="{{ $product->image_url }}" alt="{{ $product->name }}" class="w-full h-full object-cover rounded-lg {{ $product->stock <= 0 ? 'grayscale opacity-50' : '' }}">
                     @else

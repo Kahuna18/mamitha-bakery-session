@@ -9,7 +9,7 @@ class Order extends Model
     protected $fillable = [
         'order_number', 'customer_id', 'order_date', 'pickup_date',
         'type', 'status', 'notes', 'payment_proof',
-        'payment_status', 'total', 'address',
+        'payment_status', 'payment_method', 'total', 'address',
         'latitude', 'longitude', 'google_maps_link'
     ];
 

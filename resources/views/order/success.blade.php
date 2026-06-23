@@ -48,6 +48,175 @@
     @keyframes scale-up-badge-anim {
         to { transform: scale(1); }
     }
+
+    /* Domino's style Pizza Tracker styling */
+    .tracker-container {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        position: relative;
+        width: 100%;
+        margin-top: 2rem;
+        margin-bottom: 2rem;
+    }
+    @media (max-width: 768px) {
+        .tracker-container {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 2rem;
+        }
+    }
+    
+    .tracker-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        z-index: 10;
+        flex: 1;
+        position: relative;
+    }
+    @media (max-width: 768px) {
+        .tracker-step {
+            flex-direction: row;
+            align-items: center;
+            width: 100%;
+            gap: 1rem;
+        }
+    }
+
+    .tracker-icon-outer {
+        width: 56px;
+        height: 56px;
+        border-radius: 9999px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f3f4f6;
+        border: 4px solid #e5e7eb;
+        color: #9ca3af;
+        transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        position: relative;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+    .dark .tracker-icon-outer {
+        background: #1f2937;
+        border-color: #374151;
+        color: #6b7280;
+    }
+
+    /* Completed state */
+    .tracker-step.completed .tracker-icon-outer {
+        background: #10b981;
+        border-color: #a7f3d0;
+        color: #ffffff;
+        box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+    }
+    .dark .tracker-step.completed .tracker-icon-outer {
+        border-color: #065f46;
+        background: #059669;
+    }
+
+    /* Active state */
+    .tracker-step.active .tracker-icon-outer {
+        background: #ff6310;
+        border-color: #ffedd5;
+        color: #ffffff;
+        transform: scale(1.12);
+        box-shadow: 0 0 20px rgba(255, 99, 16, 0.45);
+    }
+    .dark .tracker-step.active .tracker-icon-outer {
+        border-color: #7c2d12;
+    }
+
+    /* Progress bar connecting lines (Horizontal) */
+    .tracker-connector {
+        position: absolute;
+        top: 28px;
+        left: 10%;
+        right: 10%;
+        height: 4px;
+        background: #e5e7eb;
+        z-index: 1;
+        transition: all 0.5s ease;
+    }
+    .dark .tracker-connector {
+        background: #374151;
+    }
+    .tracker-connector-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #10b981, #ff6310);
+        width: 0%;
+        transition: width 0.8s ease-in-out;
+    }
+    @media (max-width: 768px) {
+        .tracker-connector {
+            top: 28px;
+            left: 28px;
+            bottom: 28px;
+            right: auto;
+            width: 4px;
+            height: auto;
+        }
+        .tracker-connector-fill {
+            width: 100%;
+            height: 0%;
+            transition: height 0.8s ease-in-out;
+        }
+    }
+
+    /* Custom animated SVG styles */
+    .animated-mixing-bowl .spoon {
+        transform-origin: 12px 10px;
+        animation: mix 1.5s infinite linear;
+    }
+    @keyframes mix {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .animated-oven .fire {
+        animation: burn 1s infinite alternate;
+        transform-origin: 12px 20px;
+    }
+    @keyframes burn {
+        0% { transform: scaleY(0.9) opacity(0.8); }
+        100% { transform: scaleY(1.1) opacity(1); }
+    }
+
+    .animated-box .lid {
+        transform-origin: 12px 6px;
+        animation: lid-pulse 2s infinite ease-in-out;
+    }
+    @keyframes lid-pulse {
+        0%, 100% { transform: rotate(0deg); }
+        50% { transform: rotate(-10deg); }
+    }
+
+    .animated-scooter .wheel {
+        transform-origin: center;
+        animation: spin 1s infinite linear;
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* Voice / tracking locked widget styling */
+    .lock-widget {
+        background: linear-gradient(135deg, rgba(255, 99, 16, 0.08), rgba(220, 38, 38, 0.08));
+        border: 1.5px dashed rgba(255, 99, 16, 0.25);
+        border-radius: 24px;
+        padding: 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+    }
+    .dark .lock-widget {
+        background: linear-gradient(135deg, rgba(255, 99, 16, 0.04), rgba(220, 38, 38, 0.04));
+        border-color: rgba(255, 99, 16, 0.15);
+    }
 </style>
 @endpush
 
@@ -56,6 +225,27 @@
     $storeLat = \App\Models\Setting::getValue('store_latitude', '-7.7609582');
     $storeLng = \App\Models\Setting::getValue('store_longitude', '110.2529556');
     $hasRoute = $order->type === 'delivery' && $order->latitude && $order->longitude;
+
+    $maxReadyTime = '15-20 min';
+    if ($order->items->isNotEmpty()) {
+        $maxMinutes = 0;
+        $maxTimeStr = '15-20 min';
+        foreach ($order->items as $item) {
+            $timeStr = $item->product->ready_time ?? '15-20 min';
+            preg_match_all('/\d+/', $timeStr, $matches);
+            if (!empty($matches[0])) {
+                $mins = max(array_map('intval', $matches[0]));
+                if (stripos($timeStr, 'jam') !== false || stripos($timeStr, 'hour') !== false || stripos($timeStr, 'hr') !== false) {
+                    $mins *= 60;
+                }
+                if ($mins > $maxMinutes) {
+                    $maxMinutes = $mins;
+                    $maxTimeStr = $timeStr;
+                }
+            }
+        }
+        $maxReadyTime = $maxTimeStr;
+    }
 @endphp
 
 @php
@@ -328,9 +518,9 @@
                         @if($order->status == 'done')
                             Pesanan Telah Tiba
                         @elseif($order->type == 'pickup')
-                            Siap Diambil Jam 15-20 min
+                            Siap Diambil dalam {{ $maxReadyTime }}
                         @else
-                            Tiba dalam 15-20 min
+                            Tiba dalam {{ $maxReadyTime }}
                         @endif
                     </h2>
                 </div>
@@ -374,96 +564,119 @@
                 </div>
             </div>
 
-            <!-- Vertical Timeline Tracker (Tiktok status style) -->
+            <!-- Domino's Pizza Tracker layout -->
             <div class="p-6">
-                <h3 class="font-extrabold text-gray-700 dark:text-gray-300 text-xs tracking-wider uppercase mb-6">Status Perjalanan</h3>
-                <div class="relative pl-8 space-y-8 before:absolute before:inset-y-1 before:left-3 before:w-0.5 before:bg-gray-200 dark:before:bg-gray-700">
-                    
-                    <!-- Step 1: Order confirmed -->
-                    <div class="relative">
-                        <!-- Bullet status indicator -->
-                        <span class="absolute -left-8 top-1.5 w-6.5 h-6.5 rounded-full flex items-center justify-center text-xs font-black
-                            {{ $order->status !== 'cancelled' ? 'bg-green-500 text-white shadow-md' : 'bg-red-500 text-white shadow-md' }}">
-                            ✔
-                        </span>
-                        <div>
-                            <p class="font-bold text-sm text-gray-800 dark:text-gray-100">Pesanan Diterima</p>
-                            <p class="text-xs text-gray-400 mt-0.5">Terima kasih, pesanan Anda telah tersimpan.</p>
-                        </div>
+                <h3 class="font-extrabold text-gray-700 dark:text-gray-300 text-xs tracking-wider uppercase mb-6 flex justify-between items-center">
+                    <span>Progres Pesanan (Tracker)</span>
+                    @auth
+                    <span class="text-[9px] bg-green-500/10 text-green-600 dark:bg-green-950/20 dark:text-green-400 px-2 py-0.5 rounded-full lowercase font-bold tracking-normal animate-pulse">Live Polling Aktif</span>
+                    @else
+                    <span class="text-[9px] bg-gray-100 dark:bg-gray-800 text-gray-400 px-2 py-0.5 rounded-full lowercase font-bold tracking-normal">Mode Statis</span>
+                    @endauth
+                </h3>
+
+                <!-- Stepper Container -->
+                <div class="relative min-h-[320px] md:min-h-0 md:py-6">
+                    <!-- Progress Bar Connector Line -->
+                    <div class="tracker-connector">
+                        <div id="tracker-connector-fill" class="tracker-connector-fill" style="width: 0%;"></div>
                     </div>
 
-                    <!-- Step 2: Confirmed/Verified by admin -->
-                    @php
-                        $isConfirmed = in_array($order->status, ['confirmed', 'producing', 'ready', 'done']);
-                    @endphp
-                    <div class="relative">
-                        <span class="absolute -left-8 top-1.5 w-6.5 h-6.5 rounded-full flex items-center justify-center text-xs font-black
-                            {{ $isConfirmed ? 'bg-green-500 text-white shadow-md' : 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500' }}">
-                            {{ $isConfirmed ? '✔' : '2' }}
-                        </span>
-                        <div>
-                            <p class="font-bold text-sm {{ $isConfirmed ? 'text-gray-800 dark:text-gray-100' : 'text-gray-400 dark:text-gray-500' }}">
-                                Dikonfirmasi Admin
-                            </p>
-                            <p class="text-xs text-gray-400 mt-0.5">Admin sedang memverifikasi pesanan Anda.</p>
+                    <div class="tracker-container">
+                        <!-- Step 1: Placed -->
+                        <div id="step-placed" class="tracker-step">
+                            <div class="tracker-icon-outer" title="Pesanan Diterima">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                            </div>
+                            <div class="text-center md:mt-2.5">
+                                <p class="font-bold text-xs text-gray-850 dark:text-gray-250">Diterima</p>
+                                <p class="text-[9px] text-gray-400 dark:text-gray-500 mt-0.5 hidden md:block">Order Placed</p>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Confirmed -->
+                        <div id="step-confirmed" class="tracker-step">
+                            <div class="tracker-icon-outer animated-mixing-bowl" title="Dikonfirmasi Admin">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path class="spoon" stroke-linecap="round" stroke-linejoin="round" d="M12 4v4m0 0l-2-2m2 2l2-2" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 10a7 7 0 01-7 7 7 7 0 01-7-7h14z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 10V6a2 2 0 012-2h10a2 2 0 012 2v4" />
+                                </svg>
+                            </div>
+                            <div class="text-center md:mt-2.5">
+                                <p class="font-bold text-xs text-gray-400 dark:text-gray-500">Adonan</p>
+                                <p class="text-[9px] text-gray-450 dark:text-gray-550 mt-0.5 hidden md:block">Prep Room</p>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Baking -->
+                        <div id="step-producing" class="tracker-step">
+                            <div class="tracker-icon-outer animated-oven" title="Sedang Dipanggang">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <line x1="3" y1="14" x2="21" y2="14" />
+                                    <circle cx="8" cy="8" r="1.5" />
+                                    <circle cx="16" cy="8" r="1.5" />
+                                    <path class="fire" stroke="#ff6310" d="M12 19c1.5 0 2-1 2-2.5s-1-2-2-3.5c-1 1.5-2 2-2 3.5s.5 2.5 2 2.5z"/>
+                                </svg>
+                            </div>
+                            <div class="text-center md:mt-2.5">
+                                <p class="font-bold text-xs text-gray-400 dark:text-gray-500">Dipanggang</p>
+                                <p class="text-[9px] text-gray-450 dark:text-gray-550 mt-0.5 hidden md:block">Baking Oven</p>
+                            </div>
+                        </div>
+
+                        <!-- Step 4: Ready -->
+                        <div id="step-ready" class="tracker-step">
+                            <div class="tracker-icon-outer animated-box" title="Siap Diambil/Diantar">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path class="lid" stroke-linecap="round" stroke-linejoin="round" d="M12 3L2 7l10 4 10-4-10-4zM2 17l10 4 10-4M2 12l10 4 10-4" />
+                                </svg>
+                            </div>
+                            <div class="text-center md:mt-2.5">
+                                <p class="font-bold text-xs text-gray-400 dark:text-gray-500">Siap</p>
+                                <p class="text-[9px] text-gray-450 dark:text-gray-550 mt-0.5 hidden md:block">Boxed & Check</p>
+                            </div>
+                        </div>
+
+                        <!-- Step 5: Completed -->
+                        <div id="step-done" class="tracker-step">
+                            <div class="tracker-icon-outer animated-scooter" title="Pesanan Selesai">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <circle class="wheel" cx="6" cy="18" r="3" />
+                                    <circle class="wheel" cx="18" cy="18" r="3" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 18h4M8 15h8l-2-6H10l-2 6zM15 9V6a1 1 0 00-1-1h-3" />
+                                </svg>
+                            </div>
+                            <div class="text-center md:mt-2.5">
+                                <p class="font-bold text-xs text-gray-400 dark:text-gray-500">Selesai</p>
+                                <p class="text-[9px] text-gray-450 dark:text-gray-550 mt-0.5 hidden md:block">Delivered</p>
+                            </div>
                         </div>
                     </div>
-
-                    <!-- Step 3: Producing / Baking -->
-                    @php
-                        $isProducing = in_array($order->status, ['producing', 'ready', 'done']);
-                    @endphp
-                    <div class="relative">
-                        <span class="absolute -left-8 top-1.5 w-6.5 h-6.5 rounded-full flex items-center justify-center text-xs font-black
-                            {{ $isProducing ? 'bg-green-500 text-white shadow-md' : 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500' }}">
-                            {{ $isProducing ? '✔' : '3' }}
-                        </span>
-                        <div>
-                            <p class="font-bold text-sm {{ $isProducing ? 'text-gray-800 dark:text-gray-100' : 'text-gray-400 dark:text-gray-500' }}">
-                                Sedang Diproses (Dapur)
-                            </p>
-                            <p class="text-xs text-gray-400 mt-0.5">Roti kesukaan Anda sedang dipanggang hangat.</p>
-                        </div>
-                    </div>
-
-                    <!-- Step 4: Ready / Delivery -->
-                    @php
-                        $isReady = in_array($order->status, ['ready', 'done']);
-                    @endphp
-                    <div class="relative">
-                        <span class="absolute -left-8 top-1.5 w-6.5 h-6.5 rounded-full flex items-center justify-center text-xs font-black
-                            {{ $isReady ? 'bg-green-500 text-white shadow-md' : 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500' }}">
-                            {{ $isReady ? '✔' : '4' }}
-                        </span>
-                        <div>
-                            <p class="font-bold text-sm {{ $isReady ? 'text-gray-800 dark:text-gray-100' : 'text-gray-400 dark:text-gray-500' }}">
-                                {{ $order->type === 'delivery' ? 'Dalam Perjalanan Kurir' : 'Siap Diambil' }}
-                            </p>
-                            <p class="text-xs text-gray-400 mt-0.5">
-                                {{ $order->type === 'delivery' ? 'Kurir sedang mengantar pesanan ke alamat Anda.' : 'Roti siap diambil di outlet Mamitha.' }}
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- Step 5: Completed -->
-                    @php
-                        $isDone = $order->status === 'done';
-                    @endphp
-                    <div class="relative">
-                        <span class="absolute -left-8 top-1.5 w-6.5 h-6.5 rounded-full flex items-center justify-center text-xs font-black
-                            {{ $isDone ? 'bg-green-500 text-white shadow-md' : 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500' }}">
-                            {{ $isDone ? '✔' : '5' }}
-                        </span>
-                        <div>
-                            <p class="font-bold text-sm {{ $isDone ? 'text-gray-800 dark:text-gray-100' : 'text-gray-400 dark:text-gray-500' }}">
-                                Pesanan Selesai
-                            </p>
-                            <p class="text-xs text-gray-400 mt-0.5">Selesai! Terima kasih telah berbelanja di Mamitha Bakery.</p>
-                        </div>
-                    </div>
-
                 </div>
             </div>
+
+            @guest
+            <!-- Lock Widget promoting Member sign-in / registration for real-time tracking -->
+            <div class="px-6 pb-6">
+                <div class="lock-widget">
+                    <span class="text-3xl select-none">🔒</span>
+                    <div class="flex-1 text-left">
+                        <h4 class="text-xs font-black text-gray-800 dark:text-gray-250 uppercase tracking-wider">Lacak Pesanan Real-Time Terkunci</h4>
+                        <p class="text-[10px] text-gray-550 dark:text-gray-400 mt-1 leading-normal font-medium">
+                            Ingin melacak dengan **Voice Updates**, **Live GPS Map**, dan **Auto-Polling**? Masuk atau daftar akun member Mamitha (gratis) untuk membuka fitur premium ini!
+                        </p>
+                        <div class="flex gap-2.5 mt-3">
+                            <a href="{{ route('login') }}" class="px-4 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-[9px] rounded-lg transition shadow-sm">Login</a>
+                            <a href="{{ route('register') }}" class="px-4 py-1.5 bg-gray-150 dark:bg-gray-700 hover:bg-gray-250 dark:hover:bg-gray-650 text-gray-750 dark:text-gray-200 font-extrabold text-[9px] rounded-lg transition">Daftar Member</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @endguest
 
         </div>
 
@@ -479,11 +692,17 @@
                 @endforeach
             </div>
             
-            <div class="border-t border-gray-100 dark:border-gray-700/50 pt-4 flex justify-between items-center">
+            <div class="border-t border-gray-100 dark:border-gray-700/50 pt-4 flex justify-between items-center gap-4">
                 <div>
                     <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Metode Pengiriman</p>
                     <p class="text-xs font-bold text-gray-800 dark:text-gray-200 mt-0.5">{{ $order->type == 'pickup' ? '🏪 Ambil di Toko' : '🚚 Diantar Kurir' }}</p>
                 </div>
+                @if($order->payment_method)
+                <div>
+                    <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Metode Pembayaran</p>
+                    <p class="text-xs font-bold text-gray-800 dark:text-gray-200 mt-0.5">{{ $order->payment_method }}</p>
+                </div>
+                @endif
                 <div class="text-right">
                     <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Total Dibayar</p>
                     <p class="text-xl font-black text-amber-800 dark:text-amber-400 mt-0.5">Rp {{ number_format($order->total, 0, ',', '.') }}</p>
@@ -799,5 +1018,171 @@
             }, 450);
         }
     }
+
+    // =========================================================================
+    // Domino's Pizza Tracker Polling & Audio Update Logic
+    // =========================================================================
+    const orderId = {{ $order->id }};
+    const isLoggedIn = {{ auth()->check() ? 'true' : 'false' }};
+    let currentStatus = '{{ $order->status }}';
+
+    // Map order status to progress bar percentage and active steps
+    const statusSteps = {
+        'pending': { percent: 10, index: 0 },
+        'confirmed': { percent: 32, index: 1 },
+        'producing': { percent: 55, index: 2 },
+        'ready': { percent: 78, index: 3 },
+        'done': { percent: 100, index: 4 },
+        'cancelled': { percent: 0, index: -1 }
+    };
+
+    const statusVoiceAlerts = {
+        'pending': 'Pesanan Anda sudah masuk di Mamitha Bakery.',
+        'confirmed': 'Pesanan Anda sedang disiapkan di dapur.',
+        'producing': 'Roti Anda sedang dipanggang.',
+        'ready': 'Roti Anda sudah matang dan siap diantar atau diambil.',
+        'done': 'Pesanan selesai! Terima kasih telah berbelanja di Mamitha Bakery.',
+        'cancelled': 'Pesanan Anda telah dibatalkan.'
+    };
+
+    function updateTrackerUI(status) {
+        if (!statusSteps[status]) return;
+        
+        const config = statusSteps[status];
+        const connector = document.getElementById('tracker-connector-fill');
+        if (connector) {
+            // Apply fill percentage depending on mobile/desktop
+            const isMobile = window.innerWidth <= 768;
+            if (isMobile) {
+                connector.style.height = config.percent + '%';
+                connector.style.width = '100%';
+            } else {
+                connector.style.width = config.percent + '%';
+                connector.style.height = '100%';
+            }
+        }
+
+        // Stepper step elements
+        const steps = ['placed', 'confirmed', 'producing', 'ready', 'done'];
+        steps.forEach((stepName, idx) => {
+            const stepId = 'step-' + (stepName === 'placed' ? 'placed' : stepName);
+            const el = document.getElementById(stepId);
+            if (!el) return;
+
+            // Reset classes
+            el.classList.remove('completed', 'active');
+            
+            if (idx < config.index) {
+                el.classList.add('completed');
+            } else if (idx === config.index) {
+                el.classList.add('active');
+            }
+        });
+
+        // Dynamic status banner texts in the DOM
+        const bannerHeader = document.querySelector('.p-6.border-b h2');
+        if (bannerHeader && status !== currentStatus) {
+            if (status === 'done') {
+                bannerHeader.textContent = 'Pesanan Telah Tiba';
+            } else if (status === 'ready') {
+                bannerHeader.textContent = 'Siap Diambil / Diantar';
+            }
+        }
+    }
+
+    // Play Audio Tones via Web Audio API
+    function playStatusChime() {
+        try {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const playTone = (freq, start, duration) => {
+                const osc = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, start);
+                gainNode.gain.setValueAtTime(0.2, start);
+                gainNode.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+                osc.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                osc.start(start);
+                osc.stop(start + duration);
+            };
+            // Beautiful triple note chime
+            playTone(523.25, audioCtx.currentTime, 0.2); // C5
+            playTone(659.25, audioCtx.currentTime + 0.15, 0.2); // E5
+            playTone(783.99, audioCtx.currentTime + 0.3, 0.4); // G5
+        } catch (e) {
+            console.error('AudioContext error:', e);
+        }
+    }
+
+    // Speech synthesis announcement
+    function speakStatusChange(status) {
+        if (!window.speechSynthesis) return;
+        const text = statusVoiceAlerts[status];
+        if (!text) return;
+
+        // Cancel previous speaking to prevent backlog
+        window.speechSynthesis.cancel();
+        
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'id-ID'; // Indonesian
+        utterance.rate = 1.0;
+        utterance.pitch = 1.1;
+        window.speechSynthesis.speak(utterance);
+    }
+
+    // Polling function (Runs only if logged-in)
+    async function pollOrderStatus() {
+        if (!isLoggedIn || currentStatus === 'done' || currentStatus === 'cancelled') return;
+
+        try {
+            const response = await fetch(`/pesan/status-json/${orderId}`);
+            if (!response.ok) throw new Error('Status fetch error');
+            const data = await response.json();
+
+            if (data.status && data.status !== currentStatus) {
+                // Play sounds and alert
+                playStatusChime();
+                speakStatusChange(data.status);
+                
+                // Update local storage and DOM
+                currentStatus = data.status;
+                updateTrackerUI(data.status);
+
+                // If status transitions to Ready or Done, we reload/update map or other view details
+                if (data.status === 'ready' || data.status === 'done') {
+                    // Slight timeout to let animations complete
+                    setTimeout(() => window.location.reload(), 2000);
+                }
+            }
+        } catch (err) {
+            console.error('Polling error:', err);
+        }
+    }
+
+    // Initialize tracker UI and set interval on load
+    window.addEventListener('load', () => {
+        updateTrackerUI(currentStatus);
+        
+        if (isLoggedIn) {
+            // Poll every 5 seconds
+            setInterval(pollOrderStatus, 5000);
+        }
+
+        // WhatsApp auto-redirect if payment method is WhatsApp Confirmation
+        @if($order->payment_method === 'WhatsApp Confirmation')
+            const waUrl = "{{ session('whatsapp_url') ?? $whatsappUrl }}";
+            if (waUrl) {
+                setTimeout(() => {
+                    window.location.href = waUrl;
+                }, 1500); // 1.5 seconds delay so they see success state first
+            }
+        @endif
+    });
+
+    // Make sure connector line adjusts layout on screen resize
+    window.addEventListener('resize', () => {
+        updateTrackerUI(currentStatus);
+    });
 </script>
 @endpush

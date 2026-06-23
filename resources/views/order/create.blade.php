@@ -413,9 +413,15 @@
             <div class="flex items-center gap-2.5 text-xs bg-gray-50 dark:bg-gray-800/40 p-3 rounded-2xl border border-gray-100 dark:border-gray-800/50 max-w-sm">
                 <span class="text-xl">📍</span>
                 <div>
-                    <p class="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Pengiriman Ke</p>
+                    <p class="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Delivery To</p>
                     <button type="button" onclick="toggleCheckoutDrawer(true); goToStep('checkout');" class="font-extrabold text-gray-800 dark:text-gray-200 hover:text-amber-600 dark:hover:text-amber-500 transition flex items-center gap-1.5 mt-0.5 text-left">
-                        <span id="selected-address-summary">Ambil di Outlet Mamitha (Sleman)</span>
+                        <span id="selected-address-summary">
+                            @if(auth()->check() && auth()->user()->customer && auth()->user()->customer->address)
+                                {{ Str::length(auth()->user()->customer->address) > 32 ? Str::substr(auth()->user()->customer->address, 0, 32) . '...' : auth()->user()->customer->address }}
+                            @else
+                                Ambil di Outlet Mamitha (Sleman)
+                            @endif
+                        </span>
                         <svg class="w-3.5 h-3.5 text-amber-600 dark:text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
                         </svg>
@@ -456,7 +462,7 @@
             <div class="product-card bg-white dark:bg-gray-800 rounded-3xl border border-amber-100/40 dark:border-gray-700/40 overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between cursor-pointer" data-category="{{ $product->category_id }}" data-name="{{ strtolower($product->name) }}" onclick="openVariantModal({{ $product->id }})">
                 <div>
                     <!-- Product Image Section -->
-                    <div class="relative aspect-[4/3] bg-amber-50/50 dark:bg-gray-900/50 overflow-hidden group product-image-clickable">
+                    <div class="relative aspect-[4/3] bg-amber-50/50 dark:bg-gray-900/50 overflow-hidden group product-image-clickable" style="position: relative;">
                         @if($product->image)
                             <img src="{{ $product->image_url }}" alt="{{ $product->name }}" class="w-full h-full object-cover transition duration-500 group-hover:scale-105 {{ $product->stock <= 0 ? 'grayscale opacity-50' : '' }}">
                         @else
@@ -513,7 +519,7 @@
                     <!-- Details -->
                     <div class="p-5">
                         <div class="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-                            <span>⏱️ 15-20 min</span>
+                            <span>⏱️ {{ $product->ready_time }}</span>
                             <span>•</span>
                             <span class="text-amber-500">★ 4.9</span>
                         </div>
@@ -764,12 +770,12 @@
                             <h3 class="font-bold text-gray-700 dark:text-gray-300 text-sm tracking-wide uppercase">Pilihan Pengiriman</h3>
                             <div class="grid grid-cols-2 gap-3">
                                 <label class="border-2 border-gray-100 dark:border-gray-800 rounded-2xl p-4 cursor-pointer hover:border-amber-500 dark:hover:border-amber-600 transition flex flex-col items-center justify-center text-center has-[:checked]:border-amber-600 has-[:checked]:bg-amber-50/35">
-                                    <input type="radio" name="type" value="pickup" checked class="hidden" onchange="updateDeliveryType('pickup')">
+                                    <input type="radio" name="type" value="pickup" {{ !(auth()->check() && auth()->user()->customer && auth()->user()->customer->address) ? 'checked' : '' }} class="hidden" onchange="updateDeliveryType('pickup')">
                                     <span class="text-2xl mb-1">🏪</span>
                                     <span class="font-bold text-xs text-gray-800 dark:text-gray-200">Ambil di Toko</span>
                                 </label>
                                 <label class="border-2 border-gray-100 dark:border-gray-800 rounded-2xl p-4 cursor-pointer hover:border-amber-500 dark:hover:border-amber-600 transition flex flex-col items-center justify-center text-center has-[:checked]:border-amber-600 has-[:checked]:bg-amber-50/35">
-                                    <input type="radio" name="type" value="delivery" class="hidden" onchange="updateDeliveryType('delivery')">
+                                    <input type="radio" name="type" value="delivery" {{ (auth()->check() && auth()->user()->customer && auth()->user()->customer->address) ? 'checked' : '' }} class="hidden" onchange="updateDeliveryType('delivery')">
                                     <span class="text-2xl mb-1">🚚</span>
                                     <span class="font-bold text-xs text-gray-800 dark:text-gray-200">Diantar Kurir</span>
                                 </label>
@@ -777,7 +783,7 @@
                         </div>
 
                         <!-- Delivery Address & Leaflet Map (Shows only for delivery) -->
-                        <div id="delivery-details-section" class="hidden mt-6 space-y-4">
+                        <div id="delivery-details-section" class="{{ (auth()->check() && auth()->user()->customer && auth()->user()->customer->address) ? '' : 'hidden' }} mt-6 space-y-4">
                             <h3 class="font-bold text-gray-700 dark:text-gray-300 text-sm tracking-wide uppercase">Detail Lokasi</h3>
                             <div class="relative">
                                 <input type="text" id="map-search" placeholder="Cari alamat di peta..." class="w-full pl-4 pr-10 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 dark:text-white transition" onkeydown="if(event.key==='Enter'){ searchAddress(); event.preventDefault(); }">
@@ -803,7 +809,7 @@
 
                             <div>
                                 <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Alamat Lengkap Pengiriman</label>
-                                <textarea name="address" id="address-text" rows="3" placeholder="Tuliskan nama jalan, blok, nomor rumah..." class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 dark:text-white transition">{{ auth()->check() && auth()->user()->customer ? auth()->user()->customer->address : '' }}</textarea>
+                                <textarea name="address" id="address-text" rows="3" placeholder="Tuliskan nama jalan, blok, nomor rumah..." class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 dark:text-white transition" {{ (auth()->check() && auth()->user()->customer && auth()->user()->customer->address) ? 'required' : '' }}>{{ auth()->check() && auth()->user()->customer ? auth()->user()->customer->address : '' }}</textarea>
                             </div>
 
                             <!-- Shipping Option Card -->
@@ -812,7 +818,7 @@
                                     <span class="text-2xl">⚡</span>
                                     <div>
                                         <p class="text-xs font-extrabold text-gray-800 dark:text-gray-200">Standard Delivery</p>
-                                        <p class="text-[10px] text-gray-400">Arriving in 15-20 min • Tercepat</p>
+                                        <p id="checkout-delivery-time" class="text-[10px] text-gray-400">Arriving in 15-20 min • Tercepat</p>
                                     </div>
                                 </div>
                                 <span class="text-xs font-bold text-amber-700 dark:text-amber-400">Rp 10.000</span>
@@ -835,50 +841,57 @@
                         <div class="space-y-4 mt-6">
                             <h3 class="font-bold text-gray-700 dark:text-gray-300 text-sm tracking-wide uppercase">Metode Pembayaran</h3>
                             <div class="space-y-2">
-                                @auth
-                                    @if(auth()->user()->customer && auth()->user()->customer->paymentMethods->isNotEmpty())
-                                        @foreach(auth()->user()->customer->paymentMethods as $pm)
-                                            <!-- Saved Payment Method Option -->
-                                            <label class="border-2 border-gray-100 dark:border-gray-800 rounded-2xl p-4 cursor-pointer hover:border-amber-500 dark:hover:border-amber-600 transition flex items-center justify-between has-[:checked]:border-amber-600 has-[:checked]:bg-amber-50/35">
-                                                <div class="flex items-center gap-3">
-                                                    <div class="w-10 h-10 bg-amber-50 dark:bg-amber-950/20 rounded-xl flex items-center justify-center text-lg">
-                                                        @if($pm->type === 'credit_card') 💳 
-                                                        @elseif($pm->type === 'e_wallet') 📱
-                                                        @else 🏦 @endif
-                                                    </div>
-                                                    <div>
-                                                        <p class="font-bold text-xs text-gray-800 dark:text-gray-200">
-                                                            {{ $pm->provider }} - {{ $pm->account_name }}
-                                                            @if($pm->is_default)
-                                                                <span class="ml-1 text-[9px] text-[#ff6310] font-extrabold bg-orange-500/10 px-2 py-0.5 rounded-full select-none">Default</span>
-                                                            @endif
-                                                        </p>
-                                                        <p class="text-[10px] text-gray-400">
-                                                            @if($pm->type === 'credit_card')
-                                                                **** **** **** {{ substr($pm->account_number, -4) }}
-                                                            @else
-                                                                {{ $pm->account_number }}
-                                                            @endif
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                                <input type="radio" name="payment_method" value="saved_{{ $pm->id }}" {{ $pm->is_default ? 'checked' : '' }} class="text-amber-600 focus:ring-amber-500">
-                                            </label>
-                                        @endforeach
-                                    @endif
-                                @endauth
-
-                                <!-- Transfer Bank -->
-                                <label class="border-2 border-gray-100 dark:border-gray-800 rounded-2xl p-4 cursor-pointer hover:border-amber-500 dark:hover:border-amber-600 transition flex items-center justify-between has-[:checked]:border-amber-600 has-[:checked]:bg-amber-50/35">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-10 h-10 bg-amber-50 dark:bg-amber-950/20 rounded-xl flex items-center justify-center text-lg">🏦</div>
-                                        <div>
-                                            <p class="font-bold text-xs text-gray-800 dark:text-gray-200">Transfer Bank / QRIS</p>
-                                            <p class="text-[10px] text-gray-400">Verifikasi otomatis & aman</p>
+                                <!-- Transfer Bank / QRIS Container -->
+                                <div class="border-2 border-gray-100 dark:border-gray-800 rounded-2xl overflow-hidden transition duration-200 has-[:checked]:border-amber-600 has-[:checked]:bg-amber-50/10">
+                                    <label class="p-4 cursor-pointer hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition flex items-center justify-between">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-10 h-10 bg-amber-50 dark:bg-amber-950/20 rounded-xl flex items-center justify-center text-lg">🏦</div>
+                                            <div>
+                                                <p class="font-bold text-xs text-gray-800 dark:text-gray-200">Transfer Bank / QRIS</p>
+                                                <p class="text-[10px] text-gray-400">Verifikasi otomatis & aman</p>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <input type="radio" name="payment_method" value="transfer" {{ (!auth()->check() || !auth()->user()->customer || auth()->user()->customer->paymentMethods->where('is_default', true)->isEmpty()) ? 'checked' : '' }} class="text-amber-600 focus:ring-amber-500">
-                                </label>
+                                        <input type="radio" name="payment_method" value="transfer" {{ (!auth()->check() || !auth()->user()->customer || auth()->user()->customer->paymentMethods->where('is_default', true)->isEmpty()) ? 'checked' : '' }} class="text-amber-600 focus:ring-amber-500">
+                                    </label>
+                                    
+                                    @auth
+                                        @if(auth()->user()->customer && auth()->user()->customer->paymentMethods->isNotEmpty())
+                                            <div class="border-t border-gray-100 dark:border-gray-800 bg-gray-50/30 dark:bg-gray-900/10 p-4 pt-3 space-y-2.5">
+                                                <p class="text-[10px] font-extrabold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Metode Tersimpan (Member Profile)</p>
+                                                <div class="space-y-2">
+                                                    @foreach(auth()->user()->customer->paymentMethods as $pm)
+                                                        <!-- Saved Payment Method Option -->
+                                                        <label class="border border-gray-200 dark:border-gray-700/80 rounded-xl p-3 cursor-pointer hover:border-amber-500 dark:hover:border-amber-600 transition flex items-center justify-between bg-white dark:bg-gray-800/40 has-[:checked]:border-amber-600 has-[:checked]:bg-amber-50/30">
+                                                            <div class="flex items-center gap-3">
+                                                                <div class="w-8 h-8 bg-amber-50 dark:bg-amber-950/20 rounded-lg flex items-center justify-center text-sm">
+                                                                    @if($pm->type === 'credit_card') 💳 
+                                                                    @elseif($pm->type === 'e_wallet') 📱
+                                                                    @else 🏦 @endif
+                                                                </div>
+                                                                <div>
+                                                                    <p class="font-bold text-[11px] text-gray-800 dark:text-gray-200">
+                                                                        {{ $pm->provider }} - {{ $pm->account_name }}
+                                                                        @if($pm->is_default)
+                                                                            <span class="ml-1 text-[8px] text-[#ff6310] font-extrabold bg-orange-500/10 px-1.5 py-0.5 rounded-full select-none">Default</span>
+                                                                        @endif
+                                                                    </p>
+                                                                    <p class="text-[9px] text-gray-400 font-medium">
+                                                                        @if($pm->type === 'credit_card')
+                                                                            **** **** **** {{ substr($pm->account_number, -4) }}
+                                                                        @else
+                                                                            {{ $pm->account_number }}
+                                                                        @endif
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                            <input type="radio" name="payment_method" value="saved_{{ $pm->id }}" {{ $pm->is_default ? 'checked' : '' }} class="text-amber-600 focus:ring-amber-500 w-3.5 h-3.5">
+                                                        </label>
+                                                    @endforeach
+                                                </div>
+                                            </div>
+                                        @endif
+                                    @endauth
+                                </div>
 
                                 <!-- WhatsApp Manual -->
                                 <label class="border-2 border-gray-100 dark:border-gray-800 rounded-2xl p-4 cursor-pointer hover:border-amber-500 dark:hover:border-amber-600 transition flex items-center justify-between has-[:checked]:border-amber-600 has-[:checked]:bg-amber-50/35">
@@ -1320,6 +1333,7 @@
         hasVariants: {{ $product->activeVariants->isNotEmpty() ? 'true' : 'false' }},
         imageUrl: '{{ $product->image ? $product->image_url : '' }}',
         description: '{{ addslashes(str_replace(["\r", "\n"], " ", $product->description ?? 'Roti hangat dan empuk yang dibuat fresh hari ini.')) }}',
+        ready_time: '{{ $product->ready_time }}',
         variants: [
             @foreach($product->activeVariants as $v)
             { id: {{ $v->id }}, name: '{{ addslashes($v->name) }}', price_adjustment: {{ $v->price_adjustment }}, stock: {{ $v->stock }} },
@@ -1894,6 +1908,33 @@
         var totalPrice = 0;
         var discount = 0;
         var shippingFee = (document.querySelector('input[name="type"]:checked')?.value === 'delivery' && deliveryFeeEnabled) ? deliveryFeeAmount : 0;
+
+        // Find max ready time of items in the cart
+        var maxReadyTime = '15-20 min';
+        var maxMins = 0;
+        Object.keys(cart).forEach(function(key) {
+            var item = cart[key];
+            var prod = products[item.product_id];
+            if (prod && prod.ready_time) {
+                var timeStr = prod.ready_time;
+                var numbers = timeStr.match(/\d+/g);
+                if (numbers) {
+                    var mins = Math.max.apply(null, numbers.map(Number));
+                    if (timeStr.toLowerCase().includes('jam') || timeStr.toLowerCase().includes('hour') || timeStr.toLowerCase().includes('hr')) {
+                        mins *= 60;
+                    }
+                    if (mins > maxMins) {
+                        maxMins = mins;
+                        maxReadyTime = timeStr;
+                    }
+                }
+            }
+        });
+        
+        var deliveryTimeLabel = document.getElementById('checkout-delivery-time');
+        if (deliveryTimeLabel) {
+            deliveryTimeLabel.textContent = 'Arriving in ' + maxReadyTime + ' • Tercepat';
+        }
 
         // Persist cart to localStorage
         try {

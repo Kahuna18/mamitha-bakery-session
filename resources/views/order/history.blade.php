@@ -79,9 +79,17 @@
 
             <!-- Footer Summary: Total & Details/Track Action -->
             <div class="border-t border-gray-200/40 dark:border-gray-700/50 pt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div class="text-center sm:text-left">
-                    <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Total Pembayaran</p>
-                    <p class="text-lg font-black text-amber-800 dark:text-amber-400 mt-0.5">Rp {{ number_format($order->total, 0, ',', '.') }}</p>
+                <div class="text-center sm:text-left flex flex-wrap gap-x-6 gap-y-2">
+                    <div>
+                        <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Total Pembayaran</p>
+                        <p class="text-lg font-black text-amber-800 dark:text-amber-400 mt-0.5">Rp {{ number_format($order->total, 0, ',', '.') }}</p>
+                    </div>
+                    @if($order->payment_method)
+                    <div>
+                        <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Metode Pembayaran</p>
+                        <p class="text-xs font-bold text-gray-700 dark:text-gray-300 mt-1.5">{{ $order->payment_method }}</p>
+                    </div>
+                    @endif
                 </div>
                 
                 <div class="flex items-center gap-2 w-full sm:w-auto">
