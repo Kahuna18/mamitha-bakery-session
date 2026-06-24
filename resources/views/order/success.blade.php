@@ -819,7 +819,7 @@
                     </div>
 
                     <!-- Holographic Bank Card UI -->
-                    <div class="bg-gradient-to-br from-slate-900 via-slate-800 to-gray-900 text-white rounded-[32px] p-6 shadow-2xl relative overflow-hidden border border-white/10 max-w-sm mx-auto">
+                    <div class="bg-gradient-to-br from-slate-900 via-slate-800 to-gray-900 text-white rounded-[32px] p-5 sm:p-6 shadow-2xl relative overflow-hidden border border-white/10 max-w-sm mx-auto">
                         <!-- Glowing aura spots -->
                         <div class="absolute -top-24 -right-24 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
                         <div class="absolute -bottom-24 -left-24 w-48 h-48 bg-rose-500/10 rounded-full blur-3xl pointer-events-none"></div>
@@ -829,7 +829,7 @@
                             <div class="flex justify-between items-start">
                                 <div>
                                     <span class="text-[8px] font-black uppercase tracking-widest text-slate-400">Official Merchant Account</span>
-                                    <h4 class="text-base font-black tracking-tight text-white mt-0.5">Mamitha Bakery</h4>
+                                    <h4 class="text-sm sm:text-base font-black tracking-tight text-white mt-0.5">Mamitha Bakery</h4>
                                 </div>
                                 <div class="w-10 h-8 bg-gradient-to-br from-yellow-300 to-amber-500 rounded-lg shadow-[inset_0_1px_3px_rgba(255,255,255,0.4)] flex items-center justify-center border border-yellow-300/10">
                                     <span class="text-lg opacity-40">💳</span>
@@ -839,16 +839,16 @@
                             <!-- Card Number -->
                             <div class="text-left">
                                 <span class="text-[8px] font-black uppercase tracking-wider text-slate-400">Nomor Rekening BCA</span>
-                                <div class="flex items-center justify-between mt-1 gap-2">
-                                    <span class="font-mono text-xl font-bold tracking-[0.12em] text-white">1234 5678 90</span>
-                                    <button type="button" onclick="copyText('1234567890', 'No. Rekening BCA berhasil disalin')" class="px-3 py-1 bg-white/10 hover:bg-white/20 active:scale-95 border border-white/10 text-white text-[10px] font-extrabold rounded-xl transition cursor-pointer flex items-center gap-1 shadow-sm">
+                                <div class="flex flex-wrap items-center justify-between mt-1 gap-2">
+                                    <span class="font-mono text-lg sm:text-xl font-bold tracking-[0.12em] text-white">1234 5678 90</span>
+                                    <button type="button" onclick="copyText('1234567890', 'No. Rekening BCA berhasil disalin')" class="px-3 py-1 bg-white/10 hover:bg-white/20 active:scale-95 border border-white/10 text-white text-[10px] font-extrabold rounded-xl transition cursor-pointer flex items-center gap-1 shadow-sm shrink-0">
                                         <span>📋</span> Salin
                                     </button>
                                 </div>
                             </div>
 
                             <!-- Card Details -->
-                            <div class="border-t border-white/5 pt-4 flex justify-between items-center text-left">
+                            <div class="border-t border-white/5 pt-4 flex flex-wrap justify-between items-center gap-3 text-left">
                                 <div>
                                     <span class="text-[8px] font-black uppercase tracking-wider text-slate-400">Atas Nama</span>
                                     <p class="text-xs font-bold text-slate-200 mt-0.5">Mamitha Bakery</p>
@@ -856,7 +856,7 @@
                                 <div class="text-right">
                                     <span class="text-[8px] font-black uppercase tracking-wider text-slate-400">Total Transfer</span>
                                     <div class="flex items-center gap-2 justify-end mt-0.5">
-                                        <span class="font-mono text-base font-black text-amber-400">Rp {{ number_format($order->total, 0, ',', '.') }}</span>
+                                        <span class="font-mono text-sm sm:text-base font-black text-amber-400">Rp {{ number_format($order->total, 0, ',', '.') }}</span>
                                         <button type="button" onclick="copyText('{{ (int) $order->total }}', 'Jumlah transfer berhasil disalin')" class="p-1.5 bg-white/10 hover:bg-white/20 active:scale-95 border border-white/10 text-white rounded-lg transition cursor-pointer shadow-sm">
                                             📋
                                         </button>
@@ -906,6 +906,17 @@
                             <span class="px-2 py-0.5 bg-white dark:bg-gray-800 border border-gray-200/50 dark:border-gray-700/80 rounded">Virtual Account BCA/BNI/BRI</span>
                             <span class="px-2 py-0.5 bg-white dark:bg-gray-800 border border-gray-200/50 dark:border-gray-700/80 rounded">Kartu Kredit</span>
                         </div>
+                        
+                        @if($order->snap_token && $order->payment_status === 'unpaid')
+                        <div class="pt-3 border-t border-gray-200/30 dark:border-gray-700/30 mt-3">
+                            <button type="button" onclick="triggerSnapPayment()" class="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-extrabold text-center rounded-2xl shadow-xl transition transform active:scale-95 flex items-center justify-center gap-2 animate-pulse-btn cursor-pointer">
+                                <span>💳</span> Bayar Sekarang (Online Payment)
+                            </button>
+                            <p class="text-[10px] text-gray-400 dark:text-gray-500 text-center mt-2 leading-relaxed">
+                                *Izin redirect diperlukan. Jika halaman pembayaran tidak terbuka otomatis, silakan klik tombol di atas.
+                            </p>
+                        </div>
+                        @endif
                     </div>
                 </div>
                 @endif
@@ -987,20 +998,17 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
     @if($order->snap_token && $order->payment_status === 'unpaid')
-    document.addEventListener("DOMContentLoaded", function() {
-        const payButton = document.getElementById('pay-button');
-        if (payButton) {
-            payButton.addEventListener('click', function () {
-                triggerSnapPayment();
-            });
+    // Expose triggerSnapPayment globally so both the inline card button and the DOM listener can execute it
+    window.triggerSnapPayment = function() {
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        const isSnapLoaded = typeof window.snap !== 'undefined';
 
-            // Automatically open Snap popup on load for seamless payment
-            setTimeout(function() {
-                triggerSnapPayment();
-            }, 800);
-        }
-
-        function triggerSnapPayment() {
+        if (isMobile || !isSnapLoaded) {
+            // For mobile or if snap.js is blocked, redirect parent page directly to the Midtrans check-out site
+            const snapUrl = '{{ config('services.midtrans.is_production') ? 'https://app.midtrans.com/snap/v2/vtweb/' : 'https://app.sandbox.midtrans.com/snap/v2/vtweb/' }}' + '{{ $order->snap_token }}';
+            window.location.href = snapUrl;
+        } else {
+            // For desktop, open the snap modal
             window.snap.pay('{{ $order->snap_token }}', {
                 onSuccess: function(result){
                     console.log('payment success!', result);
@@ -1019,6 +1027,20 @@
                 }
             });
         }
+    };
+
+    document.addEventListener("DOMContentLoaded", function() {
+        const payButton = document.getElementById('pay-button');
+        if (payButton) {
+            payButton.addEventListener('click', function () {
+                triggerSnapPayment();
+            });
+        }
+
+        // Automatically open Snap payment redirect/popup on load
+        setTimeout(function() {
+            triggerSnapPayment();
+        }, 800);
 
         function confirmPaymentOnServer(orderId) {
             fetch('{{ route('order.confirm-payment') }}', {

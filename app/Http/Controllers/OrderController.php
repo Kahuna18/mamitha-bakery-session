@@ -364,7 +364,93 @@ class OrderController extends Controller
 
     public function success($id)
     {
-        $order = Order::with(['customer', 'items.product'])->findOrFail($id);
+        $order = Order::with(['customer', 'items.product', 'items.variant'])->findOrFail($id);
+        
+        // Regenerate snap token on-the-fly if it is missing for Midtrans payments
+        if (!$order->snap_token && $order->payment_status === 'unpaid' && (stripos($order->payment_method, 'midtrans') !== false)) {
+            try {
+                $this->initMidtrans();
+                
+                $midtransItems = [];
+                foreach ($order->items as $item) {
+                    $product = $item->product;
+                    $variant = $item->variant;
+                    
+                    $name = $product->name;
+                    if ($variant) {
+                        $name .= ' (' . $variant->name . ')';
+                    }
+                    
+                    if (strlen($name) > 50) {
+                        $name = substr($name, 0, 47) . '...';
+                    }
+                    
+                    $midtransItems[] = [
+                        'id' => 'prod-' . $item->product_id . ($item->variant_id ? '-v' . $item->variant_id : ''),
+                        'price' => (int) $item->price,
+                        'quantity' => (int) $item->quantity,
+                        'name' => $name,
+                    ];
+                }
+                
+                $deliveryFeeEnabled = Setting::getValue('delivery_fee_enabled', 'true') === 'true';
+                $deliveryFeeAmount = (int) Setting::getValue('delivery_fee_amount', 10000);
+                if ($order->type === 'delivery' && $deliveryFeeEnabled) {
+                    $midtransItems[] = [
+                        'id' => 'delivery-fee',
+                        'price' => (int) $deliveryFeeAmount,
+                        'quantity' => 1,
+                        'name' => 'Ongkos Kirim / Delivery Fee',
+                    ];
+                }
+                
+                $discountEnabled = Setting::getValue('discount_enabled', 'true') === 'true';
+                $discountPercentage = (int) Setting::getValue('discount_percentage', 10);
+                if ($discountEnabled) {
+                    $subtotalAmount = 0;
+                    foreach ($order->items as $item) {
+                        $subtotalAmount += $item->price * $item->quantity;
+                    }
+                    $discountAmt = round($subtotalAmount * $discountPercentage / 100);
+                    if ($discountAmt > 0) {
+                        $midtransItems[] = [
+                            'id' => 'discount',
+                            'price' => -((int) $discountAmt),
+                            'quantity' => 1,
+                            'name' => 'Diskon Promo (' . $discountPercentage . '%)',
+                        ];
+                    }
+                }
+
+                $params = [
+                    'transaction_details' => [
+                        'order_id' => $order->order_number . '-' . time(),
+                        'gross_amount' => (int) $order->total,
+                    ],
+                    'item_details' => $midtransItems,
+                    'customer_details' => [
+                        'first_name' => $order->customer->name,
+                        'phone' => $order->customer->phone,
+                        'billing_address' => [
+                            'first_name' => $order->customer->name,
+                            'phone' => $order->customer->phone,
+                            'address' => $order->type === 'delivery' ? ($order->address ?? '') : 'Ambil di Toko',
+                        ],
+                        'shipping_address' => [
+                            'first_name' => $order->customer->name,
+                            'phone' => $order->customer->phone,
+                            'address' => $order->type === 'delivery' ? ($order->address ?? '') : 'Ambil di Toko',
+                        ],
+                    ],
+                ];
+
+                $snapToken = \Midtrans\Snap::getSnapToken($params);
+                $order->update(['snap_token' => $snapToken]);
+            } catch (\Exception $e) {
+                \Log::error('Midtrans Snap Regeneration Error for order ' . $order->order_number . ': ' . $e->getMessage());
+            }
+        }
+
         $whatsappUrl = session('whatsapp_url');
         $storeWhatsapp = Setting::getValue('store_whatsapp');
 

@@ -31,15 +31,8 @@ class OrderController extends Controller
 
         if ($request->filled('tab')) {
             $tab = $request->tab;
-            if ($tab === 'pending_payment') {
-                $query->where('status', 'pending')
-                      ->where('payment_status', 'unpaid')
-                      ->where(function($q) {
-                          $q->where('payment_method', 'like', '%Transfer Bank%')
-                            ->orWhere('payment_method', 'like', '%Online Payment%')
-                            ->orWhere('payment_method', 'like', '%Midtrans%')
-                            ->orWhere('payment_method', 'like', '%- %');
-                      });
+            if ($tab === 'pending' || $tab === 'pending_payment') {
+                $query->where('status', 'pending');
             } elseif ($tab === 'kitchen') {
                 $query->whereIn('status', ['confirmed', 'producing', 'ready']);
             } elseif ($tab === 'completed') {
