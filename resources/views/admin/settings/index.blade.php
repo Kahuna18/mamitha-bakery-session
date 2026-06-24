@@ -1078,6 +1078,32 @@
                 </div>
             </div>
 
+            {{-- Rekening Bank Manual --}}
+            <div class="menu-item" onclick="toggleExpand('bankPanel', this)">
+                <div class="menu-icon">💳</div>
+                <div class="menu-item-info">
+                    <div class="menu-item-title">Rekening Bank Manual</div>
+                    <div class="menu-item-subtitle">Nama bank, nomor rekening, atas nama</div>
+                </div>
+                <svg class="menu-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+            </div>
+            <div class="expand-panel" id="bankPanel">
+                <div class="form-group">
+                    <label class="form-label">Nama Bank</label>
+                    <input type="text" name="bank_name" value="{{ $settings['bank_name'] ?? 'BCA' }}" class="form-input" placeholder="BCA">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Nomor Rekening</label>
+                    <input type="text" name="bank_account_number" value="{{ $settings['bank_account_number'] ?? '1234 5678 90' }}" class="form-input" placeholder="1234 5678 90">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Atas Nama (Pemilik Rekening)</label>
+                    <input type="text" name="bank_account_holder" value="{{ $settings['bank_account_holder'] ?? 'Mamitha Bakery' }}" class="form-input" placeholder="Mamitha Bakery">
+                </div>
+            </div>
+
             {{-- Tentang Toko --}}
             <div class="menu-item" onclick="toggleExpand('aboutPanel', this)">
                 <div class="menu-icon">📝</div>

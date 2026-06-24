@@ -107,10 +107,14 @@ class MemberRankTest extends TestCase
 
         $response = $this->post(route('order.store'), $payload);
 
-        // Assert redirect to success page and points earned flashed to session
+        // Assert redirect to success page
         $response->assertRedirect();
-        $response->assertSessionHas('points_earned', 3);
-        $response->assertSessionMissing('level_up'); // No level up yet (13 points total is still Bronze)
+        $response->assertSessionMissing('points_earned');
+        $this->assertEquals(10, $customer->fresh()->points);
+
+        // Simulate payment completion
+        $order = \App\Models\Order::latest()->first();
+        $order->update(['payment_status' => 'paid']);
 
         // Assert points updated in database
         $customer->refresh();
@@ -149,14 +153,14 @@ class MemberRankTest extends TestCase
 
         $response = $this->post(route('order.store'), $payload);
 
-        // Assert redirect, points earned and level_up flashed
+        // Assert redirect
         $response->assertRedirect();
-        $response->assertSessionHas('points_earned', 6);
-        $response->assertSessionHas('level_up', [
-            'old' => 'Bronze',
-            'new' => 'Silver',
-            'badge' => '🥈',
-        ]);
+        $response->assertSessionMissing('points_earned');
+        $this->assertEquals(95, $customer->fresh()->points);
+
+        // Simulate payment completion
+        $order = \App\Models\Order::latest()->first();
+        $order->update(['payment_status' => 'paid']);
 
         // Assert database points and rank
         $customer->refresh();

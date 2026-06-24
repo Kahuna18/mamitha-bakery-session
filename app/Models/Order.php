@@ -10,7 +10,7 @@ class Order extends Model
         'order_number', 'customer_id', 'order_date', 'pickup_date',
         'type', 'status', 'notes', 'payment_proof',
         'payment_status', 'payment_method', 'snap_token', 'total', 'address',
-        'latitude', 'longitude', 'google_maps_link'
+        'latitude', 'longitude', 'google_maps_link', 'points_awarded'
     ];
 
     protected $casts = [
@@ -18,6 +18,40 @@ class Order extends Model
         'pickup_date' => 'date',
         'total' => 'decimal:2',
     ];
+
+    protected static function booted()
+    {
+        static::updated(function ($order) {
+            if ($order->wasChanged('payment_status') && $order->payment_status === 'paid' && !$order->points_awarded) {
+                $order->awardPointsToCustomer();
+            }
+        });
+    }
+
+    public function awardPointsToCustomer()
+    {
+        $customer = $this->customer;
+        if ($customer && $customer->is_member && $customer->user_id !== null) {
+            $pointsEarned = (int) floor($this->total / 10000);
+            if ($pointsEarned > 0) {
+                $oldRank = $customer->rank_name;
+                $customer->increment('points', $pointsEarned);
+                $newRank = $customer->fresh()->rank_name;
+
+                // Flash points info to session for display on success page/modal
+                session()->flash('points_earned', $pointsEarned);
+
+                if ($newRank !== $oldRank) {
+                    session()->flash('level_up', [
+                        'old' => $oldRank,
+                        'new' => $newRank,
+                        'badge' => $customer->fresh()->rank_badge
+                    ]);
+                }
+            }
+        }
+        $this->updateQuietly(['points_awarded' => true]);
+    }
 
     public function customer()
     {

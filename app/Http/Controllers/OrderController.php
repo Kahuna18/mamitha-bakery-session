@@ -208,26 +208,6 @@ class OrderController extends Controller
                 : null,
         ]);
 
-        // Member points accumulation & level up detection
-        // Only registered member customers (who have a user account) get points and rank from purchases.
-        if ($customer->is_member && $customer->user_id !== null) {
-            $pointsEarned = (int) floor($total / 10000);
-            if ($pointsEarned > 0) {
-                $oldRank = $customer->rank_name;
-                $customer->increment('points', $pointsEarned);
-                $newRank = $customer->fresh()->rank_name;
-
-                session()->flash('points_earned', $pointsEarned);
-
-                if ($newRank !== $oldRank) {
-                    session()->flash('level_up', [
-                        'old' => $oldRank,
-                        'new' => $newRank,
-                        'badge' => $customer->fresh()->rank_badge
-                    ]);
-                }
-            }
-        }
 
         foreach ($orderItems as $item) {
             $order->items()->create($item);

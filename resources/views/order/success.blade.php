@@ -829,7 +829,7 @@
                             <div class="flex justify-between items-start">
                                 <div>
                                     <span class="text-[8px] font-black uppercase tracking-widest text-slate-400">Official Merchant Account</span>
-                                    <h4 class="text-sm sm:text-base font-black tracking-tight text-white mt-0.5">Mamitha Bakery</h4>
+                                    <h4 class="text-sm sm:text-base font-black tracking-tight text-white mt-0.5">{{ \App\Models\Setting::getValue('bank_account_holder', 'Mamitha Bakery') }}</h4>
                                 </div>
                                 <div class="w-10 h-8 bg-gradient-to-br from-yellow-300 to-amber-500 rounded-lg shadow-[inset_0_1px_3px_rgba(255,255,255,0.4)] flex items-center justify-center border border-yellow-300/10">
                                     <span class="text-lg opacity-40">💳</span>
@@ -838,10 +838,10 @@
 
                             <!-- Card Number -->
                             <div class="text-left">
-                                <span class="text-[8px] font-black uppercase tracking-wider text-slate-400">Nomor Rekening BCA</span>
+                                <span class="text-[8px] font-black uppercase tracking-wider text-slate-400">Nomor Rekening {{ \App\Models\Setting::getValue('bank_name', 'BCA') }}</span>
                                 <div class="flex flex-wrap items-center justify-between mt-1 gap-2">
-                                    <span class="font-mono text-lg sm:text-xl font-bold tracking-[0.12em] text-white">1234 5678 90</span>
-                                    <button type="button" onclick="copyText('1234567890', 'No. Rekening BCA berhasil disalin')" class="px-3 py-1 bg-white/10 hover:bg-white/20 active:scale-95 border border-white/10 text-white text-[10px] font-extrabold rounded-xl transition cursor-pointer flex items-center gap-1 shadow-sm shrink-0">
+                                    <span class="font-mono text-lg sm:text-xl font-bold tracking-[0.12em] text-white">{{ \App\Models\Setting::getValue('bank_account_number', '1234 5678 90') }}</span>
+                                    <button type="button" onclick="copyText('{{ str_replace(' ', '', \App\Models\Setting::getValue('bank_account_number', '1234567890')) }}', 'No. Rekening {{ \App\Models\Setting::getValue('bank_name', 'BCA') }} berhasil disalin')" class="px-3 py-1 bg-white/10 hover:bg-white/20 active:scale-95 border border-white/10 text-white text-[10px] font-extrabold rounded-xl transition cursor-pointer flex items-center gap-1 shadow-sm shrink-0">
                                         <span>📋</span> Salin
                                     </button>
                                 </div>
@@ -851,7 +851,7 @@
                             <div class="border-t border-white/5 pt-4 flex flex-wrap justify-between items-center gap-3 text-left">
                                 <div>
                                     <span class="text-[8px] font-black uppercase tracking-wider text-slate-400">Atas Nama</span>
-                                    <p class="text-xs font-bold text-slate-200 mt-0.5">Mamitha Bakery</p>
+                                    <p class="text-xs font-bold text-slate-200 mt-0.5">{{ \App\Models\Setting::getValue('bank_account_holder', 'Mamitha Bakery') }}</p>
                                 </div>
                                 <div class="text-right">
                                     <span class="text-[8px] font-black uppercase tracking-wider text-slate-400">Total Transfer</span>
@@ -870,7 +870,7 @@
                     <div class="max-w-lg mx-auto text-xs text-gray-600 dark:text-gray-300 leading-relaxed space-y-2 text-left bg-gray-50 dark:bg-gray-900/40 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-inner">
                         <p class="flex gap-2">
                             <span class="font-black text-amber-600">1.</span>
-                            <span>Lakukan transfer sejumlah <b class="text-gray-800 dark:text-gray-100 font-mono">Rp {{ number_format($order->total, 0, ',', '.') }}</b> ke rekening BCA di atas.</span>
+                            <span>Lakukan transfer sejumlah <b class="text-gray-800 dark:text-gray-100 font-mono">Rp {{ number_format($order->total, 0, ',', '.') }}</b> ke rekening {{ \App\Models\Setting::getValue('bank_name', 'BCA') }} di atas.</span>
                         </p>
                         <p class="flex gap-2">
                             <span class="font-black text-amber-600">2.</span>

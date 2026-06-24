@@ -42,6 +42,9 @@ class SettingController extends Controller
             'courier_phone' => 'nullable|string|max:20',
             'baking_duration_minutes' => 'required|integer|min:1',
             'delivery_duration_minutes' => 'required|integer|min:1',
+            'bank_name' => 'required|string|max:100',
+            'bank_account_number' => 'required|string|max:50',
+            'bank_account_holder' => 'required|string|max:100',
         ]);
 
         $validated['is_closed'] = $request->input('is_closed') == '1' ? 'true' : 'false';
