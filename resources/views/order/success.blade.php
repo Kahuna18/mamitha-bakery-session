@@ -489,6 +489,7 @@
         
         <!-- Main Success Tracker Card -->
         <div class="bg-white dark:bg-gray-800 rounded-3xl border border-amber-100/50 dark:border-gray-700/50 shadow-xl overflow-hidden">
+            @if(!$isPendingPayment)
             @if($showMap)
             <!-- Leaflet Map (Header of Card) -->
             <div class="relative">
@@ -1101,7 +1102,7 @@
 
         // Bakery Marker (always show it so user knows store location)
         bakeryMarker = L.marker(storeLocation).addTo(map)
-            .bindPopup('🥐 <b>Mamitha Bakery Sleman</b><br>Jl. Magelang KM 14, Sleman, Yogyakarta');
+            .bindPopup('🥐 <b>Mamitha Bakery Sleman</b><br>{{ addslashes(\App\Models\Setting::getValue('store_address', 'Jl. Magelang KM 14, Sleman, Yogyakarta')) }}');
 
         if (orderType === 'pickup') {
             bakeryMarker.openPopup();

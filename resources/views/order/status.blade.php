@@ -276,7 +276,7 @@
             }).addTo(map);
 
             const bakeryMarker = L.marker(storeLocation).addTo(map)
-                .bindPopup('🥐 <b>Mamitha Bakery Sleman</b><br>Jl. Magelang KM 14, Sleman, Yogyakarta');
+                .bindPopup('🥐 <b>Mamitha Bakery Sleman</b><br>{{ addslashes(\App\Models\Setting::getValue('store_address', 'Jl. Magelang KM 14, Sleman, Yogyakarta')) }}');
 
             let customerMarker = null;
             if (isPickup) {

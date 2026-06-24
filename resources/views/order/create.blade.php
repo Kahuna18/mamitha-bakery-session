@@ -2435,7 +2435,7 @@
 
         // Set store marker
         L.marker(storeLocation).addTo(map)
-            .bindPopup('🥐 Mamitha Bakery')
+            .bindPopup('🥐 <b>Mamitha Bakery</b><br>{{ addslashes(\App\Models\Setting::getValue('store_address', 'Jl. Magelang KM 14, Sleman, Yogyakarta')) }}')
             .openPopup();
 
         // Set user/delivery draggable marker
@@ -2475,7 +2475,7 @@
             }).addTo(pickupMap);
 
             L.marker(storeLocation).addTo(pickupMap)
-                .bindPopup('🥐 <b>Mamitha Bakery Sleman</b><br>Jl. Magelang KM 14, Sleman, Yogyakarta')
+                .bindPopup('🥐 <b>Mamitha Bakery Sleman</b><br>{{ addslashes(\App\Models\Setting::getValue('store_address', 'Jl. Magelang KM 14, Sleman, Yogyakarta')) }}')
                 .openPopup();
 
             // Trigger invalidateSize after initialization for proper rendering
