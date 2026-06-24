@@ -13,33 +13,53 @@
 <!-- Tab Bar Navigation -->
 <div class="flex border-b border-gray-200 dark:border-gray-700/50 mb-6 overflow-x-auto scrollbar-none gap-2">
     @php
-        $activeTab = request('tab', 'all');
-        if ($activeTab === 'pending_payment') {
-            $activeTab = 'pending';
-        }
+        $activeTab = request('tab', 'incoming');
         $tabCounts = [
-            'pending' => \App\Models\Order::where('status', 'pending')->count()
+            'incoming' => \App\Models\Order::where(function($q) {
+                $q->where('payment_status', 'paid')
+                  ->whereIn('status', ['pending', 'confirmed']);
+            })->orWhere(function($q) {
+                $q->whereIn('payment_method', ['Cash On Delivery / COD', 'WhatsApp Confirmation'])
+                  ->whereIn('status', ['pending', 'confirmed']);
+            })->count(),
+            
+            'pending_payment' => \App\Models\Order::where('status', 'pending')
+                ->where('payment_status', 'unpaid')
+                ->whereNotIn('payment_method', ['Cash On Delivery / COD', 'WhatsApp Confirmation'])
+                ->count(),
+            
+            'kitchen' => \App\Models\Order::whereIn('status', ['producing', 'ready'])->count(),
         ];
     @endphp
     
-    <a href="{{ route('admin.orders.index', array_merge(request()->except('page'), ['tab' => 'all'])) }}" 
-       class="pb-3 px-4 text-sm font-semibold border-b-2 transition-all whitespace-nowrap {{ $activeTab === 'all' ? 'border-amber-600 text-amber-700 dark:text-amber-400 dark:border-amber-500 font-bold' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200' }}">
-        Semua Pesanan
+    <a href="{{ route('admin.orders.index', array_merge(request()->except('page'), ['tab' => 'incoming'])) }}" 
+       class="pb-3 px-4 text-sm font-semibold border-b-2 transition-all whitespace-nowrap relative flex items-center gap-1.5 {{ $activeTab === 'incoming' ? 'border-amber-600 text-amber-700 dark:text-amber-400 dark:border-amber-500 font-bold' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200' }}">
+        Order Masuk
+        @if($tabCounts['incoming'] > 0)
+            <span class="inline-flex items-center justify-center px-2 py-0.5 text-[10px] font-black leading-none text-white bg-amber-600 rounded-full animate-pulse shadow-sm">
+                {{ $tabCounts['incoming'] }}
+            </span>
+        @endif
     </a>
     
-    <a href="{{ route('admin.orders.index', array_merge(request()->except('page'), ['tab' => 'pending'])) }}" 
-       class="pb-3 px-4 text-sm font-semibold border-b-2 transition-all whitespace-nowrap relative flex items-center gap-1.5 {{ $activeTab === 'pending' ? 'border-amber-600 text-amber-700 dark:text-amber-400 dark:border-amber-500 font-bold' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200' }}">
-        Menunggu / Pending
-        @if($tabCounts['pending'] > 0)
-            <span class="inline-flex items-center justify-center px-2 py-0.5 text-[10px] font-black leading-none text-white bg-red-600 dark:bg-red-500 rounded-full animate-pulse shadow-sm">
-                {{ $tabCounts['pending'] }}
+    <a href="{{ route('admin.orders.index', array_merge(request()->except('page'), ['tab' => 'pending_payment'])) }}" 
+       class="pb-3 px-4 text-sm font-semibold border-b-2 transition-all whitespace-nowrap relative flex items-center gap-1.5 {{ $activeTab === 'pending_payment' ? 'border-amber-600 text-amber-700 dark:text-amber-400 dark:border-amber-500 font-bold' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200' }}">
+        Pending Pembayaran
+        @if($tabCounts['pending_payment'] > 0)
+            <span class="inline-flex items-center justify-center px-2 py-0.5 text-[10px] font-black leading-none text-white bg-red-650 rounded-full shadow-sm">
+                {{ $tabCounts['pending_payment'] }}
             </span>
         @endif
     </a>
     
     <a href="{{ route('admin.orders.index', array_merge(request()->except('page'), ['tab' => 'kitchen'])) }}" 
-       class="pb-3 px-4 text-sm font-semibold border-b-2 transition-all whitespace-nowrap {{ $activeTab === 'kitchen' ? 'border-amber-600 text-amber-700 dark:text-amber-400 dark:border-amber-500 font-bold' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200' }}">
+       class="pb-3 px-4 text-sm font-semibold border-b-2 transition-all whitespace-nowrap relative flex items-center gap-1.5 {{ $activeTab === 'kitchen' ? 'border-amber-600 text-amber-700 dark:text-amber-400 dark:border-amber-500 font-bold' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200' }}">
         Dapur & Produksi
+        @if($tabCounts['kitchen'] > 0)
+            <span class="inline-flex items-center justify-center px-2 py-0.5 text-[10px] font-black leading-none text-white bg-blue-600 rounded-full shadow-sm">
+                {{ $tabCounts['kitchen'] }}
+            </span>
+        @endif
     </a>
     
     <a href="{{ route('admin.orders.index', array_merge(request()->except('page'), ['tab' => 'completed'])) }}" 
@@ -51,10 +71,16 @@
        class="pb-3 px-4 text-sm font-semibold border-b-2 transition-all whitespace-nowrap {{ $activeTab === 'cancelled' ? 'border-amber-600 text-amber-700 dark:text-amber-400 dark:border-amber-500 font-bold' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200' }}">
         Dibatalkan
     </a>
+
+    <a href="{{ route('admin.orders.index', array_merge(request()->except('page'), ['tab' => 'all'])) }}" 
+       class="pb-3 px-4 text-sm font-semibold border-b-2 transition-all whitespace-nowrap {{ $activeTab === 'all' ? 'border-amber-600 text-amber-700 dark:text-amber-400 dark:border-amber-500 font-bold' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200' }}">
+        Semua Pesanan
+    </a>
 </div>
 
 <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
     <form method="GET" class="flex flex-col md:flex-row gap-3">
+        <input type="hidden" name="tab" value="{{ $activeTab }}">
         <input type="text" name="search" placeholder="Cari nomor order/nama..." value="{{ request('search') }}" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm">
         <select name="status" class="px-4 py-2 border border-gray-300 rounded-lg text-sm">
             <option value="">Semua Status</option>

@@ -203,14 +203,43 @@ class DashboardController extends Controller
     public function checkNewOrders(\Illuminate\Http\Request $request)
     {
         $lastOrderId = $request->get('last_order_id', 0);
-        
-        $newOrdersCount = Order::where('id', '>', $lastOrderId)
-            ->where('status', 'pending')
-            ->count();
+        $lastPollTime = $request->get('last_poll_time');
+
+        $query = Order::query();
+
+        if ($lastPollTime) {
+            $parsedTime = Carbon::parse($lastPollTime);
+            $query->where(function ($q) use ($parsedTime) {
+                $q->where('updated_at', '>', $parsedTime)
+                    ->where(function ($sub) {
+                        $sub->where(function ($sub2) {
+                            $sub2->where('payment_status', 'paid')
+                                 ->whereIn('status', ['pending', 'confirmed']);
+                        })->orWhere(function ($sub2) {
+                            $sub2->whereIn('payment_method', ['Cash On Delivery / COD', 'WhatsApp Confirmation'])
+                                 ->whereIn('status', ['pending', 'confirmed']);
+                        });
+                    });
+            });
+        } else {
+            $query->where('id', '>', $lastOrderId)
+                ->where(function ($q) {
+                    $q->where(function ($sub) {
+                        $sub->where('payment_status', 'paid')
+                            ->whereIn('status', ['pending', 'confirmed']);
+                    })->orWhere(function ($sub) {
+                        $sub->whereIn('payment_method', ['Cash On Delivery / COD', 'WhatsApp Confirmation'])
+                            ->whereIn('status', ['pending', 'confirmed']);
+                    });
+                });
+        }
+
+        $newOrdersCount = $query->count();
             
         return response()->json([
             'new_orders_count' => $newOrdersCount,
-            'latest_order_id' => Order::max('id') ?: 0
+            'latest_order_id' => Order::max('id') ?: 0,
+            'latest_poll_time' => now()->toIso8601String()
         ]);
     }
 }

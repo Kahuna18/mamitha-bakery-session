@@ -29,18 +29,33 @@ class OrderController extends Controller
             }
         }
 
-        if ($request->filled('tab')) {
-            $tab = $request->tab;
-            if ($tab === 'pending' || $tab === 'pending_payment') {
-                $query->where('status', 'pending');
+        $tab = $request->input('tab', 'incoming');
+
+        if ($tab !== 'all') {
+            if ($tab === 'incoming') {
+                $query->where(function ($q) {
+                    $q->where(function ($sub) {
+                        $sub->where('payment_status', 'paid')
+                            ->whereIn('status', ['pending', 'confirmed']);
+                    })->orWhere(function ($sub) {
+                        $sub->whereIn('payment_method', ['Cash On Delivery / COD', 'WhatsApp Confirmation'])
+                            ->whereIn('status', ['pending', 'confirmed']);
+                    });
+                });
+            } elseif ($tab === 'pending' || $tab === 'pending_payment') {
+                $query->where('status', 'pending')
+                    ->where('payment_status', 'unpaid')
+                    ->whereNotIn('payment_method', ['Cash On Delivery / COD', 'WhatsApp Confirmation']);
             } elseif ($tab === 'kitchen') {
-                $query->whereIn('status', ['confirmed', 'producing', 'ready']);
+                $query->whereIn('status', ['producing', 'ready']);
             } elseif ($tab === 'completed') {
                 $query->where('status', 'done');
             } elseif ($tab === 'cancelled') {
                 $query->where('status', 'cancelled');
             }
-        } elseif ($request->filled('status')) {
+        }
+
+        if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 

@@ -392,6 +392,7 @@
 
     <script>
         let lastOrderId = {{ \App\Models\Order::max('id') ?: 0 }};
+        let lastPollTime = "{{ now()->toIso8601String() }}";
         let adminAlarmInterval = null;
         let adminAudioCtx = null;
         
@@ -470,12 +471,18 @@
         
         async function checkNewOrdersForAdmin() {
             try {
-                const response = await fetch(`{{ route('admin.check-new-orders') }}?last_order_id=${lastOrderId}`);
+                const response = await fetch(`{{ route('admin.check-new-orders') }}?last_order_id=${lastOrderId}&last_poll_time=${encodeURIComponent(lastPollTime)}`);
                 if (!response.ok) throw new Error('Response error');
                 
                 const data = await response.json();
                 if (data.new_orders_count > 0) {
                     startAdminAlarm();
+                }
+                if (data.latest_order_id) {
+                    lastOrderId = data.latest_order_id;
+                }
+                if (data.latest_poll_time) {
+                    lastPollTime = data.latest_poll_time;
                 }
             } catch (error) {
                 console.error('Error checking new orders:', error);
