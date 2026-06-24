@@ -215,4 +215,56 @@ class AdminOrderTabsTest extends TestCase
             'new_orders_count' => 1,
         ]);
     }
+
+    public function test_admin_can_reset_tab_orders()
+    {
+        // Create an unpaid midtrans order (pending_payment tab)
+        $unpaidMidtrans = Order::create([
+            'order_number' => 'MTH-101',
+            'customer_id' => $this->customer->id,
+            'order_date' => now(),
+            'pickup_date' => now()->addDay(),
+            'type' => 'pickup',
+            'status' => 'pending',
+            'payment_method' => 'Online Payment / Midtrans',
+            'payment_status' => 'unpaid',
+            'total' => 10000,
+        ]);
+
+        // Create a paid midtrans order (incoming tab)
+        $paidMidtrans = Order::create([
+            'order_number' => 'MTH-102',
+            'customer_id' => $this->customer->id,
+            'order_date' => now(),
+            'pickup_date' => now()->addDay(),
+            'type' => 'pickup',
+            'status' => 'pending',
+            'payment_method' => 'Online Payment / Midtrans',
+            'payment_status' => 'paid',
+            'total' => 10000,
+        ]);
+
+        // Send reset request for pending_payment tab
+        $response = $this->actingAs($this->admin)->post(route('admin.orders.reset-tab'), [
+            'tab' => 'pending_payment',
+        ]);
+
+        $response->assertStatus(302);
+        $response->assertSessionHas('success');
+
+        // Assert unpaid order is deleted but paid order still exists
+        $this->assertDatabaseMissing('orders', ['order_number' => 'MTH-101']);
+        $this->assertDatabaseHas('orders', ['order_number' => 'MTH-102']);
+
+        // Send reset request for incoming tab
+        $response2 = $this->actingAs($this->admin)->post(route('admin.orders.reset-tab'), [
+            'tab' => 'incoming',
+        ]);
+
+        $response2->assertStatus(302);
+        $response2->assertSessionHas('success');
+
+        // Assert paid order is also deleted now
+        $this->assertDatabaseMissing('orders', ['order_number' => 'MTH-102']);
+    }
 }

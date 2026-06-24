@@ -36,7 +36,7 @@
                     @elseif($order->status == 'confirmed') bg-blue-100 text-blue-700
                     @elseif($order->status == 'producing') bg-orange-100 text-orange-700
                     @elseif($order->status == 'ready') bg-green-100 text-green-700
-                    @elseif($order->status == 'done') bg-gray-100 text-gray-700
+                    @elseif($order->status == 'done') bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300
                     @else bg-red-100 text-red-700 @endif">
                     {{ $order->statusLabel() }}
                 </span>

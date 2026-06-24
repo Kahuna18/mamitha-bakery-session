@@ -782,6 +782,35 @@
                             </div>
                         </div>
 
+                        <!-- Pickup Location (Shows only for pickup) -->
+                        <div id="pickup-details-section" class="{{ !(auth()->check() && auth()->user()->customer && auth()->user()->customer->address) ? '' : 'hidden' }} mt-6 space-y-4">
+                            <h3 class="font-bold text-gray-700 dark:text-gray-300 text-sm tracking-wide uppercase">Lokasi Pengambilan</h3>
+                            
+                            <!-- Static Store Location Info -->
+                            <div class="bg-amber-500/5 dark:bg-amber-500/10 p-4 rounded-2xl border border-amber-500/20 flex flex-col gap-2">
+                                <div class="flex items-start gap-3">
+                                    <span class="text-2xl mt-0.5">🏪</span>
+                                    <div>
+                                        <h4 class="text-xs font-black text-amber-800 dark:text-amber-400 uppercase tracking-wide">Mamitha Bakery Sleman</h4>
+                                        <p class="text-xs text-gray-600 dark:text-gray-300 leading-relaxed mt-1">
+                                            {{ \App\Models\Setting::getValue('store_address') ?: 'Jl. Magelang No.KM. 14, Sleman, Yogyakarta' }}
+                                        </p>
+                                    </div>
+                                </div>
+                                @php
+                                    $pickupGmapsLink = \App\Models\Setting::getValue('store_gmaps_link') ?: "https://www.google.com/maps?q={$storeLat},{$storeLng}";
+                                @endphp
+                                <a href="{{ $pickupGmapsLink }}" target="_blank" class="self-start mt-2 px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-[11px] uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center gap-1.5 active:scale-[0.98]">
+                                    🗺️ Buka di Google Maps &rarr;
+                                </a>
+                            </div>
+
+                            <!-- Map Visual Container -->
+                            <div class="w-full rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden shadow-sm">
+                                <div id="pickup-map-container" style="height: 200px; z-index: 10;"></div>
+                            </div>
+                        </div>
+
                         <!-- Delivery Address & Leaflet Map (Shows only for delivery) -->
                         <div id="delivery-details-section" class="{{ (auth()->check() && auth()->user()->customer && auth()->user()->customer->address) ? '' : 'hidden' }} mt-6 space-y-4">
                             <h3 class="font-bold text-gray-700 dark:text-gray-300 text-sm tracking-wide uppercase">Detail Lokasi</h3>
@@ -2244,6 +2273,7 @@
             // Trigger map resize if delivery is selected
             setTimeout(() => {
                 if (map) map.invalidateSize();
+                if (pickupMap) pickupMap.invalidateSize();
             }, 300);
         }
     }
@@ -2279,11 +2309,13 @@
     // Update delivery selection
     function updateDeliveryType(type) {
         const deliverySection = document.getElementById('delivery-details-section');
+        const pickupSection = document.getElementById('pickup-details-section');
         const addressText = document.getElementById('address-text');
         const locLabel = document.getElementById('selected-address-summary');
         
         if (type === 'delivery') {
             deliverySection.classList.remove('hidden');
+            if (pickupSection) pickupSection.classList.add('hidden');
             addressText.setAttribute('required', 'required');
             if (locLabel) {
                 updateAddressSummary(addressText.value);
@@ -2293,10 +2325,14 @@
             }, 100);
         } else {
             deliverySection.classList.add('hidden');
+            if (pickupSection) pickupSection.classList.remove('hidden');
             addressText.removeAttribute('required');
             if (locLabel) {
                 locLabel.textContent = 'Ambil di Outlet Mamitha (Sleman)';
             }
+            setTimeout(() => {
+                if (pickupMap) pickupMap.invalidateSize();
+            }, 100);
         }
         updateCartState(null);
     }
@@ -2334,6 +2370,7 @@
     // Leaflet.js Map Integration
     // =========================================================================
     let map, marker;
+    let pickupMap;
     const storeLocation = [{{ $storeLat }}, {{ $storeLng }}]; // Mamitha Bakery Coordinate
 
     window.addEventListener('load', () => {
@@ -2423,6 +2460,29 @@
             document.getElementById('longitude').value = e.latlng.lng;
             reverseGeocode(e.latlng.lat, e.latlng.lng);
         });
+
+        // Initialize Pickup Map
+        const pickupMapEl = document.getElementById('pickup-map-container');
+        if (pickupMapEl) {
+            pickupMap = L.map('pickup-map-container', {
+                dragging: !L.Browser.mobile,
+                scrollWheelZoom: false
+            }).setView(storeLocation, 16);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(pickupMap);
+
+            L.marker(storeLocation).addTo(pickupMap)
+                .bindPopup('🥐 <b>Mamitha Bakery Sleman</b><br>Jl. Magelang KM 14, Sleman, Yogyakarta')
+                .openPopup();
+
+            // Trigger invalidateSize after initialization for proper rendering
+            setTimeout(() => {
+                pickupMap.invalidateSize();
+            }, 300);
+        }
     }
 
     // Free OpenStreetMap reverse geocoding via Nominatim API

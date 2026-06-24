@@ -59,6 +59,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
 
     // Orders
     Route::get('/orders', [AdminOrder::class, 'index'])->name('orders.index');
+    Route::post('/orders/reset-tab', [AdminOrder::class, 'resetTab'])->name('orders.reset-tab');
     Route::get('/orders/{order}', [AdminOrder::class, 'show'])->name('orders.show');
     Route::post('/orders/{order}/status', [AdminOrder::class, 'updateStatus'])->name('orders.update-status');
     Route::get('/orders/{order}/invoice', [AdminOrder::class, 'invoice'])->name('orders.invoice');

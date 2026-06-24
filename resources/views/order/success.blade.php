@@ -234,6 +234,7 @@
     $storeLng = \App\Models\Setting::getValue('store_longitude', '110.2529556');
     $isPendingPayment = $order->payment_status === 'unpaid' && !in_array($order->payment_method, ['Cash On Delivery / COD', 'WhatsApp Confirmation']);
     $hasRoute = !$isPendingPayment && $order->type === 'delivery' && $order->latitude && $order->longitude;
+    $showMap = !$isPendingPayment && ($order->type === 'delivery' ? ($order->latitude && $order->longitude) : true);
 
     $maxReadyTime = '15-20 min';
     if ($order->items->isNotEmpty()) {
@@ -488,12 +489,12 @@
         
         <!-- Main Success Tracker Card -->
         <div class="bg-white dark:bg-gray-800 rounded-3xl border border-amber-100/50 dark:border-gray-700/50 shadow-xl overflow-hidden">
-            @if(!$isPendingPayment)
-            @if($hasRoute)
-            <!-- Leaflet Tracking Map (Header of Card) -->
+            @if($showMap)
+            <!-- Leaflet Map (Header of Card) -->
             <div class="relative">
                 <div id="tracking-map" class="w-full"></div>
                 
+                @if($order->type === 'delivery')
                 <!-- GPS Track Me Button -->
                 <button type="button" onclick="trackMyLocation()" id="track-gps-btn" class="absolute bottom-4 right-4 z-30 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 p-2.5 rounded-full shadow-md hover:bg-gray-100 dark:hover:bg-gray-700 transition flex items-center justify-center border border-gray-200 dark:border-gray-700 animate-pulse hover:animate-none" style="animation-duration: 3s;" title="Lacak Lokasi Saya">
                     <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" id="track-gps-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -501,6 +502,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
                     </svg>
                 </button>
+                @endif
 
                 <div class="absolute top-4 left-4 z-20 bg-gray-900/90 dark:bg-gray-800/90 text-white rounded-2xl px-4 py-2 text-xs font-bold shadow-md">
                     @if($order->status == 'pending')
@@ -1074,30 +1076,42 @@
     });
     @endif
 
+    const storeLocation = [{{ $storeLat }}, {{ $storeLng }}];
     const customerLocation = [{{ $order->latitude ?? $storeLat }}, {{ $order->longitude ?? $storeLng }}];
-    const hasRoute = {{ $hasRoute ? 'true' : 'false' }};
+    const showMap = {{ $showMap ? 'true' : 'false' }};
+    const orderType = '{{ $order->type }}';
     
     let map = null;
     let customerMarker = null;
     let bakeryMarker = null;
     
-    // Initialize Map only if tracking map exists (hasRoute is true)
-    if (hasRoute && document.getElementById('tracking-map')) {
+    // Initialize Map only if tracking map exists (showMap is true)
+    if (showMap && document.getElementById('tracking-map')) {
+        const initialCenter = (orderType === 'pickup') ? storeLocation : customerLocation;
         map = L.map('tracking-map', {
             zoomControl: false,
-            attributionControl: false
-        }).setView(customerLocation, 16);
+            attributionControl: false,
+            scrollWheelZoom: (orderType === 'pickup') ? false : true
+        }).setView(initialCenter, 16);
 
         // Add tiles layer
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19
         }).addTo(map);
 
-        // Customer Icon Custom
-        customerMarker = L.marker(customerLocation).addTo(map)
-            .bindPopup('📍 Lokasi Pengiriman').openPopup();
+        // Bakery Marker (always show it so user knows store location)
+        bakeryMarker = L.marker(storeLocation).addTo(map)
+            .bindPopup('🥐 <b>Mamitha Bakery Sleman</b><br>Jl. Magelang KM 14, Sleman, Yogyakarta');
+
+        if (orderType === 'pickup') {
+            bakeryMarker.openPopup();
+        } else {
+            // Customer/Delivery Icon
+            customerMarker = L.marker(customerLocation).addTo(map)
+                .bindPopup('📍 Lokasi Pengiriman').openPopup();
             
-        fitMapBounds();
+            fitMapBounds();
+        }
     }
 
     // Function to calculate map boundaries
@@ -1106,6 +1120,7 @@
         
         const markers = [];
         if (customerMarker) markers.push(customerMarker);
+        if (bakeryMarker) markers.push(bakeryMarker);
         
         // Include live user location in bounds if present
         let tempUserMarker = null;

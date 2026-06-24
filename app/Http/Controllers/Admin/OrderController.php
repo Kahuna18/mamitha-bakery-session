@@ -142,4 +142,46 @@ class OrderController extends Controller
 
         return redirect()->route('admin.orders.index')->with('success', 'Pesanan berhasil dihapus.');
     }
+
+    public function resetTab(Request $request)
+    {
+        $tab = $request->input('tab');
+        if (!in_array($tab, ['incoming', 'pending_payment'])) {
+            return back()->with('error', 'Tab tidak valid untuk direset.');
+        }
+
+        $query = Order::query();
+
+        if ($tab === 'incoming') {
+            $query->where(function ($q) {
+                $q->where(function ($sub) {
+                    $sub->where('payment_status', 'paid')
+                        ->whereIn('status', ['pending', 'confirmed']);
+                })->orWhere(function ($sub) {
+                    $sub->whereIn('payment_method', ['Cash On Delivery / COD', 'WhatsApp Confirmation'])
+                        ->whereIn('status', ['pending', 'confirmed']);
+                });
+            });
+        } elseif ($tab === 'pending_payment') {
+            $query->where('status', 'pending')
+                ->where('payment_status', 'unpaid')
+                ->whereNotIn('payment_method', ['Cash On Delivery / COD', 'WhatsApp Confirmation']);
+        }
+
+        $orders = $query->get();
+        $count = $orders->count();
+
+        if ($count === 0) {
+            return back()->with('error', 'Tidak ada pesanan untuk direset di tab ini.');
+        }
+
+        foreach ($orders as $order) {
+            $order->kitchenTask()->delete();
+            $order->items()->delete();
+            $order->delete();
+        }
+
+        $tabName = $tab === 'incoming' ? 'Order Masuk' : 'Pending Pembayaran';
+        return back()->with('success', "Berhasil mereset {$count} pesanan dari tab {$tabName}.");
+    }
 }

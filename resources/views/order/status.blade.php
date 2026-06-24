@@ -79,11 +79,12 @@
                         </div>
                     </div>
 
-                    @if($order->type === 'delivery' && $order->latitude && $order->longitude)
+                    @if(($order->type === 'delivery' && $order->latitude && $order->longitude) || $order->type === 'pickup')
                     <!-- Map container -->
                     <div class="relative">
                         <div id="map-{{ $order->id }}" class="status-map w-full"></div>
 
+                        @if($order->type === 'delivery')
                         <!-- GPS Track Me Button -->
                         <button type="button" onclick="trackMyLocationForOrder({{ $order->id }})" id="track-gps-btn-{{ $order->id }}" class="absolute bottom-4 right-4 z-20 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 p-2.5 rounded-full shadow-md hover:bg-gray-100 dark:hover:bg-gray-700 transition flex items-center justify-center border border-gray-200 dark:border-gray-700 animate-pulse hover:animate-none" style="animation-duration: 3s;" title="Lacak Lokasi Saya">
                             <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" id="track-gps-icon-{{ $order->id }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -91,6 +92,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
                             </svg>
                         </button>
+                        @endif
                     </div>
                     @endif
 
@@ -256,33 +258,47 @@
             const lng = {{ $order->longitude ?? 'null' }};
             const type = '{{ $order->type }}';
             
-            // Only initialize map if it's a delivery and has coordinates
+            // Only initialize map if container exists
             const mapContainer = document.getElementById(mapId);
             if (!mapContainer) return;
 
-            const customerLocation = [lat, lng];
+            const isPickup = type === 'pickup';
+            const mapCenter = isPickup ? storeLocation : [lat, lng];
 
             const map = L.map(mapId, {
                 zoomControl: false,
-                attributionControl: false
-            }).setView(customerLocation, 16);
+                attributionControl: false,
+                scrollWheelZoom: isPickup ? false : true
+            }).setView(mapCenter, 16);
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19
             }).addTo(map);
 
-            const customerMarker = L.marker(customerLocation).addTo(map).bindPopup('📍 Lokasi Pengiriman').openPopup();
+            const bakeryMarker = L.marker(storeLocation).addTo(map)
+                .bindPopup('🥐 <b>Mamitha Bakery Sleman</b><br>Jl. Magelang KM 14, Sleman, Yogyakarta');
+
+            let customerMarker = null;
+            if (isPickup) {
+                bakeryMarker.openPopup();
+            } else {
+                customerMarker = L.marker([lat, lng]).addTo(map).bindPopup('📍 Lokasi Pengiriman').openPopup();
+            }
 
             // Save references for live GPS tracking
             activeMaps[{{ $order->id }}] = {
                 map: map,
-                bakeryMarker: null,
+                bakeryMarker: bakeryMarker,
                 customerMarker: customerMarker,
-                hasRoute: (type === 'delivery' && lat && lng),
+                hasRoute: !isPickup,
                 watchId: null,
                 myLocationMarker: null,
                 myLocationCircle: null
             };
+
+            if (!isPickup) {
+                fitMapBoundsForOrder({{ $order->id }});
+            }
         })();
         @endforeach
     @endif
@@ -292,7 +308,8 @@
         const orderData = activeMaps[orderId];
         if (!orderData) return;
 
-        const markers = [orderData.bakeryMarker];
+        const markers = [];
+        if (orderData.bakeryMarker) markers.push(orderData.bakeryMarker);
         if (orderData.hasRoute && orderData.customerMarker) {
             markers.push(orderData.customerMarker);
         }
@@ -303,8 +320,10 @@
             markers.push(tempUserMarker);
         }
 
-        const group = new L.featureGroup(markers);
-        orderData.map.fitBounds(group.getBounds().pad(0.25));
+        if (markers.length > 0) {
+            const group = new L.featureGroup(markers);
+            orderData.map.fitBounds(group.getBounds().pad(0.25));
+        }
     }
 
     // Live GPS tracking for a specific order map

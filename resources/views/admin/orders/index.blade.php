@@ -3,34 +3,44 @@
 @section('title', 'Order Masuk')
 
 @section('content')
-<div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+@php
+    $activeTab = request('tab', 'incoming');
+    $tabCounts = [
+        'incoming' => \App\Models\Order::where(function($q) {
+            $q->where('payment_status', 'paid')
+              ->whereIn('status', ['pending', 'confirmed']);
+        })->orWhere(function($q) {
+            $q->whereIn('payment_method', ['Cash On Delivery / COD', 'WhatsApp Confirmation'])
+              ->whereIn('status', ['pending', 'confirmed']);
+        })->count(),
+        
+        'pending_payment' => \App\Models\Order::where('status', 'pending')
+            ->where('payment_status', 'unpaid')
+            ->whereNotIn('payment_method', ['Cash On Delivery / COD', 'WhatsApp Confirmation'])
+            ->count(),
+        
+        'kitchen' => \App\Models\Order::whereIn('status', ['producing', 'ready'])->count(),
+    ];
+@endphp
+
+<div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
     <div>
         <h1 class="text-2xl font-bold text-gray-800">Order Masuk</h1>
         <p class="text-gray-500 text-sm">Kelola semua pesanan pelanggan</p>
     </div>
+    @if(in_array($activeTab, ['incoming', 'pending_payment']))
+        <form action="{{ route('admin.orders.reset-tab') }}" method="POST" onsubmit="return confirm('PENTING: Apakah Anda yakin ingin mereset/menghapus SEMUA pesanan di tab ini? Tindakan ini tidak dapat dibatalkan.')">
+            @csrf
+            <input type="hidden" name="tab" value="{{ $activeTab }}">
+            <button type="submit" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg transition-all shadow-md active:scale-95 flex items-center gap-1.5 cursor-pointer">
+                🗑️ Reset Semua ({{ $activeTab === 'incoming' ? 'Order Masuk' : 'Pending Pembayaran' }})
+            </button>
+        </form>
+    @endif
 </div>
 
 <!-- Tab Bar Navigation -->
 <div class="flex border-b border-gray-200 dark:border-gray-700/50 mb-6 overflow-x-auto scrollbar-none gap-2">
-    @php
-        $activeTab = request('tab', 'incoming');
-        $tabCounts = [
-            'incoming' => \App\Models\Order::where(function($q) {
-                $q->where('payment_status', 'paid')
-                  ->whereIn('status', ['pending', 'confirmed']);
-            })->orWhere(function($q) {
-                $q->whereIn('payment_method', ['Cash On Delivery / COD', 'WhatsApp Confirmation'])
-                  ->whereIn('status', ['pending', 'confirmed']);
-            })->count(),
-            
-            'pending_payment' => \App\Models\Order::where('status', 'pending')
-                ->where('payment_status', 'unpaid')
-                ->whereNotIn('payment_method', ['Cash On Delivery / COD', 'WhatsApp Confirmation'])
-                ->count(),
-            
-            'kitchen' => \App\Models\Order::whereIn('status', ['producing', 'ready'])->count(),
-        ];
-    @endphp
     
     <a href="{{ route('admin.orders.index', array_merge(request()->except('page'), ['tab' => 'incoming'])) }}" 
        class="pb-3 px-4 text-sm font-semibold border-b-2 transition-all whitespace-nowrap relative flex items-center gap-1.5 {{ $activeTab === 'incoming' ? 'border-amber-600 text-amber-700 dark:text-amber-400 dark:border-amber-500 font-bold' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200' }}">
@@ -98,7 +108,7 @@
             <option value="month" {{ request('filter') == 'month' ? 'selected' : '' }}>Bulan Ini</option>
         </select>
         <button type="submit" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-lg transition">Filter</button>
-        <a href="{{ route('admin.orders.index') }}" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition">Reset</a>
+        <a href="{{ route('admin.orders.index') }}" class="px-4 py-2 bg-gray-100 dark:bg-gray-750 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg border border-gray-200 dark:border-gray-700 transition">Reset</a>
     </form>
 </div>
 
@@ -148,7 +158,7 @@
                             @elseif($order->status == 'confirmed') bg-blue-100 text-blue-700
                             @elseif($order->status == 'producing') bg-orange-100 text-orange-700
                             @elseif($order->status == 'ready') bg-green-100 text-green-700
-                            @elseif($order->status == 'done') bg-gray-100 text-gray-700
+                            @elseif($order->status == 'done') bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300
                             @else bg-red-100 text-red-700 @endif">
                             {{ $order->statusLabel() }}
                         </span>
