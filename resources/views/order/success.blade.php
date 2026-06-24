@@ -916,6 +916,16 @@
                                 *Izin redirect diperlukan. Jika halaman pembayaran tidak terbuka otomatis, silakan klik tombol di atas.
                             </p>
                         </div>
+                        @elseif($order->payment_status === 'unpaid')
+                        <div class="pt-3 border-t border-red-200/30 dark:border-red-800/30 mt-3 p-3.5 bg-red-50/50 dark:bg-red-950/20 text-red-700 dark:text-red-450 rounded-2xl text-[11px] space-y-1.5 border border-red-100/50 dark:border-red-900/35">
+                            <p class="font-extrabold text-xs flex items-center gap-1"><span>⚠️</span> Online Payment Not Ready</p>
+                            <p class="leading-relaxed">Gagal menghubungkan ke gerbang pembayaran Midtrans. Silakan lakukan salah satu langkah berikut:</p>
+                            <ul class="list-disc pl-4 space-y-1">
+                                <li>Pastikan variabel lingkungan (`MIDTRANS_SERVER_KEY`, `MIDTRANS_CLIENT_KEY`, dan `MIDTRANS_IS_PRODUCTION`) sudah diatur di tab <b>Variables</b> proyek Railway Anda.</li>
+                                <li>Pastikan nilai key yang diatur sesuai (Sandbox vs Production).</li>
+                                <li>Hubungi pemilik toko atau klik <b>Konfirmasi via WhatsApp</b> untuk beralih ke pembayaran manual.</li>
+                            </ul>
+                        </div>
                         @endif
                     </div>
                 </div>
