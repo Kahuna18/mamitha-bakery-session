@@ -288,7 +288,7 @@ class OrderController extends Controller
 
                 $params = [
                     'transaction_details' => [
-                        'order_id' => $order->order_number . '-' . time(),
+                        'order_id' => $order->order_number . '-' . $order->created_at->timestamp,
                         'gross_amount' => (int) $total,
                     ],
                     'item_details' => $midtransItems,
@@ -346,6 +346,41 @@ class OrderController extends Controller
     {
         $order = Order::with(['customer', 'items.product', 'items.variant'])->findOrFail($id);
         
+        // Auto-check payment status from Midtrans on success page load (acts as a webhook fallback)
+        if ($order->payment_status === 'unpaid' && (stripos($order->payment_method, 'midtrans') !== false)) {
+            try {
+                $this->initMidtrans();
+                $midtransOrderId = $order->order_number . '-' . $order->created_at->timestamp;
+                $status = \Midtrans\Transaction::status($midtransOrderId);
+                
+                $transactionStatus = $status->transaction_status;
+                $fraudStatus = $status->fraud_status;
+                
+                $isPaid = false;
+                if ($transactionStatus == 'settlement' || ($transactionStatus == 'capture' && $fraudStatus == 'accept')) {
+                    $isPaid = true;
+                }
+                
+                if ($isPaid) {
+                    $order->update([
+                        'payment_status' => 'paid',
+                        'status' => 'confirmed'
+                    ]);
+                    
+                    if (!$order->kitchenTask) {
+                        $order->kitchenTask()->create([
+                            'status' => 'pending',
+                        ]);
+                    }
+                    
+                    // Reload fresh order to reflect changes in the view
+                    $order = $order->fresh(['customer', 'items.product', 'items.variant']);
+                }
+            } catch (\Exception $e) {
+                \Log::info('Midtrans auto-check failed or transaction not created yet: ' . $e->getMessage());
+            }
+        }
+
         // Regenerate snap token on-the-fly if it is missing for Midtrans payments
         if (!$order->snap_token && $order->payment_status === 'unpaid' && (stripos($order->payment_method, 'midtrans') !== false)) {
             try {
@@ -404,7 +439,7 @@ class OrderController extends Controller
 
                 $params = [
                     'transaction_details' => [
-                        'order_id' => $order->order_number . '-' . time(),
+                        'order_id' => $order->order_number . '-' . $order->created_at->timestamp,
                         'gross_amount' => (int) $order->total,
                     ],
                     'item_details' => $midtransItems,

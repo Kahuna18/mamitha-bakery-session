@@ -1011,50 +1011,6 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
     @if($order->snap_token && $order->payment_status === 'unpaid')
-    // Expose triggerSnapPayment globally so both the inline card button and the DOM listener can execute it
-    window.triggerSnapPayment = function() {
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        const isSnapLoaded = typeof window.snap !== 'undefined';
-
-        if (isMobile || !isSnapLoaded) {
-            // For mobile or if snap.js is blocked, redirect parent page directly to the Midtrans check-out site
-            const snapUrl = '{{ config('services.midtrans.is_production') ? 'https://app.midtrans.com/snap/v2/vtweb/' : 'https://app.sandbox.midtrans.com/snap/v2/vtweb/' }}' + '{{ $order->snap_token }}';
-            window.location.href = snapUrl;
-        } else {
-            // For desktop, open the snap modal
-            window.snap.pay('{{ $order->snap_token }}', {
-                onSuccess: function(result){
-                    console.log('payment success!', result);
-                    confirmPaymentOnServer(result.order_id);
-                },
-                onPending: function(result){
-                    console.log('payment pending...', result);
-                    confirmPaymentOnServer(result.order_id);
-                },
-                onError: function(result){
-                    console.log('payment error!', result);
-                    alert('Pembayaran gagal atau terjadi kesalahan. Silakan coba lagi.');
-                },
-                onClose: function(){
-                    console.log('customer closed the popup without finishing the payment');
-                }
-            });
-        }
-    };
-
-    document.addEventListener("DOMContentLoaded", function() {
-        const payButton = document.getElementById('pay-button');
-        if (payButton) {
-            payButton.addEventListener('click', function () {
-                triggerSnapPayment();
-            });
-        }
-
-        // Automatically open Snap payment redirect/popup on load
-        setTimeout(function() {
-            triggerSnapPayment();
-        }, 800);
-
         function confirmPaymentOnServer(orderId) {
             fetch('{{ route('order.confirm-payment') }}', {
                 method: 'POST',
@@ -1074,7 +1030,50 @@
                 window.location.reload();
             });
         }
-    });
+
+        window.triggerSnapPayment = function() {
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            const isSnapLoaded = typeof window.snap !== 'undefined';
+
+            if (isMobile || !isSnapLoaded) {
+                // For mobile or if snap.js is blocked, redirect parent page directly to the Midtrans check-out site
+                const snapUrl = '{{ config('services.midtrans.is_production') ? 'https://app.midtrans.com/snap/v4/redirection/' : 'https://app.sandbox.midtrans.com/snap/v4/redirection/' }}' + '{{ $order->snap_token }}';
+                window.location.href = snapUrl;
+            } else {
+                // For desktop, open the snap modal
+                window.snap.pay('{{ $order->snap_token }}', {
+                    onSuccess: function(result){
+                        console.log('payment success!', result);
+                        confirmPaymentOnServer(result.order_id);
+                    },
+                    onPending: function(result){
+                        console.log('payment pending...', result);
+                        confirmPaymentOnServer(result.order_id);
+                    },
+                    onError: function(result){
+                        console.log('payment error!', result);
+                        alert('Pembayaran gagal atau terjadi kesalahan. Silakan coba lagi.');
+                    },
+                    onClose: function(){
+                        console.log('customer closed the popup without finishing the payment');
+                    }
+                });
+            }
+        };
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const payButton = document.getElementById('pay-button');
+            if (payButton) {
+                payButton.addEventListener('click', function () {
+                    triggerSnapPayment();
+                });
+            }
+
+            // Automatically open Snap payment redirect/popup on load
+            setTimeout(function() {
+                triggerSnapPayment();
+            }, 800);
+        });
     @endif
 
     const storeLocation = [{{ $storeLat }}, {{ $storeLng }}];
