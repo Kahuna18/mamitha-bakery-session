@@ -34,8 +34,13 @@
             <textarea name="description" rows="3" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm">{{ old('description') }}</textarea>
         </div>
         <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Foto Produk</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Foto Produk Utama</label>
             <input type="file" name="image" accept="image/*" class="w-full text-sm">
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Foto Tambahan (Bisa pilih lebih dari 1)</label>
+            <input type="file" name="additional_images[]" accept="image/*" multiple class="w-full text-sm block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100">
+            <p class="text-xs text-gray-400 mt-1">Pilih beberapa foto sekaligus untuk menambah galeri foto produk (sangat cocok untuk Kue Ulang Tahun).</p>
         </div>
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Stok</label>

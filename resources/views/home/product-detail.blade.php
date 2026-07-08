@@ -8,24 +8,52 @@
         <a href="{{ route('menu') }}" class="text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 text-sm font-medium">&larr; Kembali ke Menu</a>
 
         <div class="grid md:grid-cols-2 gap-8 mt-4">
-            <div class="relative bg-amber-50 dark:bg-gray-800 rounded-xl p-8 flex items-center justify-center aspect-square">
-                @if($product->image)
-                    <img src="{{ $product->image_url }}" alt="{{ $product->name }}" class="w-full h-full object-cover rounded-lg {{ $product->stock <= 0 ? 'grayscale opacity-50' : '' }}">
-                @else
-                    <span class="text-8xl opacity-30">🍞</span>
-                @endif
-                <!-- Stock Badge -->
-                <div class="absolute top-4 right-4">
-                    @if($product->stock <= 0)
-                        <span class="bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md">Habis</span>
+            <div>
+                <div class="relative bg-amber-50 dark:bg-gray-800 rounded-xl p-6 flex items-center justify-center aspect-square overflow-hidden border border-amber-100/50 dark:border-gray-700/50">
+                    @if($product->image)
+                        <img id="main-product-preview" src="{{ $product->image_url }}" alt="{{ $product->name }}" class="w-full h-full object-cover rounded-lg transition duration-300 {{ $product->stock <= 0 ? 'grayscale opacity-50' : '' }}">
                     @else
-                        <span class="bg-white/90 dark:bg-gray-900/90 text-gray-700 dark:text-gray-200 text-xs font-bold px-3 py-1 rounded-full shadow-sm">Stok: {{ $product->stock }}</span>
+                        <span id="main-product-preview-emoji" class="text-8xl opacity-30">🍞</span>
+                    @endif
+                    <!-- Stock Badge -->
+                    <div class="absolute top-4 right-4 z-10">
+                        @if($product->stock <= 0)
+                            <span class="bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md">Habis</span>
+                        @else
+                            <span class="bg-white/90 dark:bg-gray-900/90 text-gray-700 dark:text-gray-200 text-xs font-bold px-3 py-1 rounded-full shadow-sm">Stok: {{ $product->stock }}</span>
+                        @endif
+                    </div>
+                    @if($product->stock <= 0)
+                    <div class="absolute inset-0 bg-gray-900/20 flex items-center justify-center rounded-xl z-10">
+                        <span class="bg-red-600 text-white text-lg font-bold px-6 py-2 rounded-full shadow-lg transform -rotate-12">SOLD OUT</span>
+                    </div>
                     @endif
                 </div>
-                @if($product->stock <= 0)
-                <div class="absolute inset-0 bg-gray-900/20 flex items-center justify-center rounded-xl">
-                    <span class="bg-red-600 text-white text-lg font-bold px-6 py-2 rounded-full shadow-lg transform -rotate-12">SOLD OUT</span>
+
+                @if($product->images->isNotEmpty())
+                <div class="flex gap-2.5 mt-4 overflow-x-auto pb-1 no-scrollbar">
+                    <div onclick="changePreview('{{ $product->image_url }}', this)" class="w-16 h-16 rounded-xl overflow-hidden cursor-pointer border-2 border-amber-600 shadow-sm transition active:scale-95 flex-shrink-0 thumbnail-item">
+                        <img src="{{ $product->image_url }}" class="w-full h-full object-cover">
+                    </div>
+                    @foreach($product->images as $img)
+                    <div onclick="changePreview('{{ $img->image_url }}', this)" class="w-16 h-16 rounded-xl overflow-hidden cursor-pointer border-2 border-transparent hover:border-amber-300 transition active:scale-95 flex-shrink-0 thumbnail-item">
+                        <img src="{{ $img->image_url }}" class="w-full h-full object-cover">
+                    </div>
+                    @endforeach
                 </div>
+
+                <script>
+                    function changePreview(url, el) {
+                        const img = document.getElementById('main-product-preview');
+                        if (img) img.src = url;
+                        document.querySelectorAll('.thumbnail-item').forEach(item => {
+                            item.classList.remove('border-amber-600');
+                            item.classList.add('border-transparent');
+                        });
+                        el.classList.remove('border-transparent');
+                        el.classList.add('border-amber-600');
+                    }
+                </script>
                 @endif
             </div>
             <div>

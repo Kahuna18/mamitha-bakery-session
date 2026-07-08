@@ -631,6 +631,12 @@
                     </div>
                 </div>
 
+                <!-- Image Gallery (Thumbnails) for Multiple Photos -->
+                <div id="modal-gallery-section" class="px-5 py-3 border-b border-gray-100 dark:border-gray-800 hidden">
+                    <p class="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Galeri Foto Kue (Ketuk untuk memperbesar)</p>
+                    <div id="modal-gallery-thumbnails" class="flex gap-2 overflow-x-auto pb-1 no-scrollbar"></div>
+                </div>
+
                 <!-- Variant Chips Section -->
                 <div id="modal-variants-section" class="px-5 py-4 hidden">
                     <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Pilih Varian</p>
@@ -1373,6 +1379,11 @@
         stock: {{ $product->stock ?? 0 }},
         hasVariants: {{ $product->activeVariants->isNotEmpty() ? 'true' : 'false' }},
         imageUrl: '{{ $product->image ? $product->image_url : '' }}',
+        additionalImages: [
+            @foreach($product->images as $img)
+            '{{ $img->image_url }}',
+            @endforeach
+        ],
         description: '{{ addslashes(str_replace(["\r", "\n"], " ", $product->description ?? 'Roti hangat dan empuk yang dibuat fresh hari ini.')) }}',
         ready_time: '{{ $product->ready_time }}',
         variants: [
@@ -1461,6 +1472,42 @@
             imgEl.classList.add('hidden');
             emojiEl.classList.remove('hidden');
             emojiEl.classList.add('flex');
+        }
+
+        // Additional images gallery inside modal
+        var gallerySection = document.getElementById('modal-gallery-section');
+        var galleryContainer = document.getElementById('modal-gallery-thumbnails');
+        if (gallerySection && galleryContainer) {
+            galleryContainer.innerHTML = '';
+            if (prod.imageUrl && prod.additionalImages && prod.additionalImages.length > 0) {
+                gallerySection.classList.remove('hidden');
+                
+                // Main image thumbnail
+                var mainThumb = document.createElement('div');
+                mainThumb.className = 'w-12 h-12 rounded-lg overflow-hidden cursor-pointer border-2 border-amber-600 flex-shrink-0 modal-thumb-item';
+                mainThumb.innerHTML = '<img src="' + prod.imageUrl + '" class="w-full h-full object-cover">';
+                mainThumb.onclick = function() {
+                    imgEl.src = prod.imageUrl;
+                    galleryContainer.querySelectorAll('.modal-thumb-item').forEach(el => el.classList.replace('border-amber-600', 'border-transparent'));
+                    this.classList.replace('border-transparent', 'border-amber-600');
+                };
+                galleryContainer.appendChild(mainThumb);
+
+                // Additional images thumbnails
+                prod.additionalImages.forEach(function(url) {
+                    var thumb = document.createElement('div');
+                    thumb.className = 'w-12 h-12 rounded-lg overflow-hidden cursor-pointer border-2 border-transparent flex-shrink-0 modal-thumb-item hover:border-amber-300';
+                    thumb.innerHTML = '<img src="' + url + '" class="w-full h-full object-cover">';
+                    thumb.onclick = function() {
+                        imgEl.src = url;
+                        galleryContainer.querySelectorAll('.modal-thumb-item').forEach(el => el.classList.replace('border-amber-600', 'border-transparent'));
+                        this.classList.replace('border-transparent', 'border-amber-600');
+                    };
+                    galleryContainer.appendChild(thumb);
+                });
+            } else {
+                gallerySection.classList.add('hidden');
+            }
         }
 
         // Discount badge

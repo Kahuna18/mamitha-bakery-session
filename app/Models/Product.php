@@ -24,6 +24,11 @@ class Product extends Model
         return $this->hasMany(ProductReview::class);
     }
 
+    public function images()
+    {
+        return $this->hasMany(ProductImage::class);
+    }
+
     public function category()
     {
         return $this->belongsTo(Category::class);
@@ -82,7 +87,16 @@ class Product extends Model
     {
         static::creating(function ($product) {
             if (empty($product->slug)) {
-                $product->slug = Str::slug($product->name);
+                $slug = Str::slug($product->name);
+                $originalSlug = $slug;
+                $counter = 2;
+
+                while (static::where('slug', $slug)->exists()) {
+                    $slug = $originalSlug . '-' . $counter;
+                    $counter++;
+                }
+
+                $product->slug = $slug;
             }
         });
     }

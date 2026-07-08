@@ -35,9 +35,11 @@ class ProductController extends Controller
             'stock' => 'integer|min:0',
             'rating' => 'required|numeric|min:0|max:5',
             'ready_time' => 'required|string|max:50',
+            'additional_images' => 'nullable|array',
+            'additional_images.*' => 'image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
-        $validated['slug'] = Str::slug($validated['name']);
+        $validated['slug'] = $this->generateUniqueSlug($validated['name']);
         $validated['is_available'] = $request->boolean('is_available');
         $validated['is_featured'] = $request->boolean('is_featured');
 
@@ -58,7 +60,27 @@ class ProductController extends Controller
             $validated['image'] = 'uploads/products/' . $filename;
         }
 
-        Product::create($validated);
+        $product = Product::create($validated);
+
+        if ($request->hasFile('additional_images')) {
+            foreach ($request->file('additional_images') as $file) {
+                $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                
+                if (!file_exists(public_path('uploads/products'))) {
+                    mkdir(public_path('uploads/products'), 0755, true);
+                }
+                $file->move(public_path('uploads/products'), $filename);
+                
+                if (!file_exists(storage_path('app/public/products'))) {
+                    mkdir(storage_path('app/public/products'), 0755, true);
+                }
+                copy(public_path('uploads/products/' . $filename), storage_path('app/public/products/' . $filename));
+
+                $product->images()->create([
+                    'image_path' => 'uploads/products/' . $filename,
+                ]);
+            }
+        }
 
         return redirect()->route('admin.products.index')->with('success', 'Produk berhasil ditambahkan.');
     }
@@ -82,6 +104,8 @@ class ProductController extends Controller
             'stock' => 'integer|min:0',
             'rating' => 'required|numeric|min:0|max:5',
             'ready_time' => 'required|string|max:50',
+            'additional_images' => 'nullable|array',
+            'additional_images.*' => 'image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
         $validated['is_available'] = $request->boolean('is_available');
@@ -128,11 +152,51 @@ class ProductController extends Controller
 
         $product->update($validated);
 
+        // Delete requested additional images
+        if ($request->has('delete_images')) {
+            foreach ($request->input('delete_images') as $imgId) {
+                $img = $product->images()->find($imgId);
+                if ($img) {
+                    $path = public_path($img->image_path);
+                    if (file_exists($path)) {
+                        @unlink($path);
+                    }
+                    $storagePath = storage_path('app/public/products/' . basename($img->image_path));
+                    if (file_exists($storagePath)) {
+                        @unlink($storagePath);
+                    }
+                    $img->delete();
+                }
+            }
+        }
+
+        // Upload new additional images
+        if ($request->hasFile('additional_images')) {
+            foreach ($request->file('additional_images') as $file) {
+                $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                
+                if (!file_exists(public_path('uploads/products'))) {
+                    mkdir(public_path('uploads/products'), 0755, true);
+                }
+                $file->move(public_path('uploads/products'), $filename);
+                
+                if (!file_exists(storage_path('app/public/products'))) {
+                    mkdir(storage_path('app/public/products'), 0755, true);
+                }
+                copy(public_path('uploads/products/' . $filename), storage_path('app/public/products/' . $filename));
+
+                $product->images()->create([
+                    'image_path' => 'uploads/products/' . $filename,
+                ]);
+            }
+        }
+
         return redirect()->route('admin.products.index')->with('success', 'Produk berhasil diperbarui.');
     }
 
     public function destroy(Product $product)
     {
+        // Delete main image
         if ($product->image) {
             if (str_starts_with($product->image, 'uploads/products/')) {
                 $oldPath = public_path($product->image);
@@ -154,8 +218,47 @@ class ProductController extends Controller
                 }
             }
         }
+
+        // Delete additional images
+        foreach ($product->images as $img) {
+            $path = public_path($img->image_path);
+            if (file_exists($path)) {
+                @unlink($path);
+            }
+            $storagePath = storage_path('app/public/products/' . basename($img->image_path));
+            if (file_exists($storagePath)) {
+                @unlink($storagePath);
+            }
+            $img->delete();
+        }
+
         $product->delete();
 
         return redirect()->route('admin.products.index')->with('success', 'Produk berhasil dihapus.');
+    }
+
+    /**
+     * Generate a unique slug for a product.
+     * Appends a numeric suffix if the slug already exists.
+     */
+    private function generateUniqueSlug(string $name, ?int $excludeId = null): string
+    {
+        $slug = Str::slug($name);
+        $originalSlug = $slug;
+        $counter = 2;
+
+        while (true) {
+            $query = Product::where('slug', $slug);
+            if ($excludeId) {
+                $query->where('id', '!=', $excludeId);
+            }
+            if (!$query->exists()) {
+                break;
+            }
+            $slug = $originalSlug . '-' . $counter;
+            $counter++;
+        }
+
+        return $slug;
     }
 }

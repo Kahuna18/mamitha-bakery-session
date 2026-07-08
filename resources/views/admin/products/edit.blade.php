@@ -32,11 +32,33 @@
             <textarea name="description" rows="3" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm">{{ old('description', $product->description) }}</textarea>
         </div>
         <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Foto Produk</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Foto Produk Utama</label>
             @if($product->image)
-            <img src="{{ $product->image_url }}" class="w-20 h-20 object-cover rounded mb-2">
+            <img src="{{ $product->image_url }}" class="w-24 h-24 object-cover rounded-xl mb-2 border border-gray-200 shadow-sm">
             @endif
             <input type="file" name="image" accept="image/*" class="w-full text-sm">
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Foto Tambahan saat ini (Centang untuk menghapus)</label>
+            @if($product->images->isNotEmpty())
+            <div class="grid grid-cols-4 gap-3 mb-3">
+                @foreach($product->images as $img)
+                <div class="relative group border border-gray-100 rounded-xl overflow-hidden shadow-sm bg-gray-50 aspect-square">
+                    <img src="{{ $img->image_url }}" class="w-full h-full object-cover">
+                    <label class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer text-white text-xs font-bold gap-1.5 p-1 text-center">
+                        <input type="checkbox" name="delete_images[]" value="{{ $img->id }}" class="rounded text-red-600 focus:ring-red-500 w-4 h-4 cursor-pointer">
+                        <span>Hapus</span>
+                    </label>
+                </div>
+                @endforeach
+            </div>
+            @else
+            <p class="text-xs text-gray-400 mb-3 bg-gray-50 border border-gray-100 p-2.5 rounded-lg">Belum ada foto tambahan.</p>
+            @endif
+            
+            <label class="block text-sm font-medium text-gray-700 mb-1">Tambah Foto Baru (Bisa pilih lebih dari 1)</label>
+            <input type="file" name="additional_images[]" accept="image/*" multiple class="w-full text-sm block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100">
+            <p class="text-xs text-gray-400 mt-1">Pilih beberapa foto sekaligus untuk menambah galeri foto produk (sangat cocok untuk Kue Ulang Tahun).</p>
         </div>
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Stok</label>
